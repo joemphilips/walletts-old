@@ -2,6 +2,7 @@ import {BlockchainProxy, RPC} from 'blockchain-proxy'
 import {Coin} from "./primitives";
 import Keystore, {BasicKeystore} from "./keystore";
 import CoinManager from "./coin_manager";
+import WalletDB from "./walletdb";
 
 // Business logic is implemented here.
 // IO/Serialization logic must implemented in coinManager
@@ -11,6 +12,7 @@ interface AbstractWallet<P extends BlockchainProxy, K extends Keystore> {
   coinManager: CoinManager<P>
   proxy: P;
   sign: (k: K) => Promise<boolean>;
+  db: WalletDB
 }
 
 class Series {
@@ -25,15 +27,17 @@ interface Pool {
   seriesLookup: any;
 }
 
-
+export class BasicWallet<P, K> implements AbstractWallet {
+}
 
 // Community wallet based on Voting Pool
 // refs: http://opentransactions.org/wiki/index.php?title=Category:Voting_Pools
-export default class CommunityWallet<P, K> implements AbstractWallet {
+export class CommunityWallet<P, K> implements AbstractWallet {
   public coinManager: CoinManager<P>;
-  constructor (p: P, k: K) {
+  constructor (p: P, k: K, db: WalletDB) {
     this.proxy = p;
     this.keystore = k;
+    this.db = db;
   }
 
   load(walletPath: string) {

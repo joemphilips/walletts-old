@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package lighthouse3;
+message PingRequest {}
+message PingResponse {}
+
+
+service WalletService {
+    rpc Ping (PingRequest) returns (PingResponse);
+}
+

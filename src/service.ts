@@ -5,7 +5,8 @@ import {Command} from "commander";
 class WalletService {
   constructor(opts: Cli) {
     this.cfg = container.cradle.loadConfig(opts)
-    this.wallet = container.cradle.Wallet;
+    this.walletdb = container.cradle.WalletDB(container.cradle.WalletOutStraem, container.cradle.WalletInStream);
+    this.wallet = container.cradle.Wallet(container.cradle.proxy, container.cradle.Keystore, this.walletdb);
     this.server = container.cradle.RPCServer
   }
 
@@ -16,7 +17,7 @@ class WalletService {
       throw new Error('failed to load Wallet !')
     }
 
-    this.server.start(this.wallet)
+    this.server.start(this.wallet, this.cfg)
   }
 }
 
