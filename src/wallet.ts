@@ -3,6 +3,8 @@ import {Coin} from "./primitives";
 import Keystore, {BasicKeystore} from "./keystore";
 import CoinManager from "./coin_manager";
 import WalletDB from "./walletdb";
+import BackendProxy from "./backend";
+import {requestCallback} from "grpc";
 
 // Business logic is implemented here.
 // IO/Serialization logic must implemented in coinManager
@@ -34,10 +36,11 @@ export class BasicWallet<P, K> implements AbstractWallet {
 // refs: http://opentransactions.org/wiki/index.php?title=Category:Voting_Pools
 export class CommunityWallet<P, K> implements AbstractWallet {
   public coinManager: CoinManager<P>;
-  constructor (p: P, k: K, db: WalletDB) {
+  constructor (p: P, k: K, db: WalletDB, backend: BackendProxy) {
     this.proxy = p;
     this.keystore = k;
     this.db = db;
+    this.backend = backend;
   }
 
   load(walletPath: string) {

@@ -2,11 +2,14 @@ import container from './container'
 import * as program from "commander";
 import {Command} from "commander";
 
-class WalletService {
+export default class WalletService {
   constructor(opts: Cli) {
     this.cfg = container.cradle.loadConfig(opts)
     this.walletdb = container.cradle.WalletDB(container.cradle.WalletOutStraem, container.cradle.WalletInStream);
-    this.wallet = container.cradle.Wallet(container.cradle.proxy, container.cradle.Keystore, this.walletdb);
+    this.wallet = container.cradle.Wallet(container.cradle.proxy,
+      container.cradle.Keystore,
+      this.walletdb,
+      container.cradle.BackendProxy);
     this.server = container.cradle.RPCServer
   }
 
@@ -37,4 +40,4 @@ let cli: Cli = program
 (async function main() {
   let service = new walletService(cli)
   service.run()
-})()
+})();
