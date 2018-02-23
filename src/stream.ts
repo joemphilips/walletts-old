@@ -1,4 +1,4 @@
-import {Readable, Writable} from 'stream'
+import {Readable, Transform, Writable} from 'stream'
 import * as sodium from 'sodium'
 
 // stream for encrypting/decrypting WalletDB data
@@ -13,5 +13,9 @@ export class EncryptStream extends Writable {
 }
 
 export class DecryptStream extends Readable {
+
+}
+
+export class PSBTParserStream {
 
 }

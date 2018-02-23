@@ -23,6 +23,6 @@ container.register({
   WalletDB: asClass(WalletDB),
   WalletOutStream:  asClass(EncryptStream),
   WalletInStream: asClass(DecryptStream)
-})
+});
 
 export default container

@@ -4,29 +4,17 @@ import Keystore, {BasicKeystore} from "./keystore";
 import CoinManager from "./coin_manager";
 import WalletDB from "./walletdb";
 import BackendProxy from "./backend";
-import {requestCallback} from "grpc";
 
 // Business logic is implemented here.
 // IO/Serialization logic must implemented in coinManager
 // as possible.
 interface AbstractWallet<P extends BlockchainProxy, K extends Keystore> {
-  load: (string) => Promise<boolean>;
   coinManager: CoinManager<P>
   proxy: P;
+  db: WalletDB;
+  load: (string) => Promise<boolean>;
   sign: (k: K) => Promise<boolean>;
-  db: WalletDB
-}
-
-class Series {
-  public isActive: true; // write now it will never deactivate
-  public pubKeys: NodeJS.Buffer[]; // xpub
-  public pubPrivKeys: NodeJS.Buffer[]; // xpriv
-  public m: number
-}
-
-interface Pool {
-  ID: number;
-  seriesLookup: any;
+  getAddress: (k: K) => string;
 }
 
 export class BasicWallet<P, K> implements AbstractWallet {
@@ -49,4 +37,24 @@ export class CommunityWallet<P, K> implements AbstractWallet {
   sign() {
     this.coinManager.sign(this.keystore)
   }
+
+  getAddress() {
+    this.keystore.getAddress();
+  }
 }
+
+
+class Series {
+  id: number;
+  public isActive: true; // write now it will never deactivate
+  public pubKeys: NodeJS.Buffer[]; // xpub
+  public pubPrivKeys: NodeJS.Buffer[]; // xpriv
+  public m: number
+}
+
+interface Pool {
+  id: number;
+  seriesLookup: any;
+  createSeries: (seriesId: number) => 
+}
+
