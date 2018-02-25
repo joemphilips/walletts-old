@@ -4,7 +4,7 @@ import {grpc} from 'grpc-web-client';
 import {CrowdFundingService, PaymentService} from '../../generated/backendserver_pb_service'
 import * as message from '../../generated/backendserver_pb'
 
-export default class BackendProxy extends EventEmitter {
+export default class BackendProxyWeb extends EventEmitter {
   public url: string;
   constructor(opts: any){
     super(opts);

@@ -13,7 +13,7 @@ async function ping (ctx: any) {
 function main () {
   const app = new Mali(PROTO_PATH);
   app.use( ping );
-  app.start({url});
+  app.start(url);
 };
 
 // start mock server
