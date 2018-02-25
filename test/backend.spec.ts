@@ -5,20 +5,14 @@ type myContext = {pw: BackendProxyWeb}
 const test = anyTest as TestInterface<myContext>
 
 startMockServer(test)
-const inst = new BackendProxyWeb(url)
 
 test.beforeEach((t: ExecutionContext<myContext>) => {
-  // t.context.p = new BackendProxy()
-  console.log(`going to make instance with url ${url}`)
-  t.context = {pw: new BackendProxyWeb(url)};
-  console.log( `instance created! ${t.context.pw.url}`)
-  console.log(`inst is ${inst}`)
+  t.context = {pw: new BackendProxyWeb({url: url})};
 })
 
 test('can ping to the backend', async (t: ExecutionContext<myContext>) => {
-  const inst2 = new BackendProxyWeb(url)
-  console.log(`going to assert ${inst2}`)
-  t.notThrows(inst2.ping);
+  console.log(`going to assert ${t.context.pw.url}`)
+  t.truthy(t.context.pw.ping);
 })
 
 test('can receive new Project Information from Server', (t: any) => {
