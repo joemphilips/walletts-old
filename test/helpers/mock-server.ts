@@ -9,12 +9,15 @@ const PROTO_PATH = path.resolve(__dirname, '../../proto/backendserver.proto');
 // handlers
 async function ping (ctx: any) {
   log.info(`received ping message ${ctx}`);
-  ctx.res = { message: 'hello'.concat(ctx.req.name) }
+  ctx.res = { message: 'hello'.concat(ctx.req.getMessage()) }
 }
 
 export default function startMockServer () {
   console.log("starting mock server ... ")
   const app = new Mali(PROTO_PATH);
-  app.use( ping );
+  app.use( {ping} );
   app.start(url);
+  console.log("mock server started ")
 };
+
+startMockServer()

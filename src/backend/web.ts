@@ -4,6 +4,8 @@ import {grpc} from 'grpc-web-client';
 import {CrowdFundingService, PaymentService} from '../../generated/backendserver_pb_service'
 import * as message from '../../generated/backendserver_pb'
 import Request = grpc.Request;
+import ProtobufMessage = grpc.ProtobufMessage;
+import UnaryOutput = grpc.UnaryOutput;
 
 export default class BackendProxyWeb extends EventEmitter {
   public url: string;
@@ -17,12 +19,13 @@ export default class BackendProxyWeb extends EventEmitter {
 
   public ping(): Request {
     const request = new message.PingRequest();
-    console.log(`going to ping to ${this.url}`)
+    request.setMessage("this is ping message!")
+    console.log(`going to ping to ${this.url} with request ${request}`)
     return grpc.unary(CrowdFundingService.Ping, {
       request: request,
       host: this.url,
-      onEnd: res => {
-        console.log(`received pong from server \n ${JSON.stringify(res)}`)
+      onEnd: ({status, statusMessage, headers, message, trailers})=> {
+        console.log("received pong from server", status, statusMessage, headers, message, trailers)
       }
     })
   }
