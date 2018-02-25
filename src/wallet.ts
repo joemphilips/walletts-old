@@ -8,7 +8,7 @@ import BackendProxy from "./backend";
 // Business logic is implemented here.
 // IO/Serialization logic must implemented in coinManager
 // as possible.
-interface AbstractWallet<P extends BlockchainProxy, K extends Keystore> {
+export interface AbstractWallet<P extends BlockchainProxy, K extends Keystore> {
   coinManager: CoinManager<P>
   proxy: P;
   db: WalletDB;

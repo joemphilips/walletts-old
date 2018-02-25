@@ -1,9 +1,25 @@
 import container from './container'
 import * as program from "commander";
-import {Command} from "commander";
+import {Config, WalletServiceOpts} from "./config";
+import WalletDB from "./walletdb";
+import {BasicWallet} from './wallet'
+import GRPCServer from "./rpc_server";
+import {BasicKeystore} from "./keystore";
+import {RPC} from 'blockchain-proxy';
+import {DecryptStream, EncryptStream} from "./stream";
 
+
+// facade class of wallet.
+// This is just one example of very basic wallet.
+// You may compose different kind of Classes and create different kinds of wallet.
+// e.g. wallet for managing community funds, wallet which uses external HD Key for signing, etc.
 export default class WalletService {
-  constructor(opts: Cli) {
+  public cfg: Config;
+  private walletdb: WalletDB<EncryptStream, DecryptStream>;
+  private wallet: BasicWallet<RPC, BasicKeystore>;
+  private server: GRPCServer;
+
+  constructor(opts: WalletServiceOpts) {
     this.cfg = container.cradle.loadConfig(opts)
     this.walletdb = container.cradle.WalletDB(
       container.cradle.WalletOutStraem,
@@ -30,13 +46,7 @@ export default class WalletService {
   }
 }
 
-class Cli extends Command {
-  public datadir: string;
-  public debugFile: string;
-  public conf: string;
-}
-
-let cli: Cli = program
+let cli: WalletServiceOpts = program
   .version('0.0.1')
   .option('-d, --datadir', 'data directory')
   .option('--debug-file', 'file to output debug info')
