@@ -17,7 +17,7 @@ import {ParseOptionsResult} from "commander";
 export default class WalletService {
   public cfg: Config;
   private walletdb: WalletDB<EncryptStream, DecryptStream>;
-  private wallet: BasicWallet<RPC, BasicKeystore>;
+  private wallet: BasicWallet;
   private server: GRPCServer;
 
   constructor(opts: WalletServiceOpts) {
