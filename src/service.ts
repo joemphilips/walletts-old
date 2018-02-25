@@ -5,11 +5,17 @@ import {Command} from "commander";
 export default class WalletService {
   constructor(opts: Cli) {
     this.cfg = container.cradle.loadConfig(opts)
-    this.walletdb = container.cradle.WalletDB(container.cradle.WalletOutStraem, container.cradle.WalletInStream);
-    this.wallet = container.cradle.Wallet(container.cradle.proxy,
+    this.walletdb = container.cradle.WalletDB(
+      container.cradle.WalletOutStraem,
+      container.cradle.WalletInStream,
+      this.cfg
+    );
+    this.wallet = container.cradle.Wallet(
+      container.cradle.proxy,
       container.cradle.Keystore,
       this.walletdb,
-      container.cradle.BackendProxy);
+      container.cradle.BackendProxy
+    );
     this.server = container.cradle.RPCServer
   }
 

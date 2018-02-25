@@ -1,11 +1,49 @@
+// backend service to support wallet.
+
 syntax = "proto3";
 
 package lighthouse3;
 message PingRequest {}
 message PingResponse {}
 
+// BIP70 compatible
+message Output {
+    uint64 amount = 1 [default = 0];
+    bytes script = 2;
+}
 
-service WalletService {
+// BIP 70 compatible messages
+message PaymentDetails {
+    string network = 1 [default = "main"];
+    repeated Output outputs = 2;
+    uint64 time = 3;
+    uint64 expires = 4;
+    string memo = 5;
+    string payment_url = 6;
+    bytes merchant_data = 7;
+}
+message PaymentRequest {
+    uint32 payment_details_version = 1 [default = 1];
+    string pki_type = 2 [default = "none"];
+    bytes pki_data = 3; // certificates
+    bytes serialized_payment_details = 4;
+    bytes signature = 5;
+}
+message Payment {
+    bytes merchant_data = 1;
+    repeated bytes transactions = 2;
+    repeated Output refund_to = 3;
+    string memo = 4;
+}
+message PaymentACK {
+    Payment payment = 1;
+    string memo = 2;
+}
+
+
+service PaymentService {
     rpc Ping (PingRequest) returns (PingResponse);
 }
 
+service CrowdFundingService {
+}
