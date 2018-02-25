@@ -2,19 +2,19 @@
 
 syntax = "proto3";
 
-package lighthouse3;
+package LighthouseServer;
 message PingRequest {}
 message PingResponse {}
 
 // BIP70 compatible
 message Output {
-    uint64 amount = 1 [default = 0];
+    uint64 amount = 1;
     bytes script = 2;
 }
 
 // BIP 70 compatible messages
 message PaymentDetails {
-    string network = 1 [default = "main"];
+    string network = 1;
     repeated Output outputs = 2;
     uint64 time = 3;
     uint64 expires = 4;
@@ -23,8 +23,8 @@ message PaymentDetails {
     bytes merchant_data = 7;
 }
 message PaymentRequest {
-    uint32 payment_details_version = 1 [default = 1];
-    string pki_type = 2 [default = "none"];
+    uint32 payment_details_version = 1;
+    string pki_type = 2;
     bytes pki_data = 3; // certificates
     bytes serialized_payment_details = 4;
     bytes signature = 5;
@@ -46,4 +46,5 @@ service PaymentService {
 }
 
 service CrowdFundingService {
+    rpc Ping (PingRequest) returns (PingResponse);
 }

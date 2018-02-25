@@ -1,6 +1,6 @@
 import * as grpc from 'grpc'
 import path from 'path'
-const PROTO_PATH = path.join("..", "walletserver.proto")
+const PROTO_PATH = path.join("..", "proto", "walletserver.proto")
 import {AbstractWallet} from './wallet'
 import {Config} from "./config";
 

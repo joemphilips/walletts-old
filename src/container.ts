@@ -7,7 +7,7 @@ import loadConfig from './config'
 import WalletDB from "./walletdb";
 import {DecryptStream, EncryptStream} from "./stream";
 import {BasicKeystore} from "./keystore";
-import BackendProxy from "./backend";
+import BackendProxy from "./backend/node";
 
 const container = createContainer({
   injectionMode: "PROXY"
