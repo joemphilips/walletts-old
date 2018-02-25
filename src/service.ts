@@ -7,6 +7,7 @@ import GRPCServer from "./rpc_server";
 import {BasicKeystore} from "./keystore";
 import {RPC} from 'blockchain-proxy';
 import {DecryptStream, EncryptStream} from "./stream";
+import {ParseOptionsResult} from "commander";
 
 
 // facade class of wallet.
@@ -37,7 +38,7 @@ export default class WalletService {
 
   public async run () {
     try {
-      await this.wallet.load()
+      await this.wallet.load(this.cfg.walletDBPath)
     } catch {
       throw new Error('failed to load Wallet !')
     }
@@ -46,7 +47,7 @@ export default class WalletService {
   }
 }
 
-let cli: WalletServiceOpts = program
+let cli = program.program
   .version('0.0.1')
   .option('-d, --datadir', 'data directory')
   .option('--debug-file', 'file to output debug info')
@@ -54,6 +55,9 @@ let cli: WalletServiceOpts = program
   .parse(process.argv)
 
 (async function main() {
-  let service = new walletService(cli)
+  let datadir = cli.datadir;
+  let debugFile = cli.debugFile;
+  let conf = cli.conf;
+  let service = new WalletService({datadir, debugFile, conf});
   service.run()
 })();

@@ -4,7 +4,7 @@ import fs from 'fs';
 import path from 'path';
 import {Config} from "./config";
 
-export default class WalletDB<W extends NodeJS.WriteStream, R extends NodeJS.ReadableStream> {
+export default class WalletDB<W extends Writable, R extends Readable> {
   constructor(w: W, r: R, cfg: Config) {
     this.w = w;
     this.r = r;

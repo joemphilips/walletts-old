@@ -26,4 +26,10 @@ export default class CoinManager<P extends BlockchainProxy> {
   public async startSync: () => Promise<void>
   public async parsePSBT: (Buffer) => Promise<btc.Transaction>;
   public sign<K extends Keystore>(key: K);
+  constructor (p: P) {
+    this.builder = new btc.TransactionBuilder();
+    this.coins = [];
+    this.proxy = p;
+    console.log("coinmanager intialized")
+  }
 }
