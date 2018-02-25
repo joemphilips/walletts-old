@@ -1,8 +1,9 @@
-import {Readable, Transform, Writable} from 'stream'
+import {Readable, Writable} from 'stream'
 const sodium = require('sodium');
 
 // stream for encrypting/decrypting WalletDB data
 export class EncryptStream extends Writable {
+  public writable: true;
   private box: any;
   constructor(opts: any) {
     super(opts)
@@ -11,6 +12,10 @@ export class EncryptStream extends Writable {
 
   public _write(chunk: Buffer, encoding: string, callback: Function) {
     this.box.encrypt(chunk, encoding)
+  }
+
+  public end(cb: Function) {
+    console.log(`not implemented !`)
   }
 }
 

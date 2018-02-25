@@ -1,4 +1,5 @@
-import * as Awilix from 'awilix'
+// container for Injecting Dependency to default WalletService.
+
 import {BasicWallet} from './wallet'
 import RPCServer, {default as GRPCServer} from './rpc_server'
 import {asClass, asFunction, createContainer} from "awilix";

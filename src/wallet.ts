@@ -3,58 +3,85 @@ import {Coin} from "./primitives";
 import Keystore, {BasicKeystore} from "./keystore";
 import CoinManager from "./coin_manager";
 import WalletDB from "./walletdb";
-import BackendProxy from "./backend";
+import BackendProxyWeb from "./backend/web";
+import {EncryptStream, DecryptStream} from "./stream";
+import WritableStream = NodeJS.WritableStream;
+import {Readable, Writable} from "stream";
+import BackendProxy from "./backend/node";
 
 // Business logic is implemented here.
 // IO/Serialization logic must implemented in coinManager
 // as possible.
-export interface AbstractWallet<P extends BlockchainProxy, K extends Keystore> {
-  coinManager: CoinManager<P>
-  proxy: P;
-  db: WalletDB;
-  load: (string) => Promise<boolean>;
-  sign: (k: K) => Promise<boolean>;
-  getAddress: (k: K) => string;
+export abstract class AbstractWallet<P extends BlockchainProxy,
+  K extends Keystore,
+  W extends Writable = EncryptStream,
+  R extends Readable = DecryptStream> {
+  public abstract coinManager: CoinManager<P>;
+  public abstract proxy: P;
+  public abstract db: WalletDB<W, R>;
+  public abstract load: (walletPath: string) => Promise<void>;
+  public abstract pay: () => Promise<void>;
+  abstract getAddress: () => string;
 }
 
-export class BasicWallet<P, K> implements AbstractWallet {
+export interface WalletOpts<P extends BlockchainProxy,K extends Keystore, W extends Writable , R extends Readable> {
+  proxy: P;
+  keystore: K;
+  db: WalletDB<W, R>;
+  backend: BackendProxyWeb;
+}
+
+export class BasicWallet implements AbstractWallet<RPC, BasicKeystore> {
+  public coinManager: CoinManager<RPC>;
+  constructor (public proxy: RPC,
+               public keystore: BasicKeystore,
+               public db: WalletDB<EncryptStream, DecryptStream>,
+               public backend: BackendProxyWeb) {
+    this.coinManager = new CoinManager<RPC>(this.proxy);
+  }
+  async load(walletPath: string): Promise<void> {
+    try {
+      await this.db.load(walletPath)
+    } catch (e) {
+      throw new Error("failed to load Wallet")
+    }
+  };
+public async pay() { await this.coinManager.sign(this.keystore) }
+
+  getAddress() {
+    return this.keystore.getAddress();
+  }
 }
 
 // Community wallet based on Voting Pool
 // refs: http://opentransactions.org/wiki/index.php?title=Category:Voting_Pools
-export class CommunityWallet<P, K> implements AbstractWallet {
-  public coinManager: CoinManager<P>;
-  constructor (p: P, k: K, db: WalletDB, backend: BackendProxy) {
-    this.proxy = p;
-    this.keystore = k;
-    this.db = db;
-    this.backend = backend;
+export class CommunityWallet extends BasicWallet {
+  constructor (opts: WalletOpts<RPC, BasicKeystore, EncryptStream, DecryptStream>) {
+    const {proxy, keystore, db, backend} = opts;
+    super(proxy, keystore, db, backend);
   }
 
-  load(walletPath: string) {
+  async load(walletPath: string) {
+    try {
+      await this.db.load(walletPath)
+    } catch (e) {
+      throw new Error("failed to load Wallet")
+    }
   };
 
-  sign() {
-    this.coinManager.sign(this.keystore)
-  }
-
-  getAddress() {
-    this.keystore.getAddress();
-  }
 }
 
 
-class Series {
+interface Series {
   id: number;
-  public isActive: true; // write now it will never deactivate
-  public pubKeys: NodeJS.Buffer[]; // xpub
-  public pubPrivKeys: NodeJS.Buffer[]; // xpriv
-  public m: number
+  isActive: true; // write now it will never deactivate
+  pubKeys: Buffer[]; // xpub
+  pubPrivKeys: Buffer[]; // xpriv
+  m: number
 }
 
 interface Pool {
   id: number;
   seriesLookup: any;
-  createSeries: (seriesId: number) => 
 }
 
