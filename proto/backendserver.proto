@@ -3,8 +3,12 @@
 syntax = "proto3";
 
 package LighthouseServer;
-message PingRequest {}
-message PingResponse {}
+message PingRequest {
+    string message = 1;
+}
+message PingResponse {
+    string message = 1;
+}
 
 // BIP70 compatible
 message Output {

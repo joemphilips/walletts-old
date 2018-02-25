@@ -22,10 +22,9 @@ export default class BackendProxyWeb extends EventEmitter {
       request: request,
       host: this.url,
       onEnd: res => {
-        console.log(`received pong from server \n ${res}`)
+        console.log(`received pong from server \n ${JSON.stringify(res)}`)
       }
     })
-
   }
 
   _receivePSBT(payload: any) {
