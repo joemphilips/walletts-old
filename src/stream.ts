@@ -3,7 +3,6 @@ const sodium = require('sodium');
 
 // stream for encrypting/decrypting WalletDB data
 export class EncryptStream extends Writable {
-  public writable: true;
   private box: any;
   constructor(opts: any) {
     super(opts)
