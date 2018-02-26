@@ -1,8 +1,8 @@
 import * as ini from 'ini'
 import {Command} from "commander";
-import path from 'path'
 import * as btc from 'bitcoinjs-lib'
 import {networkInterfaces} from "os";
+const path = require('path')
 
 export interface Config {
   debugLevel: "debug" | "info" | "quiet";
@@ -16,9 +16,11 @@ export interface Config {
 export class ConfigError extends Error {}
 
 export interface WalletServiceOpts {
-  datadir: string;
-  debugFile: string;
-  conf: string;
+  datadir?: string;
+  debugFile?: string;
+  conf?: string;
+  port?: string
+  network?: string
 }
 
 const defaultappHome: string | undefined = process.env[process.platform === "win32" ? "USERPROFILE" : "HOME"]
@@ -55,7 +57,7 @@ export default function loadConfig(opts: WalletServiceOpts): Config {
     walletDBPath: walletDBPath,
     debugLevel: defaultDebugLevel,
     debugFile: debugFile,
-    network: network;
+    network: network,
   };
 }
 

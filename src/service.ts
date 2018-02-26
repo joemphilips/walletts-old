@@ -52,6 +52,8 @@ let cli = program.program
   .option('-d, --datadir', 'data directory')
   .option('--debug-file', 'file to output debug info')
   .option('--conf', 'config file')
+  .option('--network', 'which network to be run ( testnet3|mainnet|regtest )')
+  .option('--port', 'the port to which this wallet will listen')
   .parse(process.argv)
 
 (async function main() {
