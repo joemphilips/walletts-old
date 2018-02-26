@@ -60,4 +60,3 @@ export default function loadConfig(opts: WalletServiceOpts): Config {
     network: network,
   };
 }
-

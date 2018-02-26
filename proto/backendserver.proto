@@ -44,7 +44,6 @@ message PaymentACK {
     string memo = 2;
 }
 
-
 service PaymentService {
     rpc Ping (PingRequest) returns (PingResponse);
 }

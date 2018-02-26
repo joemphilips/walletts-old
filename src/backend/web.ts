@@ -1,4 +1,7 @@
 // grpc client which speaks to backend service from browser.
+// it also works as a Subject pattern which accepts observer and notify the wallet about when ...
+//  1. it gets offline.
+//  2. it receives push notifications from server.
 import {EventEmitter2 as EventEmitter} from "eventemitter2"
 import {grpc} from 'grpc-web-client';
 import {CrowdFundingService, PaymentService} from '../../generated/backendserver_pb_service'

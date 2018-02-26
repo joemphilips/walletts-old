@@ -1,5 +1,5 @@
 import container from './container'
-import {Config, WalletServiceOpts} from "./config";
+import {Config, default as loadConfig, WalletServiceOpts} from "./config";
 import WalletDB from "./walletdb";
 import {BasicWallet} from './wallet'
 import GRPCServer from "./rpc_server";
@@ -21,19 +21,25 @@ export default class WalletService {
   private server: GRPCServer;
 
   constructor(opts: WalletServiceOpts) {
-    this.cfg = container.cradle.loadConfig(opts)
-    this.walletdb = container.cradle.WalletDB(
-      container.cradle.WalletOutStraem,
-      container.cradle.WalletInStream,
+    this.cfg = loadConfig(opts)
+    this.walletdb = container.resolve('WalletDB')
+    /*
+    container.cradle.WalletDB(
+      EncryptStream,
+      DecryptStream,
       this.cfg
     );
-    this.wallet = container.cradle.Wallet(
+    */
+    this.wallet = container.resolve("Wallet")
+
+      /*container.cradle.Wallet(
       container.cradle.proxy,
       container.cradle.Keystore,
       this.walletdb,
       container.cradle.BackendProxy
     );
-    this.server = container.cradle.RPCServer
+    */
+    this.server = container.resolve("RPCServer")
   }
 
   public async run () {
