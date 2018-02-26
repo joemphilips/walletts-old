@@ -1,11 +1,11 @@
 import {Readable, Writable} from 'stream'
 import * as crypto from 'crypto'
-import fs from 'fs';
-import path from 'path';
 import {Config} from "./config";
+const fs = require('fs');
+const path = require('path');
 
 export default class WalletDB<W extends Writable, R extends Readable> {
-  constructor(w: W, r: R, cfg: Config) {
+  constructor(private w: W, private r: R, private cfg: Config) {
     this.w = w;
     this.r = r;
     this.cfg = cfg
