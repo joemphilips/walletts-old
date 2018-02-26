@@ -1,5 +1,4 @@
 import container from './container'
-import * as program from "commander";
 import {Config, WalletServiceOpts} from "./config";
 import WalletDB from "./walletdb";
 import {BasicWallet} from './wallet'
@@ -8,6 +7,7 @@ import {BasicKeystore} from "./keystore";
 import {RPC} from 'blockchain-proxy';
 import {DecryptStream, EncryptStream} from "./stream";
 import {ParseOptionsResult} from "commander";
+const program = require("commander");
 
 
 // facade class of wallet.
@@ -47,14 +47,14 @@ export default class WalletService {
   }
 }
 
-let cli = program.program
+let cli = program
   .version('0.0.1')
   .option('-d, --datadir', 'data directory')
   .option('--debug-file', 'file to output debug info')
   .option('--conf', 'config file')
   .option('--network', 'which network to be run ( testnet3|mainnet|regtest )')
   .option('--port', 'the port to which this wallet will listen')
-  .parse(process.argv)
+  .parse(process.argv);
 
 (async function main() {
   let datadir = cli.datadir;

@@ -1,7 +1,6 @@
 // grpc client which speaks to backend service.
-import {EventEmitter} from "eventemitter2"
-import axios from 'axios';
-import grpc from 'grpc';
+import {EventEmitter2 as EventEmitter} from "eventemitter2"
+import * as grpc from 'grpc';
 
 export default class BackendProxy extends EventEmitter {
   constructor(opts: any){
@@ -15,6 +14,7 @@ export default class BackendProxy extends EventEmitter {
 
   }
 
-  _receivePSBT()  {
+  _receivePSBT(payload: Buffer): void {
+    return
   }
 }
