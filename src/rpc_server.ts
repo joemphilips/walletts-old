@@ -1,22 +1,28 @@
 import * as grpc from 'grpc'
-import path from 'path'
-const PROTO_PATH = path.join("..", "proto", "walletserver.proto")
 import {AbstractWallet} from './wallet'
 import {Config} from "./config";
+import {GrpcObject} from "grpc";
+const path =  require('path')
+const PROTO_PATH = path.join("..", "proto", "walletserver.proto")
+
+
+const walletServiceHandlers = {
+  ping: function (call: any, cb: Function) {
+    console.log("received ping message ", call.request);
+    cb(null, {message: "hello! " + call.request.message})
+  }
+}
 
 export default class GRPCServer {
-  public constructor() {
-    this.discrptor = grpc.load(PROTO_PATH)
+  private _descriptor: GrpcObject;
+  constructor() {
+    this._descriptor = grpc.load(PROTO_PATH);
   }
   public start<W extends AbstractWallet> (w: W, cfg: Config) {
-    let WalletServer = grpc.buildServer([this.discriptor.walletservice]);
-    let server = new WalletServer({
-      "wallet": {
-        // TODO: Write handler here
-      }
-    });
+    let walletServer = new grpc.Server();
+    walletServer.addService(this._descriptor.walletservice, walletServiceHandlers);
 
-    server.bind(cfg.port);
-    server.listen();
+    walletServer.bind(cfg.port, grpc.ServerCredentials.createInsecure());
+    walletServer.start();
   }
 }

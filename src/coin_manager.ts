@@ -6,7 +6,7 @@ import Keystore from "./keystore";
 
 // Transaction Output with Metadata
 // equivalent to ManagedAddress in btcwallet.
-class WalletCoin extends Coin {
+class WalletCoin implements Coin {
   public scriptType: string;
   public script: Buffer | null; // script necessary for signing Transaction
   public isChange?: boolean;
@@ -15,7 +15,6 @@ class WalletCoin extends Coin {
     return true
   }
   constructor() {
-    super()
     this.scriptType = "nullData";
     this.script = null;
   }
@@ -25,6 +24,7 @@ export default class CoinManager<P extends BlockchainProxy> {
   public proxy: P;
   public coins: WalletCoin[];
   public builder: btc.TransactionBuilder;
+  /*
   public get lastInternalAddresses(): any {
     return "hoge"
   };
@@ -36,7 +36,10 @@ export default class CoinManager<P extends BlockchainProxy> {
   };
   public startSync: () => Promise<void>
   public parsePSBT: (Buffer) => Promise<btc.Transaction>;
-  public sign<K extends Keystore>(key: K);
+  */
+  public sign<K extends Keystore>(key: K): boolean {
+    return false;
+  };
   constructor (p: P) {
     this.builder = new btc.TransactionBuilder();
     this.coins = [];

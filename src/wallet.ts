@@ -12,8 +12,9 @@ import BackendProxy from "./backend/node";
 // Business logic is implemented here.
 // IO/Serialization logic must implemented in coinManager
 // as possible.
-export abstract class AbstractWallet<P extends BlockchainProxy,
-  K extends Keystore,
+export abstract class AbstractWallet<
+  P extends BlockchainProxy = RPC,
+  K extends Keystore = BasicKeystore,
   W extends Writable = EncryptStream,
   R extends Readable = DecryptStream> {
   public abstract coinManager: CoinManager<P>;
