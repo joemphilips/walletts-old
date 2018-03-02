@@ -54,7 +54,8 @@
   "exclude": [
     "node_modules",
     "test/**",
-    "dist"
+    "dist",
+    ".git"
   ],
   "include": [
     "src"
