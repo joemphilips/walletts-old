@@ -9,7 +9,9 @@ const testConfFilePath = path.join(__dirname, "..", "fixtures", "test.conf")
 export function loadWalletConf (testSuiteName: string) {
   let datadir = path.join(tmpDir, testSuiteName);
   // create datadir if it does not exist.
-  fs.mkdirSync(datadir)
+  if (!fs.existsSync(datadir)) {
+   fs.mkdirSync(datadir);
+  }
   const debugLog = path.join(datadir, "debug.log")
   let opts: WalletServiceOpts = {
     datadir: datadir,
