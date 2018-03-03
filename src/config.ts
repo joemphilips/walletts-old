@@ -19,7 +19,7 @@ export interface WalletServiceOpts {
   datadir?: string;
   debugFile?: string;
   conf?: string;
-  port?: string
+  port?: string | number;
   network?: string
 }
 
