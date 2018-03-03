@@ -23,7 +23,6 @@ export abstract class AbstractWallet<
   public abstract load: (walletPath: string) => Promise<void>;
   public abstract pay: () => Promise<void>;
   abstract getAddress: () => string;
-  abstract _isBlockchainReachable(): () => Promise<boolean>;
 }
 
 export interface WalletOpts<P extends BlockchainProxy,K extends Keystore, W extends Writable , R extends Readable> {
@@ -53,7 +52,6 @@ public async pay() { await this.coinManager.sign(this.keystore) }
   getAddress() {
     return this.keystore.getAddress();
   }
-
 }
 
 // Community wallet based on Voting Pool
