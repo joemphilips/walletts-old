@@ -1,7 +1,7 @@
 // main entry point for using this wallet from command line.
 
 const program = require("commander");
-import WalletService from "../service"
+import WalletService from "./service"
 
 let cli = program
   .version('0.0.1')

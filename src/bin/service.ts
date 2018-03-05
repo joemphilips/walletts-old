@@ -1,9 +1,9 @@
-import container from './container'
-import {Config, default as loadConfig, WalletServiceOpts} from "./config";
-import WalletDB from "./walletdb";
-import {BasicWallet} from './wallet'
-import GRPCServer from "./rpc_server";
-import {DecryptStream, EncryptStream} from "./stream";
+import container from '../container'
+import {Config, default as loadConfig, WalletServiceOpts} from "../config";
+import WalletDB from "../walletdb";
+import {BasicWallet} from '../wallet'
+import GRPCServer from "../rpc_server";
+import {DecryptStream, EncryptStream} from "../stream";
 
 
 // facade class for wrapping up wallet with rpc interface
