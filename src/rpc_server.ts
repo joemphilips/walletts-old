@@ -14,7 +14,7 @@ const walletServiceHandlers = {
 }
 
 export default class GRPCServer {
-  private _descriptor: GrpcObject;
+  private _descriptor: any;
   constructor() {
     console.log("going to load from ", PROTO_PATH)
     this._descriptor = grpc.load(PROTO_PATH);
