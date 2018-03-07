@@ -3,3 +3,4 @@ dist/
 node_modules/
 generated/*
 test/tmp
+yarn-error.log
