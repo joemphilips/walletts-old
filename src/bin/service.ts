@@ -1,9 +1,7 @@
 import container from '../container'
 import {Config, default as loadConfig, WalletServiceOpts} from "../config";
-import WalletDB from "../walletdb";
 import {BasicWallet} from '../wallet'
 import GRPCServer from "../rpc_server";
-import {DecryptStream, EncryptStream} from "../stream";
 
 
 // facade class for wrapping up wallet with rpc interface
@@ -12,15 +10,13 @@ import {DecryptStream, EncryptStream} from "../stream";
 // e.g. wallet for managing community funds, wallet which uses external HD Key for signing, etc.
 export default class WalletService {
   public cfg: Config;
-  private walletdb: WalletDB<EncryptStream, DecryptStream>;
   private wallet: BasicWallet;
   private server: GRPCServer;
 
   constructor(opts: WalletServiceOpts) {
-    this.cfg = loadConfig(opts)
-    this.walletdb = container.resolve('WalletDB')
-    this.wallet = container.resolve("Wallet")
-    this.server = container.resolve("RPCServer")
+    this.cfg = container.resolve("cfg");
+    this.wallet = container.resolve("wallet");
+    this.server = container.resolve("server")
   }
 
   public async run () {

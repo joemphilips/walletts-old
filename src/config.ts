@@ -15,7 +15,7 @@ export interface Config {
 
 export class ConfigError extends Error {}
 
-export interface WalletServiceOpts {
+export type WalletServiceOpts = {
   datadir?: string;
   debugFile?: string;
   conf?: string;
@@ -37,8 +37,7 @@ export default function loadConfig(opts: WalletServiceOpts): Config {
   const debugFile =  opts.debugFile ? opts.debugFile
     : fileConf.debugFile ? fileConf.debugFile
     : defaultDebugFile;
-  const networkstring = opts.network ? opts.network
-    : fileConf.network ? fileConf.network
+  const networkstring = opts.network ? opts.network : fileConf.network ? fileConf.network
     : 'testnet3';
   let network = (networkstring === "mainnet") ? btc.networks.bitcoin
     : (networkstring === "testnet3") ? btc.networks.testnet
