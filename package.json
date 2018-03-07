@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "npm-run-all protoc && tsc",
+    "start": "npm-run-all protoc && tsc -w",
     "test": "nyc ava-ts",
     "pretest": "npm-run-all protoc",
     "protoc": "protoc --plugin=protoc-gen-ts=./node_modules/.bin/protoc-gen-ts --js_out=import_style=commonjs,binary:generated --ts_out=service=true:generated -I ./proto proto/*.proto"
