@@ -4,8 +4,13 @@
 //  2. it receives push notifications from server.
 import {EventEmitter2 as EventEmitter} from "eventemitter2"
 import {grpc} from 'grpc-web-client';
-import {CrowdFundingService, PaymentService} from '../../generated/backendserver_pb_service'
-import * as message from '../../generated/backendserver_pb'
+
+// these will cause compile error since it can find @types/google-protobuf
+// import {CrowdFundingService, PaymentService} from '../../generated/backendserver_pb_service'
+// import * as message from '../../generated/backendserver_pb'
+
+const {CrowdFundingService, PaymentService} = require('../../generated/backendserver_pb_service');
+const message = require("../../generated/backendserver_pb")
 import Request = grpc.Request;
 import ProtobufMessage = grpc.ProtobufMessage;
 import UnaryOutput = grpc.UnaryOutput;

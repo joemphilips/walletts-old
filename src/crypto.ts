@@ -1,7 +1,7 @@
+/*
 import * as _sodium from 'libsodium-wrappers'
 import * as sodium from 'sodium';
 
-/*
 (async (): Promise<void> => {
   await _sodium.ready;
   const sodium = _sodium;
@@ -37,7 +37,6 @@ import * as sodium from 'sodium';
   console.log(m1)
 
 })();
-*/
 
 
 (async () => {
@@ -49,3 +48,4 @@ import * as sodium from 'sodium';
   const plainText = box.decrypt(cipherText, 'utf8');
   console.log("plainText is ", plainText)
 })();
+*/
