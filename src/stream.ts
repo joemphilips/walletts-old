@@ -11,7 +11,7 @@ export class EncryptStream extends Writable {
     console.log("not implemented !");
   }
 
-  public end(cb: Function) {
+  public end(cb: Function)
     console.log(`not implemented !`);
   }
 }

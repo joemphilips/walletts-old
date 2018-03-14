@@ -53,6 +53,7 @@
     "node": ">=8.9"
   },
   "dependencies": {
+    "grpc": "^1.10.0",
     "sha.js": "^2.4.10"
   },
   "devDependencies": {
@@ -77,7 +78,8 @@
   "ava": {
     "failFast": true,
     "files": [
-      "build/main/**/*.spec.js"
+      "build/main/**/*.spec.js",
+      "build/test/**/*.js"
     ],
     "sources": [
       "build/main/**/*.js"
