@@ -1,13 +1,13 @@
-import * as btc from "bitcoinjs-lib";
-import { Config } from "./config";
+import * as btc from 'bitcoinjs-lib';
+import { Config } from './config';
 
 // Keystore work as a visitor pattern mostly for CoinManager
 export default interface Keystore {
-  getAddress: () => string;
+  readonly getAddress: () => string;
 };
 
 export class BasicKeystore implements Keystore {
-  public HDNode: btc.HDNode;
+  public readonly HDNode: btc.HDNode;
   constructor(seed?: Buffer) {
     this.HDNode = seed
       ? btc.HDNode.fromSeedBuffer(seed)

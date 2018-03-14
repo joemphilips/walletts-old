@@ -1,33 +1,34 @@
 // container for Injecting Dependency to default WalletService.
 
-import { BasicWallet } from "./wallet";
-import RPCServer, { default as GRPCServer } from "./rpc_server";
 import {
   asClass,
   asFunction,
-  asValue, AwilixContainer,
+  asValue,
+  AwilixContainer,
   createContainer,
   InjectionMode,
   Lifetime
-} from "awilix";
-import { RPC } from "./blockchain-proxy";
-import WalletDB from "./walletdb";
-import { DecryptStream, EncryptStream } from "./stream";
-import { BasicKeystore } from "./keystore";
-import BackendProxy from "./backend/node";
-import loadConfig from "./config";
-import { CliUIProxy } from "./uiproxy";
+} from 'awilix';
+import BackendProxy from './backend/node';
+import { RPC } from './blockchain-proxy';
+import loadConfig from './config';
+import { BasicKeystore } from './keystore';
+import RPCServer, { default as GRPCServer } from './rpc_server';
+import { DecryptStream, EncryptStream } from './stream';
+import { CliUIProxy } from './uiproxy';
+import { BasicWallet } from './wallet';
+import WalletDB from './walletdb';
 
 const container: AwilixContainer = createContainer({
   injectionMode: InjectionMode.CLASSIC
 });
 
-const defaultConfig = loadConfig({ debugFile: "../lighthouse-debug.log" });
+const defaultConfig = loadConfig({ debugFile: '../lighthouse-debug.log' });
 container.register({
   cfg: asValue(defaultConfig),
   wallet: asClass(BasicWallet),
   bchproxy: asClass(RPC).inject(() => ({
-    confPath: "~/.bitcoin/bitcoin.conf"
+    confPath: '~/.bitcoin/bitcoin.conf'
   })),
   keystore: asClass(BasicKeystore),
   server: asClass(GRPCServer),

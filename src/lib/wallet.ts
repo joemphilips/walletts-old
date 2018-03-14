@@ -1,15 +1,19 @@
-import { BlockchainProxy, RPC } from "./blockchain-proxy";
-import Keystore, { BasicKeystore } from "./keystore";
-import CoinManager from "./coin_manager";
-import WalletDB from "./walletdb";
-import BackendProxyWeb from "./backend/node";
-import { EncryptStream, DecryptStream } from "./stream";
 import WritableStream = NodeJS.WritableStream;
-import { Readable, Writable } from "stream";
-import BackendProxy from "./backend/node";
-import { UIProxy, WalletAction } from "./uiproxy";
-import logger from "./logger";
-import {FailedToCreateWalletError, WalletError, WalletNotFoundError} from "./errors";
+import { Readable, Writable } from 'stream';
+import BackendProxy from './backend/node';
+import BackendProxyWeb from './backend/node';
+import { BlockchainProxy, RPC } from './blockchain-proxy';
+import CoinManager from './coin_manager';
+import {
+  FailedToCreateWalletError,
+  WalletError,
+  WalletNotFoundError
+} from './errors';
+import Keystore, { BasicKeystore } from './keystore';
+import logger from './logger';
+import { DecryptStream, EncryptStream } from './stream';
+import { UIProxy, WalletAction } from './uiproxy';
+import WalletDB from './walletdb';
 
 // Business logic is implemented here.
 // IO/Serialization logic must implemented in coinManager
@@ -20,12 +24,12 @@ export abstract class AbstractWallet<
   W extends Writable = EncryptStream,
   R extends Readable = DecryptStream
 > {
-  public abstract coinManager: CoinManager<P>;
-  public abstract bchproxy: P;
-  public abstract db: WalletDB<W, R>;
-  public abstract load: (walletPath: string) => Promise<void>;
-  public abstract pay: () => Promise<void>;
-  abstract getAddress: () => string;
+  public abstract readonly coinManager: CoinManager<P>;
+  public abstract readonly bchproxy: P;
+  public abstract readonly db: WalletDB<W, R>;
+  public abstract readonly load: (walletPath: string) => Promise<void>;
+  public abstract readonly pay: () => Promise<void>;
+  public abstract readonly getAddress: () => string;
 }
 
 export interface WalletOpts<
@@ -34,15 +38,15 @@ export interface WalletOpts<
   W extends Writable,
   R extends Readable
 > {
-  bchproxy: P;
-  keystore: K;
-  db: WalletDB<W, R>;
-  backend: BackendProxyWeb;
-  uiproxy: UIProxy;
+  readonly bchproxy: P;
+  readonly keystore: K;
+  readonly db: WalletDB<W, R>;
+  readonly backend: BackendProxyWeb;
+  readonly uiproxy: UIProxy;
 }
 
 export class BasicWallet implements AbstractWallet<RPC, BasicKeystore> {
-  public coinManager: CoinManager<RPC>;
+  public readonly coinManager: CoinManager<RPC>;
   constructor(
     public bchproxy: RPC,
     public keystore: BasicKeystore,
@@ -53,28 +57,28 @@ export class BasicWallet implements AbstractWallet<RPC, BasicKeystore> {
     this.coinManager = new CoinManager<RPC>(this.bchproxy);
   }
 
-  async load(walletPath: string): Promise<void> {
+  public async load(walletPath: string): Promise<void> {
     try {
       await this.db.load(walletPath);
     } catch (e) {
       if (e instanceof WalletNotFoundError) {
         // TODO: try recovering wallet before creating new one.
-        let action: WalletAction = await this.uiproxy.createNewWallet();
+        const action: WalletAction = await this.uiproxy.createNewWallet();
         switch (action.type) {
-          case "createWallet":
-            logger.info("going to create wallet from random seed");
-            let success: boolean = await this.db.create({
+          case 'createWallet':
+            logger.info('going to create wallet from random seed');
+            const success: boolean = await this.db.create({
               nameSpace: action.payload
             });
             if (!success) {
               throw new FailedToCreateWalletError(
-                "could not create wallet in WalletDB!"
+                'could not create wallet in WalletDB!'
               );
             }
-            logger.info("successfully created wallet!");
+            logger.info('successfully created wallet!');
             break;
-          case "importWallet":
-            logger.info("trying to import wallet from random seed ...");
+          case 'importWallet':
+            logger.info('trying to import wallet from random seed ...');
             // TODO: rescan
             break;
           default:
@@ -83,7 +87,7 @@ export class BasicWallet implements AbstractWallet<RPC, BasicKeystore> {
             );
         }
       } else {
-        throw new WalletError("failed to load Wallet");
+        throw new WalletError('failed to load Wallet');
       }
     }
   }
@@ -91,7 +95,7 @@ export class BasicWallet implements AbstractWallet<RPC, BasicKeystore> {
     await this.coinManager.sign(this.keystore);
   }
 
-  getAddress() {
+  public getAddress() {
     return this.keystore.getAddress();
   }
 }
@@ -106,24 +110,24 @@ export class CommunityWallet extends BasicWallet {
     super(bchproxy, keystore, db, backend, uiproxy);
   }
 
-  async load(walletPath: string) {
+  public async load(walletPath: string) {
     try {
       await this.db.load(walletPath);
     } catch (e) {
-      throw new Error("failed to load Wallet");
+      throw new Error('failed to load Wallet');
     }
   }
 }
 
 interface Series {
-  id: number;
-  isActive: true; // write now it will never deactivate
-  pubKeys: Buffer[]; // xpub
-  pubPrivKeys: Buffer[]; // xpriv
-  m: number;
+  readonly id: number;
+  readonly isActive: true; // write now it will never deactivate
+  readonly pubKeys: ReadonlyArray<Buffer>; // xpub
+  readonly pubPrivKeys: ReadonlyArray<Buffer>; // xpriv
+  readonly m: number;
 }
 
 interface Pool {
-  id: number;
-  seriesLookup: any;
+  readonly id: number;
+  readonly seriesLookup: any;
 }

@@ -32,4 +32,3 @@ declare module 'sha.js' {
     // tslint:enable:no-method-signature
   }
 }
-

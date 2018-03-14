@@ -1,7 +1,7 @@
-import { Readable, Writable } from "stream";
-import { Config } from "./config";
-const fs = require("fs");
-const path = require("path");
+import { Readable, Writable } from 'stream';
+import { Config } from './config';
+const fs = require('fs');
+const path = require('path');
 
 export default class WalletDB<W extends Writable, R extends Readable> {
   constructor(private w: W, private r: R, private cfg: Config) {
@@ -10,16 +10,21 @@ export default class WalletDB<W extends Writable, R extends Readable> {
     this.cfg = cfg;
   }
   public async load(nameSpace: string): Promise<void> {
-    if (!path.exists(this.cfg.walletDBPath))
+    if (!path.exists(this.cfg.walletDBPath)) {
       throw new Error(
         `No walletDB directory Found in ${this.cfg.walletDBPath}`
       );
-    let rstream = fs.createReadStream(this.cfg.walletDBPath);
+    }
+    const rstream = fs.createReadStream(this.cfg.walletDBPath);
     rstream.pipe(this.r);
   }
 
-  public async create({ nameSpace }: { nameSpace: string }): Promise<boolean> {
-    console.log("not implemtented");
+  public async create({
+    nameSpace
+  }: {
+    readonly nameSpace: string;
+  }): Promise<boolean> {
+    console.log('not implemtented');
     return false;
   }
 }

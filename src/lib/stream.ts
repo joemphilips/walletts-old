@@ -1,17 +1,17 @@
-import { Readable, Writable } from "stream";
+import { Readable, Writable } from 'stream';
 
 // stream for encrypting/decrypting WalletDB data
 export class EncryptStream extends Writable {
-  private box: any;
+  private readonly box: any;
   constructor(opts: any) {
     super(opts);
   }
 
   public _write(chunk: Buffer, encoding: string, callback: Function) {
-    console.log("not implemented !");
+    console.log('not implemented !');
   }
 
-  public end(cb: Function){
+  public end(cb: Function) {
     console.log(`not implemented !`);
   }
 }
