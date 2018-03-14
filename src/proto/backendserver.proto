@@ -1,0 +1,112 @@
+// backend service to support wallet.
+
+syntax = "proto3";
+
+package LighthouseServer;
+message PingRequest {
+    string message = 1;
+}
+message PingResponse {
+    string message = 1;
+}
+
+message ACK {
+    uint32 ack = 1;
+}
+
+
+// -------- wallet and payment -----------
+
+// show the intention to create CommunityWallet to the server
+message CommunityWalletCommitment {
+    repeated string communityMemberID = 1;
+    string xpub = 2;
+}
+
+// BIP70 compatible
+message Output {
+    uint64 amount = 1;
+    bytes script = 2;
+}
+
+// BIP 70 compatible messages
+message PaymentDetails {
+    string network = 1;
+    repeated Output outputs = 2;
+    uint64 time = 3;
+    uint64 expires = 4;
+    string memo = 5;
+    string payment_url = 6;
+    bytes merchant_data = 7;
+}
+message PaymentRequest {
+    uint32 payment_details_version = 1;
+    string pki_type = 2;
+    bytes pki_data = 3; // certificates
+    bytes serialized_payment_details = 4;
+    bytes signature = 5;
+}
+message Payment {
+    bytes merchant_data = 1;
+    repeated bytes transactions = 2;
+    repeated Output refund_to = 3;
+    string memo = 4;
+}
+message PaymentACK {
+    Payment payment = 1;
+    string memo = 2;
+}
+
+service PaymentService {
+    rpc Ping (PingRequest) returns (PingResponse);
+}
+
+
+// ----------- crowdfuncing -----------
+
+message ProjectDetail {
+    string title = 1;
+    string description = 2;
+    bytes cover_image = 3; // sambnail image which will be showed in 250:600
+    int64 min_pledge_size = 4; // minimum size for pledge (in satoshi)
+    enum Network {
+        MAIN = 0;
+        TEST = 1;
+    };
+    Network network = 5;
+    string output_addresses = 6;
+    uint64 start_time = 7;
+    uint64 expiration_time = 8;
+    UserData owner_data = 9;
+    repeated UserData co_founder_data = 10;
+    enum PKIType {
+        NONE  = 0;
+        X509SHA256 = 1;
+    };
+    PKIType pki_type = 11;
+    bytes pki_data = 12;
+}
+
+// TODO: specify schema for UserData used in crowdfunding
+message UserData {
+    string email = 1;
+}
+
+message PledgeDetails {
+    string memo = 1;
+    UserData funder_data = 2;
+    uint64 input_value = 3; // amount to fund.
+    string project_id = 4;
+    uint64 timestamp = 5;
+}
+
+message ProjectStatus {
+    string title = 1;
+    uint64 amount_pledged_sofar = 2;
+    repeated PledgeDetails pledges = 3;
+}
+
+service CrowdFundingService {
+    rpc CreateCommunityWallet (CommunityWalletCommitment) returns (ACK);
+    rpc Ping (PingRequest) returns (PingResponse);
+}

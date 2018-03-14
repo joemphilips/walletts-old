@@ -1,0 +1,48 @@
+// This file is mostly taken from btcwallet's protobuf interface
+// https://github.com/btcsuite/btcwallet/blob/master/rpc/api.proto
+
+syntax = "proto3";
+
+package LighthouseWallet;
+message PingRequest {}
+message PingResponse {}
+
+
+service WalletService {
+    rpc Ping (PingRequest) returns (PingResponse);
+}
+
+message TransactionDetails {
+    message Input {
+        uint32 index = 1;
+        uint32 previous_account = 2;
+        int64 previous_amount = 3;
+    }
+    message Output {
+        uint32 index = 1;
+        uint32 account = 2;
+        bool internal = 3;
+    }
+    bytes hash = 1;
+    bytes transaction = 2;
+    repeated Input debits = 3;
+    repeated Output credits = 4;
+    int64 fee = 5;
+    int64 timestamp = 6;
+}
+
+message AccountBalance {
+    uint32 account = 1;
+    int64 total_balance = 2;
+}
+
+message NetworkRequest {}
+message NetworkResponse {
+    uint32 active_network = 1;
+}
+
+message createWalletRequest {
+    bytes passphrase = 1;
+    bytes seed = 2;
+}
+message getWalletRequest {}
