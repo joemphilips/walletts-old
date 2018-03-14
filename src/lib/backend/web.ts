@@ -1,3 +1,5 @@
+/*
+
 // grpc client which speaks to backend service from browser.
 // it also works as a Subject pattern which accepts observer and notify the wallet about when ...
 //  1. it gets offline.
@@ -54,3 +56,4 @@ export default class BackendProxyWeb extends EventEmitter {
     );
   }
 }
+*/

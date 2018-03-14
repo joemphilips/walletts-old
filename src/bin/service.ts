@@ -1,7 +1,7 @@
-import container from "../container";
-import { Config, default as loadConfig, WalletServiceOpts } from "../config";
-import { BasicWallet } from "../wallet";
-import GRPCServer from "../rpc_server";
+import container from "../lib/container";
+import { Config, default as loadConfig, WalletServiceOpts } from "../lib/config";
+import { BasicWallet } from "../lib/wallet";
+import GRPCServer from "../lib/rpc_server";
 
 // facade class for wrapping up wallet with rpc interface
 // This is just one example of very basic wallet.

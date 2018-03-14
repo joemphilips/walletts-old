@@ -5,12 +5,12 @@ import RPCServer, { default as GRPCServer } from "./rpc_server";
 import {
   asClass,
   asFunction,
-  asValue,
+  asValue, AwilixContainer,
   createContainer,
   InjectionMode,
   Lifetime
 } from "awilix";
-import { RPC } from "blockchain-proxy";
+import { RPC } from "./blockchain-proxy";
 import WalletDB from "./walletdb";
 import { DecryptStream, EncryptStream } from "./stream";
 import { BasicKeystore } from "./keystore";
@@ -18,7 +18,7 @@ import BackendProxy from "./backend/node";
 import loadConfig from "./config";
 import { CliUIProxy } from "./uiproxy";
 
-const container = createContainer({
+const container: AwilixContainer = createContainer({
   injectionMode: InjectionMode.CLASSIC
 });
 

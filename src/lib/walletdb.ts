@@ -1,5 +1,4 @@
 import { Readable, Writable } from "stream";
-import * as crypto from "crypto";
 import { Config } from "./config";
 const fs = require("fs");
 const path = require("path");

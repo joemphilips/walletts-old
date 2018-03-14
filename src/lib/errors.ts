@@ -1,5 +1,5 @@
 // base class for all error generated intentionally by this module
-class WalletError implements Error {
+export class WalletError implements Error {
   public name = "WalletError";
 
   constructor(public message: string) {}
@@ -9,8 +9,8 @@ class WalletError implements Error {
   }
 }
 
-class WalletNotFoundError extends WalletError {}
+export class WalletNotFoundError extends WalletError {}
 
-class FailedToCreateWalletError extends WalletError {
+export class FailedToCreateWalletError extends WalletError {
   public name = "FailedToCreateWalletError";
 }

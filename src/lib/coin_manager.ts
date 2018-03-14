@@ -1,12 +1,11 @@
 import * as btc from "bitcoinjs-lib";
-import { Coin } from "./primitives";
-import { BlockchainProxy } from "blockchain-proxy";
+import { BlockchainProxy } from "./blockchain-proxy";
 import WalletDB from "./walletdb";
 import Keystore from "./keystore";
 
 // Transaction Output with Metadata
 // equivalent to ManagedAddress in btcwallet.
-class WalletCoin implements Coin {
+export class WalletCoin {
   public scriptType: string;
   public script: Buffer | null; // script necessary for signing Transaction
   public isChange?: boolean;

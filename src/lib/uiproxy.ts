@@ -1,4 +1,5 @@
 import * as inquirer from "inquirer";
+import {WalletError} from "./errors";
 
 export interface WalletAction {
   type: "createWallet" | "tryRecover" | "importWallet" | "doNothing";

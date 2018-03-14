@@ -1,15 +1,15 @@
-import { BlockchainProxy, RPC } from "blockchain-proxy";
-import { Coin } from "./primitives";
+import { BlockchainProxy, RPC } from "./blockchain-proxy";
 import Keystore, { BasicKeystore } from "./keystore";
 import CoinManager from "./coin_manager";
 import WalletDB from "./walletdb";
-import BackendProxyWeb from "./backend/web";
+import BackendProxyWeb from "./backend/node";
 import { EncryptStream, DecryptStream } from "./stream";
 import WritableStream = NodeJS.WritableStream;
 import { Readable, Writable } from "stream";
 import BackendProxy from "./backend/node";
 import { UIProxy, WalletAction } from "./uiproxy";
 import logger from "./logger";
+import {FailedToCreateWalletError, WalletError, WalletNotFoundError} from "./errors";
 
 // Business logic is implemented here.
 // IO/Serialization logic must implemented in coinManager
