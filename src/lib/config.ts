@@ -2,7 +2,7 @@ import * as btc from 'bitcoinjs-lib';
 import { Command } from 'commander';
 import * as ini from 'ini';
 import { networkInterfaces } from 'os';
-import path from 'path';
+import * as path from 'path';
 
 export interface Config {
   readonly debugLevel: 'debug' | 'info' | 'quiet';
@@ -23,8 +23,8 @@ export interface WalletServiceOpts {
   readonly network?: string;
 }
 
-const defaultappHome: string | undefined =
-  process.env[process.platform === 'win32' ? 'USERPROFILE' : 'HOME'];
+const defaultappHome: string =
+  process.env[process.platform === 'win32' ? 'USERPROFILE' : 'HOME']  || "~/.walletts";
 const defaultDataDir = path.join(defaultappHome, 'fireWallet');
 const defaultDebugFile = path.join(defaultDataDir, 'debug.log');
 const defaultConfigFile = path.join(defaultDataDir, 'wallet.conf');

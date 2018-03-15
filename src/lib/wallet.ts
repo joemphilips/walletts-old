@@ -90,11 +90,11 @@ export class BasicWallet implements AbstractWallet<RPC, BasicKeystore> {
       }
     }
   }
-  public async pay() {
+  public async pay(): Promise<void> {
     await this.coinManager.sign(this.keystore);
   }
 
-  public getAddress() {
+  public getAddress(): string {
     return this.keystore.getAddress();
   }
 }
@@ -109,13 +109,6 @@ export class CommunityWallet extends BasicWallet {
     super(bchproxy, keystore, db, backend, uiproxy);
   }
 
-  public async load(walletPath: string) {
-    try {
-      await this.db.load(walletPath);
-    } catch (e) {
-      throw new Error('failed to load Wallet');
-    }
-  }
 }
 
 interface Series {

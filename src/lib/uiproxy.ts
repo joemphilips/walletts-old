@@ -8,7 +8,7 @@ export interface WalletAction {
 
 export interface UIProxy {
   readonly mnemonicLength: number;
-  createNewWallet(): Promise<WalletAction>;
+  readonly createNewWallet: () => Promise<WalletAction>;
 }
 
 /**
@@ -63,19 +63,19 @@ export class CliUIProxy implements UIProxy {
     }
   }
 
-  public async _askMnemonic() {
+  public async _askMnemonic(): Promise<ReadonlyArray<string>> {
     const mnemonics: ReadonlyArray<any> = [];
     const q = {
       type: 'input',
       name: 'mnemonic',
-      message: `Please enter your BIP39 mnemonic seed ${mnemonics.length + 1}`
+      message: `Please enter your BIP39 mnemonic seed No.${mnemonics.length + 1}`
     };
     const m = await inquirer.prompt(q);
     mnemonics.push(m);
     if (mnemonics.length === this.mnemonicLength) {
       return mnemonics;
     } else {
-      this._askMnemonic();
+      return this._askMnemonic();
     }
   }
 }

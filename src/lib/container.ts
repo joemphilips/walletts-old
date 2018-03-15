@@ -10,7 +10,7 @@ import {
   Lifetime
 } from 'awilix';
 import BackendProxy from './backend/node';
-import { BlockchainInfo, RPC } from './blockchain-proxy/trusted-rpc';
+import { BlockchainInfo, RPC } from './blockchain-proxy';
 import loadConfig from './config';
 import { BasicKeystore } from './keystore';
 import RPCServer, { default as GRPCServer } from './rpc_server';

@@ -12,15 +12,15 @@
     // Recommended built-in rules
     "no-var-keyword": true,
     "no-parameter-reassignment": true,
-    // "typedef": [true, "call-signature"],
+    "typedef": [true, "call-signature"],
 
     // Immutability rules
-    // "readonly-keyword": true,
-    // "readonly-array": true,
-    // "no-let": true,
-    // "no-object-mutation": true,
-    "no-delete": true
-    //"no-method-signature": true,
+    "readonly-keyword": true,
+    "readonly-array": true,
+    "no-let": true,
+    // "no-object-mutation": true, // This is disabled since we didn't know how to write constructor
+    "no-delete": true,
+    "no-method-signature": true
 
     // Functional style rules
     // "no-mixed-interface": true

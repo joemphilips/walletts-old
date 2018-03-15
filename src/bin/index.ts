@@ -1,8 +1,10 @@
 // main entry point for using this wallet from command line.
 
-import program from 'commander';
+import {Command} from 'commander';
 import logger from '../lib/logger';
 import WalletService from './service';
+
+const program = new Command()
 
 const cli = program
   .version('0.0.1')
@@ -13,7 +15,7 @@ const cli = program
   .option('--port', 'the port to which this wallet will listen')
   .parse(process.argv);
 
-(async function main() {
+(async function main(): Promise<void> {
   const datadir = cli.datadir;
   const debugFile = cli.debugFile;
   const conf = cli.conf;
