@@ -1,30 +1,21 @@
 import * as btc from 'bitcoinjs-lib';
-import { BlockchainProxy } from './blockchain-proxy';
+import { BlockchainProxy } from './blockchain-proxy/trusted-rpc';
 import Keystore from './keystore';
+import logger from './logger';
+import { WalletCoin } from './primitives/wallet-coin';
 import WalletDB from './walletdb';
-
-// Transaction Output with Metadata
-// equivalent to ManagedAddress in btcwallet.
-export class WalletCoin {
-  public readonly scriptType: string;
-  public readonly script: Buffer | null; // script necessary for signing Transaction
-  public readonly isChange?: boolean;
-
-  public get isMine(): boolean {
-    // fetch data from record ...
-    return true;
-  }
-
-  constructor() {
-    this.scriptType = 'nullData';
-    this.script = null;
-  }
-}
 
 export default class CoinManager<P extends BlockchainProxy> {
   public readonly bchproxy: P;
   public readonly coins: ReadonlyArray<WalletCoin>;
   public readonly builder: btc.TransactionBuilder;
+
+  constructor(p: P) {
+    this.builder = new btc.TransactionBuilder();
+    this.coins = [];
+    this.bchproxy = p;
+    logger.info('coinmanager intialized');
+  }
 
   /*
   public get lastInternalAddresses(): any {
@@ -41,12 +32,5 @@ export default class CoinManager<P extends BlockchainProxy> {
   */
   public sign<K extends Keystore>(key: K): boolean {
     return false;
-  }
-
-  constructor(p: P) {
-    this.builder = new btc.TransactionBuilder();
-    this.coins = [];
-    this.bchproxy = p;
-    console.log('coinmanager intialized');
   }
 }

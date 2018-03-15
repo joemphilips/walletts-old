@@ -10,7 +10,7 @@ import {
   Lifetime
 } from 'awilix';
 import BackendProxy from './backend/node';
-import { RPC } from './blockchain-proxy';
+import { BlockchainInfo, RPC } from './blockchain-proxy/trusted-rpc';
 import loadConfig from './config';
 import { BasicKeystore } from './keystore';
 import RPCServer, { default as GRPCServer } from './rpc_server';
@@ -27,7 +27,7 @@ const defaultConfig = loadConfig({ debugFile: '../lighthouse-debug.log' });
 container.register({
   cfg: asValue(defaultConfig),
   wallet: asClass(BasicWallet),
-  bchproxy: asClass(RPC).inject(() => ({
+  bchproxy: asClass(BlockchainInfo).inject(() => ({
     confPath: '~/.bitcoin/bitcoin.conf'
   })),
   keystore: asClass(BasicKeystore),

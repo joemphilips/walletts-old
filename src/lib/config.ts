@@ -2,7 +2,7 @@ import * as btc from 'bitcoinjs-lib';
 import { Command } from 'commander';
 import * as ini from 'ini';
 import { networkInterfaces } from 'os';
-const path = require('path');
+import path from 'path';
 
 export interface Config {
   readonly debugLevel: 'debug' | 'info' | 'quiet';

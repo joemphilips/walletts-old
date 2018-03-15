@@ -1,5 +1,4 @@
-import { createLogger } from 'bunyan';
-import * as Logger from 'bunyan';
+import Logger, { createLogger } from 'bunyan';
 
 const logger: Logger = createLogger({ name: 'walletts' });
 

@@ -1,6 +1,7 @@
 // main entry point for using this wallet from command line.
 
-const program = require('commander');
+import program from 'commander';
+import logger from '../lib/logger';
 import WalletService from './service';
 
 const cli = program
@@ -20,7 +21,7 @@ const cli = program
   try {
     await service.run();
   } catch (e) {
-    console.log(e);
+    logger.error(e);
     process.exit(1);
   }
 })();

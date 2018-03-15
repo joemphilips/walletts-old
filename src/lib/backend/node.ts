@@ -9,8 +9,6 @@ export default class BackendProxy extends EventEmitter {
     });
   }
 
-  public ping() {}
-
   public _receivePSBT(payload: Buffer): void {
     return;
   }

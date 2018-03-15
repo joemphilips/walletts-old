@@ -8,7 +8,7 @@ export class EncryptStream extends Writable {
   }
 
   public _write(chunk: Buffer, encoding: string, callback: Function) {
-    console.log('not implemented !');
+    throw new NotImplemented('not implemented !');
   }
 
   public end(cb: Function) {

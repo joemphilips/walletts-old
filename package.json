@@ -54,7 +54,9 @@
   },
   "dependencies": {
     "awilix": "^3.0.6",
+    "bitcoin-core": "^2.0.0",
     "bitcoinjs-lib": "^3.3.2",
+    "blockchain.info": "^2.11.0",
     "bunyan": "^1.8.12",
     "commander": "^2.15.0",
     "eventemitter2": "^5.0.1",
