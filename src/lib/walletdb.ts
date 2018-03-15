@@ -5,8 +5,7 @@ import { Config } from './config';
 import logger from './logger';
 
 export default class WalletDB<W extends Writable, R extends Readable> {
-  constructor(private w: W, private r: R, private cfg: Config) {
-  }
+  constructor(private w: W, private r: R, private cfg: Config) {}
   public async load(nameSpace: string): Promise<void> {
     if (!path.exists(this.cfg.walletDBPath)) {
       throw new Error(

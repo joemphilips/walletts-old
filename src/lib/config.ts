@@ -24,7 +24,8 @@ export interface WalletServiceOpts {
 }
 
 const defaultappHome: string =
-  process.env[process.platform === 'win32' ? 'USERPROFILE' : 'HOME']  || "~/.walletts";
+  process.env[process.platform === 'win32' ? 'USERPROFILE' : 'HOME'] ||
+  '~/.walletts';
 const defaultDataDir = path.join(defaultappHome, 'fireWallet');
 const defaultDebugFile = path.join(defaultDataDir, 'debug.log');
 const defaultConfigFile = path.join(defaultDataDir, 'wallet.conf');

@@ -108,7 +108,6 @@ export class CommunityWallet extends BasicWallet {
     const { bchproxy, keystore, db, backend, uiproxy } = opts;
     super(bchproxy, keystore, db, backend, uiproxy);
   }
-
 }
 
 interface Series {
