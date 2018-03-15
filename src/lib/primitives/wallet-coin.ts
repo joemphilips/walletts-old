@@ -1,8 +1,3 @@
-import * as btc from 'bitcoinjs-lib';
-import { BlockchainProxy } from './blockchain-proxy/trusted-rpc';
-import Keystore from './keystore';
-import WalletDB from './walletdb';
-
 // Transaction Output with Metadata
 // equivalent to ManagedAddress in btcwallet.
 export class WalletCoin {

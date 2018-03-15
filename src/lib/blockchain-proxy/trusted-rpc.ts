@@ -1,9 +1,9 @@
 import { Client } from 'bitcoin-core';
 import { Transaction } from 'bitcoinjs-lib';
 import * as fs from 'fs';
-import ini from 'ini';
+import * as ini from 'ini';
 import logger from '../logger';
-import { BlockchainProxy } from './blockchain-proxy';
+import { BlockchainProxy } from './index';
 
 export class RPC implements BlockchainProxy {
   public readonly client: any;
@@ -40,7 +40,7 @@ export class RPC implements BlockchainProxy {
       .map((rtx: string) => Transaction.fromHex(rtx))
       .map((t: Transaction) => t.getId());
   }
-  public async isConnected() {
+  public async isConnected(): Promise<void> {
     if (this.client.ping) {
       logger.error('not implemented !');
     }

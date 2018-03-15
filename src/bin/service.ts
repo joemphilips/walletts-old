@@ -22,7 +22,7 @@ export default class WalletService {
     this.server = container.resolve('server');
   }
 
-  public async run() {
+  public async run(): Promise<void> {
     try {
       await this.wallet.load(this.cfg.walletDBPath);
     } catch {

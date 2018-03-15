@@ -8,12 +8,12 @@ export class EncryptStream extends Writable {
     super(opts);
   }
 
-  public _write(chunk: Buffer, encoding: string, cb: () => {}) {
+  public _write(chunk: Buffer, encoding: string, cb: () => {}): void {
     logger.error('not implemented !');
     cb();
   }
 
-  public end(cb: () => {}) {
+  public end(cb: () => {}): void {
     logger.error(`not implemented !`);
     cb();
   }

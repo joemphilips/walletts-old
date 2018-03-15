@@ -4,7 +4,7 @@ export class WalletError implements Error {
 
   constructor(public message: string) {}
 
-  public toString() {
+  public toString(): string {
     return this.name + ': ' + this.message;
   }
 }

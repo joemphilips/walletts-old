@@ -13,7 +13,7 @@ export class BasicKeystore implements Keystore {
       ? btc.HDNode.fromSeedBuffer(seed)
       : new btc.HDNode(btc.ECPair.makeRandom(), Buffer.alloc(32, 1));
   }
-  public getAddress() {
+  public getAddress(): string {
     return this.HDNode.getAddress();
   }
 }

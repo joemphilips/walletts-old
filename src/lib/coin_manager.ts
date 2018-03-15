@@ -1,5 +1,5 @@
 import * as btc from 'bitcoinjs-lib';
-import { BlockchainProxy } from './blockchain-proxy/trusted-rpc';
+import { BlockchainProxy } from './blockchain-proxy';
 import Keystore from './keystore';
 import logger from './logger';
 import { WalletCoin } from './primitives/wallet-coin';
