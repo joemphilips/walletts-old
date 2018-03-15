@@ -7,13 +7,14 @@ export interface WalletAction {
 }
 
 export interface UIProxy {
-  createNewWallet(): Promise<WalletAction>;
   readonly mnemonicLength: number;
+  createNewWallet(): Promise<WalletAction>;
 }
 
 /**
  * below is default implementation for using the Wallet as CLI.
- **/
+ */
+
 interface CreateNewWalletAnswers {
   readonly create_new: boolean;
   readonly import: boolean;

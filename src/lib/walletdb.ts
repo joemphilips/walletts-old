@@ -1,7 +1,8 @@
+import fs from 'fs';
+import path from 'path';
 import { Readable, Writable } from 'stream';
 import { Config } from './config';
-const fs = require('fs');
-const path = require('path');
+import logger from './logger';
 
 export default class WalletDB<W extends Writable, R extends Readable> {
   constructor(private w: W, private r: R, private cfg: Config) {
@@ -24,7 +25,7 @@ export default class WalletDB<W extends Writable, R extends Readable> {
   }: {
     readonly nameSpace: string;
   }): Promise<boolean> {
-    console.log('not implemtented');
+    logger.error('not implemtented');
     return false;
   }
 }

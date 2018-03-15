@@ -1,4 +1,5 @@
 import { Readable, Writable } from 'stream';
+import logger from './logger';
 
 // stream for encrypting/decrypting WalletDB data
 export class EncryptStream extends Writable {
@@ -7,12 +8,14 @@ export class EncryptStream extends Writable {
     super(opts);
   }
 
-  public _write(chunk: Buffer, encoding: string, callback: Function) {
-    throw new NotImplemented('not implemented !');
+  public _write(chunk: Buffer, encoding: string, cb: () => {}) {
+    logger.error('not implemented !');
+    cb();
   }
 
-  public end(cb: Function) {
-    console.log(`not implemented !`);
+  public end(cb: () => {}) {
+    logger.error(`not implemented !`);
+    cb();
   }
 }
 

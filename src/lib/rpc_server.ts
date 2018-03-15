@@ -13,15 +13,15 @@ const walletServiceHandlers = {
 };
 
 export default class GRPCServer {
-  private readonly _descriptor: any;
+  private descriptor: any;
   constructor() {
     logger.info('going to load from ', PROTO_PATH);
-    this._descriptor = grpc.load(PROTO_PATH);
+    this.descriptor = grpc.load(PROTO_PATH);
   }
   public start<W extends AbstractWallet>(w: W, cfg: Config) {
     const walletServer = new grpc.Server();
     walletServer.addService(
-      this._descriptor.walletservice,
+      this.descriptor.walletservice,
       walletServiceHandlers
     );
 

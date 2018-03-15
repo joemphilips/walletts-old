@@ -1,7 +1,6 @@
 import WritableStream = NodeJS.WritableStream;
 import { Readable, Writable } from 'stream';
 import BackendProxy from './backend/node';
-import BackendProxyWeb from './backend/node';
 import { BlockchainProxy, RPC } from './blockchain-proxy/trusted-rpc';
 import CoinManager from './coin_manager';
 import {
@@ -41,7 +40,7 @@ export interface WalletOpts<
   readonly bchproxy: P;
   readonly keystore: K;
   readonly db: WalletDB<W, R>;
-  readonly backend: BackendProxyWeb;
+  readonly backend: BackendProxy;
   readonly uiproxy: UIProxy;
 }
 
@@ -51,7 +50,7 @@ export class BasicWallet implements AbstractWallet<RPC, BasicKeystore> {
     public bchproxy: RPC,
     public keystore: BasicKeystore,
     public db: WalletDB<EncryptStream, DecryptStream>,
-    public backend: BackendProxyWeb,
+    public backend: BackendProxy,
     public uiproxy: UIProxy
   ) {
     this.coinManager = new CoinManager<RPC>(this.bchproxy);
