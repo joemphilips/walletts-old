@@ -29,7 +29,7 @@ export class RPC implements BlockchainProxy {
     logger.debug(`tx withInfo is ${JSON.stringify(txwithInfo)} `);
 
     // using Array.map() will cause bizarre error. So for loop instead.
-    const promises: ReadonlyArray<any> = [];
+    const promises: any[] = [];
     for (const i of txwithInfo.vin) {
       const promise = this.client.getRawTransaction(i.txid);
       promises.push(promise);
