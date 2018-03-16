@@ -1,5 +1,5 @@
-import Logger, { createLogger } from 'bunyan';
+import { createLogger } from 'bunyan';
 
-const logger: Logger = createLogger({ name: 'walletts' });
+const logger: any = createLogger({ name: 'walletts' });
 
 export default logger;
