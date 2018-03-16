@@ -21,4 +21,3 @@ export class EncryptStream extends Writable {
 
 export class DecryptStream extends Readable {}
 
-export class PSBTParserStream {}
