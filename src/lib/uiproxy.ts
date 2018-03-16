@@ -71,7 +71,7 @@ export class CliUIProxy implements UIProxy {
       message: `Please enter your BIP39 mnemonic seed No.${mnemonics.length +
         1}`
     };
-    const m = await inquirer.prompt(q);
+    const m = await inquirer.prompt<string>(q);
     mnemonics.push(m);
     if (mnemonics.length === this.mnemonicLength) {
       return mnemonics;

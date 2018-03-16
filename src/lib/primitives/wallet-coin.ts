@@ -1,6 +1,6 @@
 import { TransactionBuilder } from 'bitcoinjs-lib';
 
-type Script = Buffer | null; // script necessary for signing Transaction
+export type Script = Buffer | null; // script necessary for signing Transaction
 
 // Transaction Output with Metadata including script for spending
 // equivalent to ManagedAddress in btcwallet.
