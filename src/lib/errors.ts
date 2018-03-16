@@ -14,3 +14,5 @@ export class WalletNotFoundError extends WalletError {}
 export class FailedToCreateWalletError extends WalletError {
   public readonly name = 'FailedToCreateWalletError';
 }
+
+export class BalanceError extends WalletError {}
