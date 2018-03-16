@@ -9,9 +9,4 @@ export class WalletCoin {
     // fetch data from record ...
     return true;
   }
-
-  constructor() {
-    this.scriptType = 'nullData';
-    this.script = null;
-  }
 }
