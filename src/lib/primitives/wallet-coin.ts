@@ -5,12 +5,14 @@ type Script = Buffer | null; // script necessary for signing Transaction
 // Transaction Output with Metadata including script for spending
 // equivalent to ManagedAddress in btcwallet.
 export class WalletCoin {
-  public readonly scriptType: string;
-  public readonly isChange?: boolean;
-  public readonly scripts: ReadonlyArray<Script>;
-  public readonly builder: TransactionBuilder;
+  constructor(
+    public readonly builder: TransactionBuilder,
+    public readonly scripts: ReadonlyArray<Script>,
+    public readonly scriptType: string,
+    public readonly isChange?: boolean
+  ) {}
 
-  public get isMine(): boolean {
+  public isMine(): boolean {
     // fetch data from record ...
     return true;
   }
