@@ -1,9 +1,9 @@
 import * as grpc from 'grpc';
 import * as path from 'path';
-import { Config } from './config';
-import { AbstractWallet } from './wallet';
+import { Config } from '../lib/config';
+import { AbstractWallet } from '../lib/wallet';
 const PROTO_PATH = path.join(__dirname, '..', 'proto', 'walletserver.proto');
-import logger from './logger';
+import logger from '../lib/logger';
 
 const walletServiceHandlers = {
   ping(call: any, cb: (a: any, b: any) => { readonly c: any }): void {
