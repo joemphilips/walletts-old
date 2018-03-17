@@ -20,7 +20,12 @@ export type WalletAction = createWallet | importWallet | doNothing
 
 export interface UIProxy {
   readonly mnemonicLength: number;
-  readonly createNewWallet: () => Promise<WalletAction>;
+  /**
+   * must return
+   * 1. which action Wallet Service must take
+   * 2. information necessary for that action
+   */
+  readonly setupWalletInteractive: () => Promise<WalletAction>;
 }
 
 /**
@@ -41,7 +46,7 @@ export class CliUIProxy implements UIProxy {
     this.mnemonicLength = mnemonicLength;
   }
 
-  public async createNewWallet(): Promise<WalletAction> {
+  public async setupWalletInteractive(): Promise<WalletAction> {
     const questions: inquirer.Questions<CreateNewWalletAnswers> = [
       {
         type: 'confirm',

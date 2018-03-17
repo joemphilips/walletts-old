@@ -35,7 +35,7 @@ export default class WalletService {
       if(e instanceof WalletNotFoundError) {
         // TODO: try recovering wallet before creating new one.
         const action: WalletAction
-          = await this.uiproxy.createNewWallet();
+          = await this.uiproxy.setupWalletInteractive();
         switch (action.kind) {
           case 'createWallet':
             this.logger.info('going to create wallet from random seed');
@@ -51,7 +51,7 @@ export default class WalletService {
             break;
           case 'importWallet':
             this.logger.info(`trying to import wallet from given seed ${action.payload} ...`);
-            await this.wallet.fromSeed(action.payload)
+            await this.wallet.fromSeed(action.payload);
             break;
           default:
             throw new WalletError(
