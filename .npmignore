@@ -1,12 +1,14 @@
 src
 test
 tsconfig.json
+tsconfig.test.json
 tsconfig.module.json
 tslint.json
 .travis.yml
 .github
 .prettierignore
 build/docs
+build/test
 **/*.spec.*
 coverage
 .nyc_output
