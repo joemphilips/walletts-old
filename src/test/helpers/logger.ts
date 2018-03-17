@@ -1,5 +1,5 @@
 import { createLogger } from "bunyan";
-const log = createLogger({
+const log: any = createLogger({
   name: "testLogger",
   straem: process.stdout,
   level: "info"

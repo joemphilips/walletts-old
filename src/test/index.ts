@@ -1,6 +1,6 @@
 import anyTest, { ExecutionContext, TestInterface } from "ava";
-import WalletService from "../src/bin/service";
-import { WalletServiceOpts } from "../src/config";
+import WalletService from "../bin/service";
+import { WalletServiceOpts } from "../lib/config";
 import { AwilixResolutionError } from "awilix";
 const path = require("path");
 

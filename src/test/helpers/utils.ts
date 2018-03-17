@@ -1,12 +1,13 @@
-import { WalletOpts } from "../../src/wallet";
-import loadConfig, { WalletServiceOpts } from "../../src/config";
+import { WalletOpts } from "../../lib/wallet";
+import loadConfig, { WalletServiceOpts } from "../../lib/config";
+import {Config} from "../../";
 const path = require("path");
 const fs = require("fs");
 
 const tmpDir = path.join(__dirname, "..", "tmp");
 const testConfFilePath = path.join(__dirname, "..", "fixtures", "test.conf");
 
-export function loadWalletConf(testSuiteName: string) {
+export function loadWalletConf(testSuiteName: string): Config {
   let datadir = path.join(tmpDir, testSuiteName);
   // create datadir if it does not exist.
   if (!fs.existsSync(datadir)) {

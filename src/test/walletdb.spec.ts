@@ -1,9 +1,9 @@
 import anyTest, { ExecutionContext, TestInterface } from "ava";
-import WalletDB from "../src/walletdb";
+import WalletDB from "../lib/walletdb";
 import { MockInStream, MockOutStream } from "./helpers/mocks/mock-stream";
-import container from "../src/container";
-import { WalletOpts } from "../src/wallet";
-import loadConfig from "../src/config";
+import container from "../lib/container";
+import { WalletOpts } from "../lib/wallet";
+import loadConfig from "../lib/config";
 import { loadWalletConf } from "./helpers/utils";
 
 type WalletDBTestContext = {
