@@ -12,11 +12,11 @@ type WalletDBTestContext = {
 
 const test = anyTest as TestInterface<WalletDBTestContext>;
 
-test.beforeEach((t: ExecutionContext<WalletDBTestContext>) => {
+test.beforeEach(async (t: ExecutionContext<WalletDBTestContext>) => {
   t.context.db = new WalletDB(
     new MockOutStream(),
     new MockInStream(),
-    loadWalletConf('walletdb')
+    await loadWalletConf('walletdb')
   );
 });
 
