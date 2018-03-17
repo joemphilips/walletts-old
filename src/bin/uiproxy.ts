@@ -1,10 +1,22 @@
 import * as inquirer from 'inquirer';
-import { WalletError } from './errors';
+import { WalletError } from '../lib/errors';
 
-export interface WalletAction {
-  readonly type: 'createWallet' | 'tryRecover' | 'importWallet' | 'doNothing';
-  readonly payload: any;
+export type createWallet = {
+  kind: "createWallet",
+  payload: string
 }
+
+export type importWallet = {
+  kind: "importWallet",
+  payload: ReadonlyArray<string>
+}
+
+export type doNothing = {
+  kind: 'doNothing',
+  payload: "none"
+}
+
+export type WalletAction = createWallet | importWallet | doNothing
 
 export interface UIProxy {
   readonly mnemonicLength: number;
@@ -53,13 +65,13 @@ export class CliUIProxy implements UIProxy {
         name: 'nameSpace',
         message: 'Please enter your wallet name'
       };
-      const nameSpace = await inquirer.prompt(q);
-      return { type: 'createWallet', payload: nameSpace };
+      const nameSpace = await inquirer.prompt<string>(q);
+      return { kind: 'createWallet', payload: nameSpace };
     } else if (answers.import) {
-      const mnemonic = this._askMnemonic();
-      return { type: 'importWallet', payload: mnemonic };
+      const mnemonic = await this._askMnemonic();
+      return { kind: 'importWallet', payload: mnemonic };
     } else {
-      return { type: 'doNothing', payload: 'none' };
+      return { kind: 'doNothing', payload: "none" };
     }
   }
 

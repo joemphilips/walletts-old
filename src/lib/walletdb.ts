@@ -17,11 +17,9 @@ export default class WalletDB<W extends Writable, R extends Readable> {
     return;
   }
 
-  public async create({
-    nameSpace
-  }: {
-    readonly nameSpace: string;
-  }): Promise<boolean> {
+  public async create(
+    nameSpace: string,
+  ): Promise<boolean> {
     logger.error('not implemtented');
     return false;
   }

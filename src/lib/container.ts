@@ -13,9 +13,9 @@ import BackendProxy from './backend/node';
 import { BlockchainInfo, RPC } from './blockchain-proxy';
 import loadConfig from './config';
 import { BasicKeystore } from './keystore';
-import RPCServer, { default as GRPCServer } from './rpc_server';
+import RPCServer, { default as GRPCServer } from '../bin/rpc_server';
 import { DecryptStream, EncryptStream } from './stream';
-import { CliUIProxy } from './uiproxy';
+import { CliUIProxy } from '../bin/uiproxy';
 import { BasicWallet } from './wallet';
 import WalletDB from './walletdb';
 
