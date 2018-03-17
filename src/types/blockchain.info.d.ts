@@ -1,4 +1,4 @@
-declare module 'blockchain.info' {
+declare module 'blockchain.info/blockexplorer' {
   interface Options {
     apiCode?: string;
   }
