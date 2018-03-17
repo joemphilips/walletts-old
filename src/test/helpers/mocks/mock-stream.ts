@@ -1,8 +1,5 @@
-import {Readable, Writable} from "stream";
+import { Readable, Writable } from 'stream';
 
-export class MockOutStream extends Writable {
-}
+export class MockOutStream extends Writable {}
 
-export class MockInStream extends Readable {
-
-}
+export class MockInStream extends Readable {}

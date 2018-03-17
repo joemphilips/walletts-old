@@ -1,8 +1,8 @@
-import { createLogger } from "bunyan";
+import { createLogger } from 'bunyan';
 const log: any = createLogger({
-  name: "testLogger",
+  name: 'testLogger',
   straem: process.stdout,
-  level: "info"
+  level: 'info'
 });
 
 export default log;
