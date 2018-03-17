@@ -106,7 +106,7 @@
       "build/test/**/*.js"
     ],
     "sources": [
-      "build/main/**/*.js"
+      "build/test/**/*.js"
     ]
   },
   "config": {
