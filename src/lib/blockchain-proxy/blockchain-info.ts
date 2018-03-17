@@ -1,5 +1,5 @@
 import { Transaction } from 'bitcoinjs-lib';
-import { explorer, usingNetwork } from 'blockchain.info';
+import { explorer, usingNetwork } from 'blockchain.info/blockexplorer';
 import logger from '../logger';
 import { BlockchainProxy } from './index';
 
