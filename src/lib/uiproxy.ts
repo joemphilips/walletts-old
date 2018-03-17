@@ -64,13 +64,14 @@ export class CliUIProxy implements UIProxy {
   }
 
   public async _askMnemonic(): Promise<ReadonlyArray<string>> {
-    const mnemonics: ReadonlyArray<any> = [];
+    const mnemonics: string[] = [];
     const q = {
       type: 'input',
       name: 'mnemonic',
-      message: `Please enter your BIP39 mnemonic seed No.${mnemonics.length + 1}`
+      message: `Please enter your BIP39 mnemonic seed No.${mnemonics.length +
+        1}`
     };
-    const m = await inquirer.prompt(q);
+    const m = await inquirer.prompt<string>(q);
     mnemonics.push(m);
     if (mnemonics.length === this.mnemonicLength) {
       return mnemonics;

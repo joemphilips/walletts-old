@@ -1,7 +1,7 @@
 import WritableStream = NodeJS.WritableStream;
 import { Readable, Writable } from 'stream';
 import BackendProxy from './backend/node';
-import { BlockchainProxy, RPC } from './blockchain-proxy/trusted-rpc';
+import { BlockchainProxy, RPC } from './blockchain-proxy/';
 import CoinManager from './coin_manager';
 import {
   FailedToCreateWalletError,
@@ -108,7 +108,6 @@ export class CommunityWallet extends BasicWallet {
     const { bchproxy, keystore, db, backend, uiproxy } = opts;
     super(bchproxy, keystore, db, backend, uiproxy);
   }
-
 }
 
 interface Series {

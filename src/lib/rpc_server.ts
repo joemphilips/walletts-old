@@ -13,7 +13,7 @@ const walletServiceHandlers = {
 };
 
 export default class GRPCServer {
-  readonly private descriptor: any;
+  private readonly descriptor: any;
   constructor() {
     logger.info('going to load from ', PROTO_PATH);
     this.descriptor = grpc.load(PROTO_PATH);

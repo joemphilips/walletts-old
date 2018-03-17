@@ -1,10 +1,10 @@
 // main entry point for using this wallet from command line.
 
-import {Command} from 'commander';
+import { Command } from 'commander';
 import logger from '../lib/logger';
 import WalletService from './service';
 
-const program = new Command()
+const program = new Command();
 
 const cli = program
   .version('0.0.1')

@@ -249,7 +249,7 @@ declare module 'bitcoin-core' {
     walletPassphraseChange(...args: any[]): void;
   }
 
-  declare namespace bitcoin_core {
+  namespace bitcoin_core {
     namespace prototype {
       function abandonTransaction(...args: any[]): void;
 

@@ -15,20 +15,20 @@
     "typedef": [true, "call-signature"],
 
     // Immutability rules
-    // "readonly-keyword": true,
-    // "readonly-array": true,
-    // "no-let": true,
-    // "no-object-mutation": true, // This is disabled since we didn't know how to write constructor
+    "readonly-keyword": true,
+    "readonly-array": true,
+    "no-let": true,
+    "no-object-mutation": true,
     "no-delete": true,
-    "no-method-signature": true
+    "no-method-signature": true,
 
     // Functional style rules
-    // "no-mixed-interface": true
-    // "no-expression-statement": [
-    //  true,
-    //  { "ignore-prefix": ["console.", "process.exit"] }
-    // ]
-    // "no-if-statement": true,
+    "no-mixed-interface": true,
+    "no-expression-statement": [
+      true,
+      { "ignore-prefix": ["console.", "process.exit"] }
+    ]
+    // "no-if-statement": true
     // "no-this": true,
     // "no-class": true,
     /* end tslint-immutable rules */

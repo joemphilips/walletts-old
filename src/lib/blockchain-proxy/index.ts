@@ -8,5 +8,5 @@ export interface BlockchainProxy {
   readonly network?: Network;
 }
 
-export * from './blockchain-info'
-export * from './trusted-rpc'
+export * from './blockchain-info';
+export * from './trusted-rpc';
