@@ -16,7 +16,8 @@
     "fix": "run-s fix:prettier fix:tslint",
     "fix:prettier": "prettier 'src/**/*.ts' --write",
     "fix:tslint": "tslint --fix --project .",
-    "test": "run-s build test:*",
+    "test": "run-s test:build && run-p test:lint test:unit test:nsp",
+    "test:build": "run-s clean && tsc -p tsconfig.test.json",
     "test:lint": "tslint --project . && prettier 'src/**/*.ts' --list-different",
     "test:unit": "nyc --silent ava",
     "test:nsp": "nsp check",
@@ -31,7 +32,7 @@
     "doc:publish": "gh-pages -m '[ci skip] Updates' -d build/docs",
     "version": "standard-version",
     "reset": "git clean -dfx && git reset --hard && npm i",
-    "clean": "trash build test",
+    "clean": "trash build",
     "all": "run-s reset test cov:check doc:html",
     "prepare-release": "run-s all version doc:publish",
     "preinstall": "node -e \"if(process.env.npm_execpath.indexOf('yarn') === -1) throw new Error('walletts must be installed with Yarn: https://yarnpkg.com/')\""
@@ -105,7 +106,7 @@
       "build/test/**/*.js"
     ],
     "sources": [
-      "build/main/**/*.js"
+      "build/test/**/*.js"
     ]
   },
   "config": {
