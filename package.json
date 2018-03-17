@@ -19,7 +19,7 @@
     "test": "run-s test:build && run-p test:lint test:unit test:nsp",
     "test:build": "run-s clean && tsc -p tsconfig.test.json",
     "test:lint": "tslint --project . && prettier 'src/**/*.ts' --list-different",
-    "test:unit": "nyc --silent ava",
+    "test:unit": "ava",
     "test:nsp": "nsp check",
     "watch": "run-s clean build:main && run-p 'build:main -- -w' 'test:unit -- --watch'",
     "cov": "run-s build test:unit cov:html && opn coverage/index.html",
@@ -105,7 +105,7 @@
     "failFast": true,
     "files": [
       "build/main/**/*.spec.js",
-      "build/test/**/*.js"
+      "build/test/test/**/*.js"
     ],
     "sources": [
       "build/test/**/*.js"
