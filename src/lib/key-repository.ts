@@ -1,7 +1,7 @@
 import * as btc from 'bitcoinjs-lib';
 import { Config } from './config';
-import KeyDB, {InMemoryDB} from "./keydb";
-import {AccountID} from "./primitives/identity";
+import KeyDB, { InMemoryDB } from './keydb';
+import { AccountID } from './primitives/identity';
 
 // KeyRepository work as a visitor pattern mostly for CoinManager
 export default interface KeyRepository {
@@ -9,12 +9,13 @@ export default interface KeyRepository {
 };
 
 export class BasicKeyRepository implements KeyRepository {
-  constructor(private keyCryptpDB: InMemoryDB) {
-  }
+  constructor(private keyCryptpDB: InMemoryDB) {}
 
   public getAddress(id: AccountID, hdpath: string): string | void {
     const hd = this.keyCryptpDB.get(id);
-    if (!hd) return;
+    if (!hd) {
+      return;
+    }
     hd.derivePath(hdpath).getAddress();
   }
 }

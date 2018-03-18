@@ -9,16 +9,16 @@ import {
   InjectionMode,
   Lifetime
 } from 'awilix';
+import RPCServer, { default as GRPCServer } from '../bin/grpc-server';
+import { CliUIProxy } from '../bin/uiproxy';
 import BackendProxy from './backend/node';
 import { BlockchainInfo, RPC } from './blockchain-proxy';
 import loadConfig from './config';
 import { BasicKeyRepository } from './key-repository';
-import RPCServer, { default as GRPCServer } from '../bin/rpc_server';
+import { InMemoryDB } from './keydb';
 import { DecryptStream, EncryptStream } from './stream';
-import { CliUIProxy } from '../bin/uiproxy';
 import { BasicWallet } from './wallet';
-import WalletDB from './walletdb';
-import {InMemoryDB} from "./keydb";
+import WalletDB from './wallet-repository';
 
 const container: AwilixContainer = createContainer({
   injectionMode: InjectionMode.CLASSIC
@@ -39,7 +39,7 @@ container.register({
   db: asClass(WalletDB),
   EncryptStream: asClass(EncryptStream),
   DecryptStream: asClass(DecryptStream),
-  uiproxy: asClass(CliUIProxy),
+  uiproxy: asClass(CliUIProxy)
 });
 
 export default container;

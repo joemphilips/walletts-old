@@ -1,7 +1,7 @@
-import {UIProxy} from "../";
+import { UIProxy } from '../';
 
 class WalletBuilder {
-  constructor(public seed: ReadonlyArray<string> | string, uiproxy :UIProxy) {
-    return
+  constructor(public seed: ReadonlyArray<string> | string, uiproxy: UIProxy) {
+    return;
   }
 }

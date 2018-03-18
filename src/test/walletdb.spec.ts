@@ -1,5 +1,5 @@
 import anyTest, { ExecutionContext, TestInterface } from 'ava';
-import WalletDB from '../lib/walletdb';
+import WalletDB from '../lib/wallet-repository';
 import { MockInStream, MockOutStream } from './helpers/mocks/mock-stream';
 import container from '../lib/container';
 import { WalletOpts } from '../lib/wallet';

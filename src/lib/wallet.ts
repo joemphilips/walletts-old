@@ -1,5 +1,6 @@
 import WritableStream = NodeJS.WritableStream;
 import { Readable, Writable } from 'stream';
+import { UIProxy, WalletAction } from '../bin/uiproxy';
 import BackendProxy from './backend/node';
 import { BlockchainProxy, RPC } from './blockchain-proxy/';
 import CoinManager from './coin_manager';
@@ -8,28 +9,29 @@ import {
   WalletError,
   WalletNotFoundError
 } from './errors';
-import Keystore, {BasicKeyRepository, default as KeyRepository} from './key-repository';
+import Keystore, {
+  BasicKeyRepository,
+  default as KeyRepository
+} from './key-repository';
 import logger from './logger';
+import { AccountID } from './primitives/identity';
 import { DecryptStream, EncryptStream } from './stream';
-import { UIProxy, WalletAction } from '../bin/uiproxy';
-import WalletRepository from './walletdb';
-import {AccountID} from "./primitives/identity";
+import WalletRepository from './wallet-repository';
+import * as uuid from "node-uuid";
 
 // Business logic is implemented here.
 // IO/Serialization logic must implemented in coinManager
 // as possible.
-export abstract class AbstractWallet<
-  P extends BlockchainProxy = RPC
-> {
+export abstract class AbstractWallet<P extends BlockchainProxy = RPC> {
   public abstract readonly coinManager: CoinManager<P>;
   public abstract readonly bchproxy: P;
   public abstract readonly walletRepository: WalletRepository;
   public abstract readonly id: AccountID;
-  public abstract readonly load: (walletPath: string) => Promise<void>;
   public abstract readonly pay: (k: Keystore) => Promise<void>;
-  public abstract readonly getAddress: (k: Keystore) => string;
-  public abstract readonly fromSeed: (seed: ReadonlyArray<string>) => Promise<boolean>;
-  public abstract readonly createNew: (nameSpace: string) => Promise<boolean>;
+  public abstract readonly fromSeed: (
+    seed: ReadonlyArray<string>
+  ) => Promise<boolean>;
+  public abstract readonly createNewAcount: (nameSpace: string) => Promise<boolean>;
 }
 
 export interface WalletOpts<
@@ -49,38 +51,30 @@ export class BasicWallet implements AbstractWallet<RPC> {
     public bchproxy: RPC,
     public walletRepository: WalletRepository,
     public backend: BackendProxy,
+    public publicKey: Buffer
   ) {
     this.coinManager = new CoinManager<RPC>(this.bchproxy);
-    this.id = "walletid" // TODO: refactor
+    this.id = uuid.v4(); // TODO: derive from public key
   }
 
   public async fromSeed(seed: ReadonlyArray<string>): Promise<boolean> {
     // TODO: rescan
-    return false
+    return false;
   }
 
-  public async createNew(nameSpace: string): Promise<boolean> {
-    try {
-      this.walletRepository.create(nameSpace);
-    } catch (e) {
-      return false
-    }
-    return true
+  public async createNewAcount(nameSpace: string): Promise<boolean> {
+    throw new WalletError("not implemented")
   }
 
   public async pay(k: Keystore): Promise<void> {
     await this.coinManager.sign(k);
   }
 
-  public getAddress(k: KeyRepository): string {
-    return this.getAddress(this.id, );
-  }
 }
 
 // Community wallet based on Voting Pool
 // refs: http://opentransactions.org/wiki/index.php?title=Category:Voting_Pools
-export class CommunityWallet extends BasicWallet {
-}
+export class CommunityWallet extends BasicWallet {}
 
 interface Series {
   readonly id: number;
