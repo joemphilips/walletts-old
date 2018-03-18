@@ -2,11 +2,11 @@ import * as grpc from 'grpc';
 import * as path from 'path';
 import { Config } from '../lib/config';
 import { AbstractWallet } from '../lib/wallet';
-const PROTO_PATH = path.join(__dirname, '..', 'proto', 'walletserver.proto');
 import logger from '../lib/logger';
 import {FailedToCreateWalletError, WalletError, WalletNotFoundError} from "../";
 import {WalletAction} from "./uiproxy";
 import WalletRepository from "../lib/wallet-repository";
+export const PROTO_PATH = path.join(__dirname, '..', 'proto', 'walletserver.proto');
 
 const walletServiceHandlers = (walletRepo: WalletRepository, cfg: Config) => {
   return {

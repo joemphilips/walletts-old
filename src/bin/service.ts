@@ -10,6 +10,7 @@ import { BasicWallet } from '../lib/wallet';
 import GRPCServer from './grpc-server';
 import { UIProxy, WalletAction } from './uiproxy';
 import WalletRepository from "../lib/wallet-repository";
+import client from "./grpc-client";
 
 export default class WalletLauncher {
   public readonly cfg: Config;
@@ -17,7 +18,6 @@ export default class WalletLauncher {
   private readonly server: GRPCServer;
   private readonly uiproxy: UIProxy;
   private readonly logger: any;
-  private readonly services: any;
   private readonly walletService: any;
 
   constructor(opts: WalletServiceOpts) {
@@ -26,8 +26,7 @@ export default class WalletLauncher {
     this.server = container.resolve('server');
     this.uiproxy = container.resolve('uiproxy');
     this.logger = container.resolve('logger');
-    this.services = grpc.load("../../proto/walletserver.proto").LighthouseWallet;
-    this.walletService  = new this.services.WalletService(this.cfg.network + this.cfg.port);
+    this.walletService = client;
   }
 
   public async run(): Promise<void> {
