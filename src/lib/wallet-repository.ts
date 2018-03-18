@@ -17,9 +17,7 @@ export default class WalletRepository {
     return;
   }
 
-  public async create(
-    nameSpace: string,
-  ): Promise<boolean> {
+  public async create(nameSpace: string): Promise<boolean> {
     logger.error('not implemtented');
     return false;
   }
