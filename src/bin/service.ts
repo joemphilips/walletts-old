@@ -30,7 +30,7 @@ export default class WalletService {
 
   public async run(): Promise<void> {
     try {
-      await this.wallet.load(this.cfg.walletDBPath);
+      await this.wallet.activate(this.cfg.walletDBPath);
     } catch(e) {
       if(e instanceof WalletNotFoundError) {
         // TODO: try recovering wallet before creating new one.

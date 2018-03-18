@@ -15,7 +15,7 @@ const walletServiceHandlers = {
 export default class GRPCServer {
   private readonly descriptor: any;
   constructor() {
-    logger.info('going to load from ', PROTO_PATH);
+    logger.info('going to activate from ', PROTO_PATH);
     this.descriptor = grpc.load(PROTO_PATH);
   }
   public start<W extends AbstractWallet>(w: W, cfg: Config): void {

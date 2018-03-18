@@ -1,6 +1,6 @@
 import { Readable, Writable } from 'stream';
 
-// stream for encrypting/decrypting WalletDB data
+// stream for encrypting/decrypting WalletRepository data
 export class EncryptStream extends Writable {}
 
 export class DecryptStream extends Readable {}
