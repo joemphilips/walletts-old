@@ -11,7 +11,7 @@ export interface ImportWallet {
   payload: {
     nameSpace: string;
     seed: ReadonlyArray<string>;
-  }
+  };
 }
 
 export interface DoNothing {
@@ -77,7 +77,10 @@ export class CliUIProxy implements UIProxy {
       return { kind: 'createWallet', payload: nameSpace };
     } else if (answers.import) {
       const mnemonic = await this._askMnemonic();
-      return { kind: 'importWallet', payload: { nameSpace: "hogeWallet" ,seed: mnemonic} };
+      return {
+        kind: 'importWallet',
+        payload: { nameSpace: 'hogeWallet', seed: mnemonic }
+      };
     } else {
       return { kind: 'doNothing', payload: 'none' };
     }

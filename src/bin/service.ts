@@ -1,4 +1,4 @@
-import chalk from 'chalk'
+import chalk from 'chalk';
 import {
   Config,
   default as loadConfig,
@@ -6,10 +6,10 @@ import {
 } from '../lib/config';
 import container from '../lib/container';
 import { BasicWallet } from '../lib/wallet';
+import WalletRepository from '../lib/wallet-repository';
+import client from './grpc-client';
 import GRPCServer from './grpc-server';
 import { UIProxy, WalletAction } from './uiproxy';
-import WalletRepository from "../lib/wallet-repository";
-import client from "./grpc-client";
 
 export default class WalletLauncher {
   public readonly cfg: Config;
@@ -31,15 +31,16 @@ export default class WalletLauncher {
   public async run(): Promise<void> {
     this.server.start(this.walletRepo, this.cfg);
     chalk(`server has been started`);
-    chalk(`what do you want with your Wallet?`)
+    chalk(`what do you want with your Wallet?`);
     const action: WalletAction = await this.uiproxy.setupWalletInteractive();
-    if (action.kind === "createWallet") {
-      this.walletService.CreateWallet({}, (res: any) => {this.logger(`response for createWallet is ${res}`)})
-    } else if (action.kind === "importWallet") {
-    } else if (action.kind === "doNothing") {
-
+    if (action.kind === 'createWallet') {
+      this.walletService.CreateWallet({}, (res: any) => {
+        this.logger(`response for createWallet is ${res}`);
+      });
+    } else if (action.kind === 'importWallet') {
+    } else if (action.kind === 'doNothing') {
     } else {
-      throw new Error(`unReachable!`)
+      throw new Error(`unReachable!`);
     }
   }
 }

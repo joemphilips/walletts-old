@@ -1,12 +1,21 @@
 import * as grpc from 'grpc';
 import * as path from 'path';
+import {
+  FailedToCreateWalletError,
+  WalletError,
+  WalletNotFoundError
+} from '../';
 import { Config } from '../lib/config';
-import { AbstractWallet } from '../lib/wallet';
 import logger from '../lib/logger';
-import {FailedToCreateWalletError, WalletError, WalletNotFoundError} from "../";
-import {WalletAction} from "./uiproxy";
-import WalletRepository from "../lib/wallet-repository";
-export const PROTO_PATH = path.join(__dirname, '..', 'proto', 'walletserver.proto');
+import { AbstractWallet } from '../lib/wallet';
+import WalletRepository from '../lib/wallet-repository';
+import { WalletAction } from './uiproxy';
+export const PROTO_PATH = path.join(
+  __dirname,
+  '..',
+  'proto',
+  'walletserver.proto'
+);
 
 const walletServiceHandlers = (walletRepo: WalletRepository, cfg: Config) => {
   return {
@@ -15,15 +24,19 @@ const walletServiceHandlers = (walletRepo: WalletRepository, cfg: Config) => {
       cb(null, { message: 'hello! ' + call.request.message });
     },
 
-    async createWallet(nameSpace: string, passPhrase?: string) {
-      walletRepo.createNew(nameSpace, passPhrase)
+    async createWallet(nameSpace: string, passPhrase?: string): Promise<void> {
+      walletRepo.createNew(nameSpace, passPhrase);
     },
 
-    async importWallet(nameSpace: string, seed: ReadonlyArray<string>, passPhrase?: string) {
-      walletRepo.createFromSeed(nameSpace, seed, passPhrase)
+    async importWallet(
+      nameSpace: string,
+      seed: ReadonlyArray<string>,
+      passPhrase?: string
+    ): Promise<void> {
+      walletRepo.createFromSeed(nameSpace, seed, passPhrase);
     }
   };
-}
+};
 
 /**
  * Map grpc methods to handlers

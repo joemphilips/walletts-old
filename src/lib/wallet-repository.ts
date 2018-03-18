@@ -17,12 +17,17 @@ export default class WalletRepository {
     return;
   }
 
-  public async createNew(nameSpace: string, passPhrase?: string): Promise<boolean> {
+  public async createNew(
+    nameSpace: string,
+    passPhrase?: string
+  ): Promise<boolean> {
     logger.error('not implemtented');
     return false;
   }
 
-  public async createFromSeed(nameSpace: string, seed: ReadonlyArray<string>, passPhrase?: string) {
-
-  }
+  public async createFromSeed(
+    nameSpace: string,
+    seed: ReadonlyArray<string>,
+    passPhrase?: string
+  ) {}
 }

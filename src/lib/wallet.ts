@@ -1,4 +1,5 @@
 import WritableStream = NodeJS.WritableStream;
+import * as uuid from 'node-uuid';
 import { Readable, Writable } from 'stream';
 import { UIProxy, WalletAction } from '../bin/uiproxy';
 import BackendProxy from './backend/node';
@@ -17,7 +18,6 @@ import logger from './logger';
 import { AccountID } from './primitives/identity';
 import { DecryptStream, EncryptStream } from './stream';
 import WalletRepository from './wallet-repository';
-import * as uuid from "node-uuid";
 
 // Business logic is implemented here.
 // IO/Serialization logic must implemented in coinManager
@@ -31,7 +31,9 @@ export abstract class AbstractWallet<P extends BlockchainProxy = RPC> {
   public abstract readonly fromSeed: (
     seed: ReadonlyArray<string>
   ) => Promise<boolean>;
-  public abstract readonly createNewAcount: (nameSpace: string) => Promise<boolean>;
+  public abstract readonly createNewAcount: (
+    nameSpace: string
+  ) => Promise<boolean>;
 }
 
 export interface WalletOpts<
@@ -63,13 +65,12 @@ export class BasicWallet implements AbstractWallet<RPC> {
   }
 
   public async createNewAcount(nameSpace: string): Promise<boolean> {
-    throw new WalletError("not implemented")
+    throw new WalletError('not implemented');
   }
 
   public async pay(k: Keystore): Promise<void> {
     await this.coinManager.sign(k);
   }
-
 }
 
 // Community wallet based on Voting Pool
