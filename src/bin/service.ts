@@ -1,5 +1,4 @@
 import chalk from 'chalk'
-import * as grpc from 'grpc'
 import {
   Config,
   default as loadConfig,
@@ -26,7 +25,7 @@ export default class WalletLauncher {
     this.server = container.resolve('server');
     this.uiproxy = container.resolve('uiproxy');
     this.logger = container.resolve('logger');
-    this.walletService = client;
+    this.walletService = new client.WalletService(this.cfg.port);
   }
 
   public async run(): Promise<void> {
@@ -35,7 +34,7 @@ export default class WalletLauncher {
     chalk(`what do you want with your Wallet?`)
     const action: WalletAction = await this.uiproxy.setupWalletInteractive();
     if (action.kind === "createWallet") {
-      this.walletService.createWallet({}, (res: any) => {this.logger(`response for createWallet is ${res}`)})
+      this.walletService.CreateWallet({}, (res: any) => {this.logger(`response for createWallet is ${res}`)})
     } else if (action.kind === "importWallet") {
     } else if (action.kind === "doNothing") {
 

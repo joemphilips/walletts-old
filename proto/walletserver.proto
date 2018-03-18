@@ -3,7 +3,7 @@
 
 syntax = "proto3";
 
-package LighthouseWallet;
+package lighthouse;
 message PingRequest {}
 message PingResponse {}
 
