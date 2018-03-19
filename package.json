@@ -17,6 +17,7 @@
     "fix:prettier": "prettier 'src/**/*.ts' --write",
     "fix:tslint": "tslint --fix --project .",
     "test": "run-s test:build && run-p test:lint test:unit test:nsp",
+    "test-without-nsp": "run-s test:build && run-p test:lint test:unit",
     "test:build": "run-s clean && tsc -p tsconfig.test.json",
     "test:lint": "tslint --project . && prettier 'src/**/*.ts' --list-different",
     "test:unit": "ava",

@@ -6,7 +6,7 @@ export default interface KeyDB {
 };
 
 export class InMemoryDB extends Map<Identity, HDNode> implements KeyDB {
-  public get(id: Identity) {
+  public get(id: Identity): HDNode {
     return HDNode.fromSeedHex('0xfffffffffffffffffffffffff');
   }
 }

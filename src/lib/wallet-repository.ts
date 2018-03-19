@@ -29,5 +29,8 @@ export default class WalletRepository {
     nameSpace: string,
     seed: ReadonlyArray<string>,
     passPhrase?: string
-  ) {}
+  ): Promise<boolean> {
+    logger.error('not implemented!')
+    return false;
+  }
 }
