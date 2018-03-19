@@ -30,7 +30,7 @@ export default class WalletRepository {
     seed: ReadonlyArray<string>,
     passPhrase?: string
   ): Promise<boolean> {
-    logger.error('not implemented!')
+    logger.error('not implemented!');
     return false;
   }
 }

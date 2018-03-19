@@ -38,9 +38,9 @@ export default class WalletLauncher {
         this.logger(`response for createWallet is ${res}`);
       });
     } else if (action.kind === 'importWallet') {
-      throw new Error("not supported yet!")
+      throw new Error('not supported yet!');
     } else if (action.kind === 'doNothing') {
-      throw new Error("not supported yet!")
+      throw new Error('not supported yet!');
     } else {
       throw new Error(`unReachable!`);
     }
