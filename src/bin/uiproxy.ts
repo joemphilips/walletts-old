@@ -1,22 +1,25 @@
 import * as inquirer from 'inquirer';
 import { WalletError } from '../lib/errors';
 
-export type createWallet = {
-  kind: "createWallet",
-  payload: string
+export interface CreateWallet {
+  kind: 'createWallet';
+  payload: string;
 }
 
-export type importWallet = {
-  kind: "importWallet",
-  payload: ReadonlyArray<string>
+export interface ImportWallet {
+  kind: 'importWallet';
+  payload: {
+    nameSpace: string;
+    seed: ReadonlyArray<string>;
+  };
 }
 
-export type doNothing = {
-  kind: 'doNothing',
-  payload: "none"
+export interface DoNothing {
+  kind: 'doNothing';
+  payload: 'none';
 }
 
-export type WalletAction = createWallet | importWallet | doNothing
+export type WalletAction = CreateWallet | ImportWallet | DoNothing;
 
 export interface UIProxy {
   readonly mnemonicLength: number;
@@ -74,9 +77,12 @@ export class CliUIProxy implements UIProxy {
       return { kind: 'createWallet', payload: nameSpace };
     } else if (answers.import) {
       const mnemonic = await this._askMnemonic();
-      return { kind: 'importWallet', payload: mnemonic };
+      return {
+        kind: 'importWallet',
+        payload: { nameSpace: 'hogeWallet', seed: mnemonic }
+      };
     } else {
-      return { kind: 'doNothing', payload: "none" };
+      return { kind: 'doNothing', payload: 'none' };
     }
   }
 

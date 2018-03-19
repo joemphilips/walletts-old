@@ -9,15 +9,16 @@ import {
   InjectionMode,
   Lifetime
 } from 'awilix';
+import RPCServer, { default as GRPCServer } from '../bin/grpc-server';
+import { CliUIProxy } from '../bin/uiproxy';
 import BackendProxy from './backend/node';
 import { BlockchainInfo, RPC } from './blockchain-proxy';
 import loadConfig from './config';
-import { BasicKeystore } from './keystore';
-import RPCServer, { default as GRPCServer } from '../bin/rpc_server';
+import { BasicKeyRepository } from './key-repository';
+import { InMemoryDB } from './keydb';
 import { DecryptStream, EncryptStream } from './stream';
-import { CliUIProxy } from '../bin/uiproxy';
 import { BasicWallet } from './wallet';
-import WalletDB from './walletdb';
+import WalletDB from './wallet-repository';
 
 const container: AwilixContainer = createContainer({
   injectionMode: InjectionMode.CLASSIC
@@ -30,7 +31,9 @@ container.register({
   bchproxy: asClass(BlockchainInfo).inject(() => ({
     confPath: '~/.bitcoin/bitcoin.conf'
   })),
-  keystore: asClass(BasicKeystore),
+  keyRepository: asClass(BasicKeyRepository),
+  // TODO: Use encrypted DB (or Hareware Wallet)
+  keyCryptoDB: asClass(InMemoryDB),
   server: asClass(GRPCServer),
   backend: asClass(BackendProxy),
   db: asClass(WalletDB),

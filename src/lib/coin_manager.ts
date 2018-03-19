@@ -1,9 +1,9 @@
 import * as btc from 'bitcoinjs-lib';
 import { BlockchainProxy } from './blockchain-proxy';
-import Keystore from './keystore';
+import Keystore from './key-repository';
 import logger from './logger';
 import { WalletCoin } from './primitives/wallet-coin';
-import WalletDB from './walletdb';
+import WalletDB from './wallet-repository';
 
 export default class CoinManager<P extends BlockchainProxy> {
   public readonly bchproxy: P;

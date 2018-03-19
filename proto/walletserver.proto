@@ -3,13 +3,14 @@
 
 syntax = "proto3";
 
-package LighthouseWallet;
+package lighthouse;
 message PingRequest {}
 message PingResponse {}
 
 
 service WalletService {
     rpc Ping (PingRequest) returns (PingResponse);
+    rpc createWallet(createWalletRequest) returns (createWalletResponse);
 }
 
 message TransactionDetails {
@@ -42,7 +43,14 @@ message NetworkResponse {
 }
 
 message createWalletRequest {
-    bytes passphrase = 1;
-    bytes seed = 2;
+    string nameSpace = 1;
+    string passphrase = 2;
+}
+message createWalletResponse {
+   bool success = 1;
+}
+message importWalletRequest {
+   createWalletRequest create_wallet_request = 1;
+   repeated string seed = 2;
 }
 message getWalletRequest {}

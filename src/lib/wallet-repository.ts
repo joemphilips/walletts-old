@@ -4,9 +4,9 @@ import { Readable, Writable } from 'stream';
 import { Config } from './config';
 import logger from './logger';
 
-export default class WalletDB<W extends Writable, R extends Readable> {
+export default class WalletRepository {
   private contents: string = '';
-  constructor(private w: W, private r: R, private cfg: Config) {}
+  constructor(private cfg: Config) {}
   public async load(nameSpace: string): Promise<void> {
     if (fs.statSync(this.cfg.walletDBPath)) {
       throw new Error(
@@ -17,10 +17,17 @@ export default class WalletDB<W extends Writable, R extends Readable> {
     return;
   }
 
-  public async create(
+  public async createNew(
     nameSpace: string,
+    passPhrase?: string
   ): Promise<boolean> {
     logger.error('not implemtented');
     return false;
   }
+
+  public async createFromSeed(
+    nameSpace: string,
+    seed: ReadonlyArray<string>,
+    passPhrase?: string
+  ) {}
 }

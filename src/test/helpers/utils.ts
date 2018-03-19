@@ -1,7 +1,7 @@
 import { WalletOpts } from '../../lib/wallet';
 import loadConfig, { WalletServiceOpts } from '../../lib/config';
 import { Config } from '../../';
-import {mkdirp} from "fs-extra";
+import { mkdirp } from 'fs-extra';
 const path = require('path');
 const fs = require('fs');
 
