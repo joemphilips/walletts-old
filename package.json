@@ -13,6 +13,7 @@
     "build": "run-s clean && run-p build:*",
     "build:main": "tsc -p tsconfig.json",
     "build:module": "tsc -p tsconfig.module.json",
+    "protoc": "protoc --plugin=protoc-gen-ts=./node_modules/.bin/protoc-gen-ts --js_out=import_style=commonjs,binary:proto  --ts_out=service=true:proto -I ./proto proto/*.proto",
     "fix": "run-s fix:prettier fix:tslint",
     "fix:prettier": "prettier 'src/**/*.ts' --write",
     "fix:tslint": "tslint --fix --project .",
