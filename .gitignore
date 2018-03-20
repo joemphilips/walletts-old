@@ -1,8 +1,7 @@
 node_modules
 build
 src/**.js
-proto/
-!proto/*.proto
+src/proto/
 
 coverage
 .nyc_output

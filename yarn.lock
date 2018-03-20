@@ -452,6 +452,10 @@
     "@types/minimatch" "*"
     "@types/node" "*"
 
+"@types/google-protobuf@^3.2.7":
+  version "3.2.7"
+  resolved "https://registry.yarnpkg.com/@types/google-protobuf/-/google-protobuf-3.2.7.tgz#9576ed5dd62cdb1c9f952522028a03b7cb2b69b5"
+
 "@types/handlebars@4.0.36":
   version "4.0.36"
   resolved "https://registry.yarnpkg.com/@types/handlebars/-/handlebars-4.0.36.tgz#ff57c77fa1ab6713bb446534ddc4d979707a3a79"
@@ -1302,6 +1306,10 @@ braces@^2.3.0, braces@^2.3.1:
     snapdragon-node "^2.0.1"
     split-string "^3.0.2"
     to-regex "^3.0.1"
+
+browser-headers@^0.4.0:
+  version "0.4.0"
+  resolved "https://registry.yarnpkg.com/browser-headers/-/browser-headers-0.4.0.tgz#7b6b4d3cc0cecc9ddf503768147932105c421734"
 
 bs58@^4.0.0:
   version "4.0.1"
@@ -2823,6 +2831,12 @@ grpc-js-repository@grpc/grpc-node#master:
   dependencies:
     run-sequence "^2.2.0"
     symlink "^2.1.0"
+
+grpc-web-client@^0.5.0:
+  version "0.5.0"
+  resolved "https://registry.yarnpkg.com/grpc-web-client/-/grpc-web-client-0.5.0.tgz#bcab5c4ae27a568ed68b37ba47b0cd2f982fdae2"
+  dependencies:
+    browser-headers "^0.4.0"
 
 grpc@^1.10.0:
   version "1.10.0"
