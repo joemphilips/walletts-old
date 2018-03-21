@@ -1,5 +1,4 @@
 import chalk from 'chalk';
-import {grpc} from 'grpc-web-client';
 import {
   Config,
   default as loadConfig,
@@ -10,8 +9,7 @@ import { BasicWallet } from '../lib/wallet';
 import WalletRepository from '../lib/wallet-repository';
 import GRPCServer from './grpc-server';
 import { UIProxy, WalletAction } from './uiproxy';
-import * as wallet_pb from 'proto/walletserver_pb'
-import {WalletService} from 'proto/walletserver_pb_service'
+import getClient from './grpc-client'
 
 export default class WalletLauncher {
   public readonly cfg: Config;
@@ -20,6 +18,7 @@ export default class WalletLauncher {
   private readonly uiproxy: UIProxy;
   private readonly logger: any;
   private readonly walletService: any;
+  private readonly client: any; // stub for calling wallet server
 
   constructor(opts: WalletServiceOpts) {
     this.cfg = container.resolve('cfg');
@@ -27,6 +26,7 @@ export default class WalletLauncher {
     this.server = container.resolve('server');
     this.uiproxy = container.resolve('uiproxy');
     this.logger = container.resolve('logger');
+    this.client = getClient(this.cfg)
   }
 
   public async run(): Promise<void> {
@@ -35,20 +35,9 @@ export default class WalletLauncher {
     chalk(`what do you want with your Wallet?`);
     const action: WalletAction = await this.uiproxy.setupWalletInteractive();
     if (action.kind === 'createWallet') {
-      const req = new wallet_pb.createWalletRequest()
-      grpc.invoke(WalletService.createWallet, {
-        request: req,
-        host: this.cfg.port,
-        onMessage: (message: wallet_pb.createWalletResponse) => {
-          this.logger.info(`resopnse was ${message.toObject()}`)
-        },
-        onEnd: (code: grpc.Code, msg: string | undefined, trailer: grpc.Metadata) => {
-          if(code === grpc.Code.OK) {
-            this.logger.info(`received folloing message from server ${msg}`)
-          } else {
-            this.logger.error(`There was error with code ${code}, ${msg}`)
-          }
-        }
+      this.client.createWallet({
+        nameSpace: action.payload.nameSpace,
+        passPhrase: action.payload.passPhrase,
       })
     } else if (action.kind === 'importWallet') {
       throw new Error('not supported yet!');

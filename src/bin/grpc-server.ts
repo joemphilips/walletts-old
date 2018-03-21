@@ -17,7 +17,7 @@ export const PROTO_PATH = path.join(
   'walletserver.proto'
 );
 
-const walletServiceHandlers = (walletRepo: WalletRepository, cfg: Config) => {
+const createWalletServiceHandlers = (walletRepo: WalletRepository, cfg: Config) => {
   return {
     ping(call: any, cb: (a: any, b: any) => { readonly c: any }): void {
       logger.info('received ping message ', call.request);
@@ -45,13 +45,13 @@ export default class GRPCServer {
   private readonly descriptor: any;
   constructor() {
     logger.info('going to activate from ', PROTO_PATH);
-    this.descriptor = grpc.load(PROTO_PATH);
+    this.descriptor = grpc.load(PROTO_PATH).lighthouse;
   }
   public start(w: WalletRepository, cfg: Config): void {
     const walletServer = new grpc.Server();
-    walletServer.addService(
-      this.descriptor.walletservice,
-      walletServiceHandlers(w, cfg)
+    walletServer.addProtoService(
+      this.descriptor.WalletService.service,
+      createWalletServiceHandlers(w, cfg)
     );
 
     walletServer.bind(cfg.port, grpc.ServerCredentials.createInsecure());

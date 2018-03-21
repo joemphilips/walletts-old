@@ -44,7 +44,7 @@ message NetworkResponse {
 
 message createWalletRequest {
     string nameSpace = 1;
-    string passphrase = 2;
+    string passPhrase = 2;
 }
 message createWalletResponse {
    bool success = 1;
