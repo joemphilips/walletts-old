@@ -72,7 +72,7 @@ export class CliUIProxy implements UIProxy {
         type: 'input',
         name: 'passPhrase',
         message: 'what is your wallet passphrase?',
-        default: "No Passphrase"
+        default: 'No Passphrase'
       }
     ];
 
@@ -85,12 +85,19 @@ export class CliUIProxy implements UIProxy {
         message: 'Please enter your wallet name'
       };
       const nameSpace = await inquirer.prompt<string>(q);
-      return { kind: 'createWallet', payload: { nameSpace, passPhrase: answers.passPhrase} };
+      return {
+        kind: 'createWallet',
+        payload: { nameSpace, passPhrase: answers.passPhrase }
+      };
     } else if (answers.import) {
       const mnemonic = await this._askMnemonic();
       return {
         kind: 'importWallet',
-        payload: { nameSpace: 'hogeWallet', seed: mnemonic, passPhrase: 'passPhrase' }
+        payload: {
+          nameSpace: 'hogeWallet',
+          seed: mnemonic,
+          passPhrase: 'passPhrase'
+        }
       };
     } else {
       return { kind: 'doNothing', payload: 'none' };

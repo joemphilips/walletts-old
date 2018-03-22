@@ -1,31 +1,28 @@
 import * as grpc from 'grpc';
-import * as path from 'path';
-import {
-  FailedToCreateWalletError,
-  WalletError,
-  WalletNotFoundError
-} from '../';
-import { Config } from '../lib/config';
+import {Config} from '../lib/config';
 import logger from '../lib/logger';
-import { AbstractWallet } from '../lib/wallet';
 import WalletRepository from '../lib/wallet-repository';
-import { WalletAction } from './uiproxy';
-export const PROTO_PATH = path.join(
-  __dirname,
-  '..',
-  'proto',
-  'walletserver.proto'
-);
+import {PROTO_PATH} from "./grpc-common";
+import Mali from 'mali'
 
-const createWalletServiceHandlers = (walletRepo: WalletRepository, cfg: Config) => {
+
+export interface RPCServer {
+  readonly start: (w: WalletRepository, cfg: Config) => void
+}
+
+const createWalletServiceHandlers = (
+  walletRepo: WalletRepository,
+  cfg: Config
+) => {
   return {
-    ping(call: any, cb: (a: any, b: any) => { readonly c: any }): void {
-      logger.info('received ping message ', call.request);
-      cb(null, { message: 'hello! ' + call.request.message });
+    async ping(ctx): Promise<void> {
+      logger.info('received ping message ', ctx);
+      ctx.res = {message: 'Hello!, ' + ctx.message}
     },
 
     async createWallet(nameSpace: string, passPhrase?: string): Promise<void> {
-      walletRepo.createNew(nameSpace, passPhrase);
+      await walletRepo.createNew(nameSpace, passPhrase);
+      logger.info(`wallet created !`)
     },
 
     async importWallet(
@@ -33,7 +30,8 @@ const createWalletServiceHandlers = (walletRepo: WalletRepository, cfg: Config) 
       seed: ReadonlyArray<string>,
       passPhrase?: string
     ): Promise<void> {
-      walletRepo.createFromSeed(nameSpace, seed, passPhrase);
+      await walletRepo.createFromSeed(nameSpace, seed, passPhrase);
+      logger.info(`wallet imported !`)
     }
   };
 };
@@ -41,20 +39,15 @@ const createWalletServiceHandlers = (walletRepo: WalletRepository, cfg: Config) 
 /**
  * Map grpc methods to handlers
  */
-export default class GRPCServer {
+export default class GRPCServer implements RPCServer {
   private readonly descriptor: any;
   constructor() {
-    logger.info('going to activate from ', PROTO_PATH);
+    logger.info('going to activate server using ', PROTO_PATH);
     this.descriptor = grpc.load(PROTO_PATH).lighthouse;
   }
   public start(w: WalletRepository, cfg: Config): void {
-    const walletServer = new grpc.Server();
-    walletServer.addProtoService(
-      this.descriptor.WalletService.service,
-      createWalletServiceHandlers(w, cfg)
-    );
-
-    walletServer.bind(cfg.port, grpc.ServerCredentials.createInsecure());
-    walletServer.start();
+    const app = new Mali(PROTO_PATH)
+    const handlers = createWalletServiceHandlers(w, cfg);
+    app.use({handlers})
   }
 }
