@@ -1,60 +1,87 @@
 import * as grpc from 'grpc';
-import * as path from 'path';
-import {
-  FailedToCreateWalletError,
-  WalletError,
-  WalletNotFoundError
-} from '../';
 import { Config } from '../lib/config';
 import logger from '../lib/logger';
-import { AbstractWallet } from '../lib/wallet';
 import WalletRepository from '../lib/wallet-repository';
-import { WalletAction } from './uiproxy';
-export const PROTO_PATH = path.join(
-  __dirname,
-  '..',
-  'proto',
-  'walletserver.proto'
-);
+import { PROTO_PATH } from './grpc-common';
+import Mali, { Context } from 'mali';
 
-const walletServiceHandlers = (walletRepo: WalletRepository, cfg: Config) => {
-  return {
-    ping(call: any, cb: (a: any, b: any) => { readonly c: any }): void {
-      logger.info('received ping message ', call.request);
-      cb(null, { message: 'hello! ' + call.request.message });
-    },
+export interface RPCServer {
+  readonly start: (w: WalletRepository, cfg: Config) => void;
+}
 
-    async createWallet(nameSpace: string, passPhrase?: string): Promise<void> {
-      walletRepo.createNew(nameSpace, passPhrase);
-    },
+const createWalletServiceHandlers = (
+  walletRepo: WalletRepository,
+  cfg: Config,
+  forMali: boolean = true
+) => {
+  if (forMali) {
+    return {
+      async ping(ctx: Context): Promise<void> {
+        logger.info('received ping message ', ctx);
+        ctx.res = { message: 'Hello!, ' + ctx.request.req };
+      },
 
-    async importWallet(
-      nameSpace: string,
-      seed: ReadonlyArray<string>,
-      passPhrase?: string
-    ): Promise<void> {
-      walletRepo.createFromSeed(nameSpace, seed, passPhrase);
-    }
-  };
+      async createWallet(
+        nameSpace: string,
+        passPhrase?: string,
+        seed?: ReadonlyArray<string>
+      ): Promise<void> {
+        if (seed) {
+          await walletRepo.createFromSeed(nameSpace, seed, passPhrase);
+        } else {
+          await walletRepo.createNew(nameSpace, passPhrase);
+        }
+        logger.info(`wallet created !`);
+      }
+    };
+  } else {
+    return {
+      createWallet: (call: any, cb: (error: any, value: any) => void): void => {
+        const { nameSpace, passPhrase } = call.request;
+        if (call.request.seed) {
+          walletRepo
+            .createFromSeed(nameSpace, passPhrase, call.request.seed)
+            .then(isSuccess => {
+              if (!isSuccess) {
+                throw new Error();
+              }
+              cb(null, isSuccess);
+            })
+            .catch(e => {
+              logger.error('failed to createWallet!');
+              cb(e, null);
+            });
+        } else {
+          walletRepo.createNew(nameSpace, passPhrase);
+        }
+      }
+    };
+  }
 };
 
 /**
  * Map grpc methods to handlers
  */
-export default class GRPCServer {
-  private readonly descriptor: any;
+export class MaliGRPCServer implements RPCServer {
   constructor() {
-    logger.info('going to activate from ', PROTO_PATH);
-    this.descriptor = grpc.load(PROTO_PATH);
+    logger.info('going to activate server using ', PROTO_PATH);
   }
   public start(w: WalletRepository, cfg: Config): void {
-    const walletServer = new grpc.Server();
-    walletServer.addService(
-      this.descriptor.walletservice,
-      walletServiceHandlers(w, cfg)
-    );
+    const app = new Mali(PROTO_PATH);
+    const handlers = createWalletServiceHandlers(w, cfg);
+    app.use({ handlers });
+  }
+}
 
-    walletServer.bind(cfg.port, grpc.ServerCredentials.createInsecure());
-    walletServer.start();
+export default class GRPCServer implements RPCServer {
+  private readonly descriptor: any;
+  constructor() {
+    logger.info('going to activate server using', PROTO_PATH);
+    this.descriptor = grpc.load(PROTO_PATH).lighthouse;
+  }
+  public start(w: WalletRepository, cfg: Config): void {
+    const handlers = createWalletServiceHandlers(w, cfg, false);
+    const server = new grpc.Server();
+    server.addService(this.descriptor.WalletService.service, handlers);
   }
 }

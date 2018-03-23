@@ -10,7 +10,7 @@ message PingResponse {}
 
 service WalletService {
     rpc Ping (PingRequest) returns (PingResponse);
-    rpc createWallet(createWalletRequest) returns (createWalletResponse);
+    rpc CreateWallet(CreateWalletRequest) returns (CreateWalletResponse);
 }
 
 message TransactionDetails {
@@ -42,15 +42,13 @@ message NetworkResponse {
     uint32 active_network = 1;
 }
 
-message createWalletRequest {
+message CreateWalletRequest {
     string nameSpace = 1;
-    string passphrase = 2;
+    string passPhrase = 2;
+    repeated string seed = 3;
 }
-message createWalletResponse {
+message CreateWalletResponse {
    bool success = 1;
 }
-message importWalletRequest {
-   createWalletRequest create_wallet_request = 1;
-   repeated string seed = 2;
-}
-message getWalletRequest {}
+
+message GetWalletRequest {}

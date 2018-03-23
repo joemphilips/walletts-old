@@ -3,7 +3,10 @@ import { WalletError } from '../lib/errors';
 
 export interface CreateWallet {
   kind: 'createWallet';
-  payload: string;
+  payload: {
+    nameSpace: string;
+    passPhrase: string;
+  };
 }
 
 export interface ImportWallet {
@@ -11,6 +14,7 @@ export interface ImportWallet {
   payload: {
     nameSpace: string;
     seed: ReadonlyArray<string>;
+    passPhrase: string;
   };
 }
 
@@ -38,6 +42,7 @@ export interface UIProxy {
 interface CreateNewWalletAnswers {
   readonly create_new: boolean;
   readonly import: boolean;
+  readonly passPhrase: string;
 }
 
 export class CliUIProxy implements UIProxy {
@@ -62,6 +67,12 @@ export class CliUIProxy implements UIProxy {
         name: 'import',
         message: 'Do you want to import from existing bip39 seed?',
         default: false
+      },
+      {
+        type: 'input',
+        name: 'passPhrase',
+        message: 'what is your wallet passphrase?',
+        default: 'No Passphrase'
       }
     ];
 
@@ -74,12 +85,19 @@ export class CliUIProxy implements UIProxy {
         message: 'Please enter your wallet name'
       };
       const nameSpace = await inquirer.prompt<string>(q);
-      return { kind: 'createWallet', payload: nameSpace };
+      return {
+        kind: 'createWallet',
+        payload: { nameSpace, passPhrase: answers.passPhrase }
+      };
     } else if (answers.import) {
       const mnemonic = await this._askMnemonic();
       return {
         kind: 'importWallet',
-        payload: { nameSpace: 'hogeWallet', seed: mnemonic }
+        payload: {
+          nameSpace: 'hogeWallet',
+          seed: mnemonic,
+          passPhrase: 'passPhrase'
+        }
       };
     } else {
       return { kind: 'doNothing', payload: 'none' };
