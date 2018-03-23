@@ -17,16 +17,22 @@ test.before(t => {
   testConfig = loadConfig({ datadir: dataDir });
   const repo = new WalletRepository(testConfig);
   service.start(repo, testConfig);
+  setTimeout(() => {
+    t.log(`finished waiting 1000ms after starting server`);
+  }, 1000);
 });
 
 test('wallet service has been started', async t => {
   t.truthy(service);
 });
 
-test('It can respond to PingRequest', async t => {
+test.cb('It can respond to PingRequest', t => {
   const client: RPCClient = getClient(testConfig.port);
-  client.ping(null, (err, res) => {
-    t.falsy(err, 'error while pinging to the server');
+  client.ping(undefined, (err, res) => {
+    if (err) {
+      throw new Error('error while pinging to the server');
+    }
     t.is(res.message, 'ACK!');
+    t.end();
   });
 });
