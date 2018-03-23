@@ -36,6 +36,10 @@ const createWalletServiceHandlers = (
     };
   } else {
     return {
+      ping: (call: any, cb: (e: any, v: any) => void): void => {
+        logger.info('received ping message')
+        cb(null, "ACK!")
+      },
       createWallet: (call: any, cb: (error: any, value: any) => void): void => {
         const { nameSpace, passPhrase } = call.request;
         if (call.request.seed) {
