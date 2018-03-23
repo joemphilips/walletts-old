@@ -45,13 +45,10 @@ message NetworkResponse {
 message CreateWalletRequest {
     string nameSpace = 1;
     string passPhrase = 2;
+    repeated string seed = 3;
 }
 message CreateWalletResponse {
    bool success = 1;
 }
 
-message ImportWalletRequest {
-   CreateWalletRequest create_wallet_request = 1;
-   repeated string seed = 2;
-}
 message GetWalletRequest {}
