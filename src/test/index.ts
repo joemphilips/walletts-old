@@ -2,16 +2,16 @@ import anyTest, { ExecutionContext, TestInterface } from 'ava';
 import WalletLauncher from '../bin/service';
 import { WalletServiceOpts } from '../lib/config';
 import { AwilixResolutionError } from 'awilix';
-const path = require('path');
+import * as path from 'path'
 
-type testWalletLauncherContext = {
+interface TestWalletLauncherContext {
   service: WalletLauncher;
 };
-const test = anyTest as TestInterface<testWalletLauncherContext>;
+const test = anyTest as TestInterface<TestWalletLauncherContext>;
 let service: WalletLauncher;
 
-test.before((t: ExecutionContext<testWalletLauncherContext>) => {
-  let opts: WalletServiceOpts = {
+test.before((t: ExecutionContext<TestWalletLauncherContext>) => {
+  const opts: WalletServiceOpts = {
     datadir: path.join(__dirname, 'tmp'),
     debugFile: './tmp/debug.log',
     conf: './fixtures/test.conf'
