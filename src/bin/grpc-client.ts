@@ -1,13 +1,19 @@
 import * as grpc from 'grpc';
-import { PROTO_PATH } from './grpc-common';
+import {LightHousePackage, PROTO_PATH, WalletServiceDefinition} from './grpc-common';
 import { Config } from '../lib/config';
-import grpcClient from 'grpc-client'
+
+export interface CreateWalletArg {
+  nameSpace: string,
+  passPhrase: string,
+  seed?: ReadonlyArray<string>
+}
 
 export interface RPCClient {
-  createWallet: (nameSpace: string, passPhrase: string);
+  createWallet: (arg: CreateWalletArg, cb: (err: any, res: any) => void) => void;
 }
 
 export default function getClient(cfg: Config): RPCClient {
-  const gc = new grpcClient({host: "localhost:50051", dir: '../proto'})
-  return gc;
+  const lighthouseProto: any = grpc.load(PROTO_PATH).lighthouse;
+  const client: RPCClient = new lighthouseProto.WalletService(cfg.port, grpc.credentials.createInsecure());
+  return client;
 }

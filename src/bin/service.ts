@@ -35,10 +35,29 @@ export default class WalletLauncher {
     const action: WalletAction = await this.uiproxy.setupWalletInteractive();
     if (action.kind === 'createWallet') {
       this.client.createWallet(
-        action.payload.nameSpace,
-        action.payload.passPhrase
-      );
+        {
+          nameSpace: action.payload.nameSpace,
+          passPhrase: action.payload.passPhrase,
+        },
+        (err, res) => {
+          if (err) {
+            throw new Error
+          }
+          this.logger.info(`wallet created! response from server is ${res}`)
+        }
+      )
     } else if (action.kind === 'importWallet') {
+      this.client.createWallet(
+        {
+          nameSpace: action.payload.nameSpace,
+          passPhrase: action.payload.passPhrase,
+          seed: action.payload.seed
+        },
+        (err, res) => {
+          if (err) {throw new Error}
+          this.logger.info(`wallet created! response from server is ${res}`)
+        }
+      )
       throw new Error('not supported yet!');
     } else if (action.kind === 'doNothing') {
       throw new Error('not supported yet!');

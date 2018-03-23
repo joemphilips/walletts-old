@@ -7,3 +7,10 @@ export const PROTO_PATH = path.join(
   'walletserver.proto'
 );
 
+export interface WalletServiceDefinition {
+
+}
+
+export interface LightHousePackage {
+
+}
