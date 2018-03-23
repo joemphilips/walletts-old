@@ -43,7 +43,7 @@ declare module 'mali' {
     type: string;
     metadata: any;
     status: any;
-    res: any
+    res: any;
     set: (field: string, val: string) => void;
     get: (field: string) => void;
     getMetaData: () => any;

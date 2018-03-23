@@ -1,4 +1,4 @@
-import * as path from "path";
+import * as path from 'path';
 
 export const PROTO_PATH = path.join(
   __dirname,
@@ -6,11 +6,3 @@ export const PROTO_PATH = path.join(
   'proto',
   'walletserver.proto'
 );
-
-export interface WalletServiceDefinition {
-
-}
-
-export interface LightHousePackage {
-
-}

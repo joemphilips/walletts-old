@@ -7,9 +7,9 @@ import {
 import container from '../lib/container';
 import { BasicWallet } from '../lib/wallet';
 import WalletRepository from '../lib/wallet-repository';
-import GRPCServer, {RPCServer} from './grpc-server';
+import GRPCServer, { RPCServer } from './grpc-server';
 import { UIProxy, WalletAction } from './uiproxy';
-import getClient, {RPCClient} from './grpc-client';
+import getClient, { RPCClient } from './grpc-client';
 
 export default class WalletLauncher {
   public readonly cfg: Config;
@@ -37,15 +37,15 @@ export default class WalletLauncher {
       this.client.createWallet(
         {
           nameSpace: action.payload.nameSpace,
-          passPhrase: action.payload.passPhrase,
+          passPhrase: action.payload.passPhrase
         },
         (err, res) => {
           if (err) {
-            throw new Error
+            throw new Error();
           }
-          this.logger.info(`wallet created! response from server is ${res}`)
+          this.logger.info(`wallet created! response from server is ${res}`);
         }
-      )
+      );
     } else if (action.kind === 'importWallet') {
       this.client.createWallet(
         {
@@ -54,10 +54,12 @@ export default class WalletLauncher {
           seed: action.payload.seed
         },
         (err, res) => {
-          if (err) {throw new Error}
-          this.logger.info(`wallet created! response from server is ${res}`)
+          if (err) {
+            throw new Error();
+          }
+          this.logger.info(`wallet created! response from server is ${res}`);
         }
-      )
+      );
       throw new Error('not supported yet!');
     } else if (action.kind === 'doNothing') {
       throw new Error('not supported yet!');
