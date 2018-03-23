@@ -19,5 +19,4 @@ jobs:
             - node_modules
           key: v1-dependencies-{{ checksum "package.json" }}
       - run: yarn test-without-nsp
-      - run: npx nyc report --reporter=lcov | npx codecov
       - run: yarn run cov:check
