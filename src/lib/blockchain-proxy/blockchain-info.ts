@@ -10,6 +10,7 @@ export class BlockchainInfo implements BlockchainProxy {
     this.api = usingNetwork(0);
   }
   public async getPrevHash(tx: Transaction): Promise<string> {
+    logger.trace(`going to get PrevHash for ${tx}`);
     throw new Error('not imlemented!');
   }
 }

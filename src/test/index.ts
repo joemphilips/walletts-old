@@ -1,24 +1,38 @@
-import anyTest, { ExecutionContext, TestInterface } from 'ava';
-import WalletLauncher from '../bin/service';
-import { WalletServiceOpts } from '../lib/config';
-import { AwilixResolutionError } from 'awilix';
-const path = require('path');
+import anyTest, { default as test, TestInterface } from 'ava';
+import { default as loadConfig, WalletServiceOpts } from '../lib/config';
+import getClient, { RPCClient } from '../bin/grpc-client';
+import GRPCServer, { RPCServer } from '../bin/grpc-server';
+import WalletRepository from '../lib/wallet-repository';
+import { Config } from '../lib/config';
+import { mkdirpSync } from 'fs-extra';
 
-type testWalletLauncherContext = {
-  service: WalletLauncher;
-};
-const test = anyTest as TestInterface<testWalletLauncherContext>;
-let service: WalletLauncher;
+let service: RPCServer;
+let testConfig: Config;
 
-test.before((t: ExecutionContext<testWalletLauncherContext>) => {
-  let opts: WalletServiceOpts = {
-    datadir: path.join(__dirname, 'tmp'),
-    debugFile: './tmp/debug.log',
-    conf: './fixtures/test.conf'
-  };
-  service = new WalletLauncher(opts);
+test.before(t => {
+  service = new GRPCServer();
+  const dataDir = '~/.walletts/test-tmp';
+  t.log(`create ${dataDir} for testing ...`);
+  mkdirpSync(dataDir);
+  testConfig = loadConfig({ datadir: dataDir });
+  const repo = new WalletRepository(testConfig);
+  service.start(repo, testConfig);
+  setTimeout(() => {
+    t.log(`finished waiting 1000ms after starting server`);
+  }, 1000);
 });
 
-test.only('wallet service has been started', async t => {
+test('wallet service has been started', async t => {
   t.truthy(service);
+});
+
+test.cb('It can respond to PingRequest', t => {
+  const client: RPCClient = getClient(testConfig.port);
+  client.ping(undefined, (err, res) => {
+    if (err) {
+      throw new Error('error while pinging to the server');
+    }
+    t.is(res.message, 'ACK!');
+    t.end();
+  });
 });

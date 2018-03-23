@@ -9,16 +9,17 @@ export interface CreateWalletArg {
 }
 
 export interface RPCClient {
+  ping: (arg: undefined, cb: (err: any, res: any) => void) => void;
   createWallet: (
     arg: CreateWalletArg,
     cb: (err: any, res: any) => void
   ) => void;
 }
 
-export default function getClient(cfg: Config): RPCClient {
+export default function getClient(url: string): RPCClient {
   const lighthouseProto: any = grpc.load(PROTO_PATH).lighthouse;
   const client: RPCClient = new lighthouseProto.WalletService(
-    cfg.port,
+    url,
     grpc.credentials.createInsecure()
   );
   return client;

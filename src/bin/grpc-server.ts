@@ -11,14 +11,13 @@ export interface RPCServer {
 
 const createWalletServiceHandlers = (
   walletRepo: WalletRepository,
-  cfg: Config,
   forMali: boolean = true
 ) => {
   if (forMali) {
     return {
       async ping(ctx: Context): Promise<void> {
         logger.info('received ping message ', ctx);
-        ctx.res = { message: 'Hello!, ' + ctx.request.req };
+        ctx.res = { message: 'ACK!' };
       },
 
       async createWallet(
@@ -36,7 +35,14 @@ const createWalletServiceHandlers = (
     };
   } else {
     return {
-      createWallet: (call: any, cb: (error: any, value: any) => void): void => {
+      ping: (_: any, cb: (e?: any, v?: any) => void): void => {
+        logger.info('received ping message');
+        cb(undefined, 'ACK!');
+      },
+      createWallet: (
+        call: any,
+        cb: (error?: any, value?: any) => void
+      ): void => {
         const { nameSpace, passPhrase } = call.request;
         if (call.request.seed) {
           walletRepo
@@ -45,11 +51,11 @@ const createWalletServiceHandlers = (
               if (!isSuccess) {
                 throw new Error();
               }
-              cb(null, isSuccess);
+              cb(undefined, isSuccess);
             })
             .catch(e => {
               logger.error('failed to createWallet!');
-              cb(e, null);
+              cb(e, undefined);
             });
         } else {
           walletRepo.createNew(nameSpace, passPhrase);
@@ -68,7 +74,7 @@ export class MaliGRPCServer implements RPCServer {
   }
   public start(w: WalletRepository, cfg: Config): void {
     const app = new Mali(PROTO_PATH);
-    const handlers = createWalletServiceHandlers(w, cfg);
+    const handlers = createWalletServiceHandlers(w);
     app.use({ handlers });
   }
 }
@@ -80,8 +86,10 @@ export default class GRPCServer implements RPCServer {
     this.descriptor = grpc.load(PROTO_PATH).lighthouse;
   }
   public start(w: WalletRepository, cfg: Config): void {
-    const handlers = createWalletServiceHandlers(w, cfg, false);
+    const handlers = createWalletServiceHandlers(w, false);
     const server = new grpc.Server();
     server.addService(this.descriptor.WalletService.service, handlers);
+    server.bind(cfg.port, grpc.ServerCredentials.createInsecure());
+    server.start();
   }
 }

@@ -5,7 +5,9 @@ syntax = "proto3";
 
 package lighthouse;
 message PingRequest {}
-message PingResponse {}
+message PingResponse {
+  string message = 1;
+}
 
 
 service WalletService {
