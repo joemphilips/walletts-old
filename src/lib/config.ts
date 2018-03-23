@@ -16,9 +16,21 @@ export interface Config {
 export class ConfigError extends Error {}
 
 export interface WalletServiceOpts {
+  /**
+   * Usually ${datadir}/walletdb/
+   */
   readonly datadir?: string;
+  /**
+   * Usually ${datadir}/debug.log
+   */
   readonly debugFile?: string;
+  /**
+   * Usually ${datadir}/wallet.conf
+   */
   readonly conf?: string;
+  /**
+   * Usually localhost:58011
+   */
   readonly port?: string | number;
   readonly network?: string;
 }
@@ -26,12 +38,22 @@ export interface WalletServiceOpts {
 const defaultappHome: string =
   process.env[process.platform === 'win32' ? 'USERPROFILE' : 'HOME'] ||
   '~/.walletts';
-const defaultDataDir = path.join(defaultappHome, 'fireWallet');
+const defaultDataDir = path.join(defaultappHome, '.walletts');
 const defaultDebugFile = path.join(defaultDataDir, 'debug.log');
 const defaultConfigFile = path.join(defaultDataDir, 'wallet.conf');
 const defaultPort = '58011';
 const defaultDebugLevel = 'info';
 
+/**
+ * setup global configuration object.
+ * priority is
+ * 1. field specified directly by opts (mostly this is the command line arguments given by the user)
+ * 2. field defined in opts.conf (global configuration file)
+ * 3. default value
+ *
+ * @param {WalletServiceOpts} opts
+ * @returns {Config}
+ */
 export default function loadConfig(opts: WalletServiceOpts): Config {
   const dataDir = opts.datadir || defaultDataDir;
   const filePath = opts.conf || defaultConfigFile;

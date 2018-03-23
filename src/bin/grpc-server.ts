@@ -18,7 +18,7 @@ const createWalletServiceHandlers = (
     return {
       async ping(ctx: Context): Promise<void> {
         logger.info('received ping message ', ctx);
-        ctx.res = { message: 'Hello!, ' + ctx.request.req };
+        ctx.res = { message: 'ACK!' };
       },
 
       async createWallet(

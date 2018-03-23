@@ -26,7 +26,7 @@ export default class WalletLauncher {
     this.server = container.resolve('server');
     this.uiproxy = container.resolve('uiproxy');
     this.logger = logger;
-    this.client = getClient(this.cfg);
+    this.client = getClient(this.cfg.port);
   }
 
   public async run(): Promise<void> {
