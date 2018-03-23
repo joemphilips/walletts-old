@@ -10,6 +10,7 @@ import WalletRepository from '../lib/wallet-repository';
 import GRPCServer, { RPCServer } from './grpc-server';
 import { UIProxy, WalletAction } from './uiproxy';
 import getClient, { RPCClient } from './grpc-client';
+import logger from '../lib/logger';
 
 export default class WalletLauncher {
   public readonly cfg: Config;
@@ -24,7 +25,7 @@ export default class WalletLauncher {
     this.walletRepo = new WalletRepository(this.cfg);
     this.server = container.resolve('server');
     this.uiproxy = container.resolve('uiproxy');
-    this.logger = container.resolve('logger');
+    this.logger = logger;
     this.client = getClient(this.cfg);
   }
 

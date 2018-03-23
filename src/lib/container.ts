@@ -39,7 +39,8 @@ container.register({
   db: asClass(WalletDB),
   EncryptStream: asClass(EncryptStream),
   DecryptStream: asClass(DecryptStream),
-  uiproxy: asClass(CliUIProxy)
+  uiproxy: asClass(CliUIProxy),
+  mnemonicLength: asValue(12)
 });
 
 export default container;
