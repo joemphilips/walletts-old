@@ -2,11 +2,11 @@ import anyTest, { ExecutionContext, TestInterface } from 'ava';
 import WalletLauncher from '../bin/service';
 import { WalletServiceOpts } from '../lib/config';
 import { AwilixResolutionError } from 'awilix';
-import * as path from 'path'
+import * as path from 'path';
 
 interface TestWalletLauncherContext {
   service: WalletLauncher;
-};
+}
 const test = anyTest as TestInterface<TestWalletLauncherContext>;
 let service: WalletLauncher;
 
