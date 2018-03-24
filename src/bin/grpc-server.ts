@@ -96,7 +96,7 @@ export default class GRPCServer implements RPCServer {
     const handlers = createWalletServiceHandlers(w, false, this.logger);
     const server = new grpc.Server();
     server.addService(this.descriptor.WalletService.service, handlers);
-    server.bind(cfg.port, grpc.ServerCredentials.createInsecure());
+    server.bind(cfg.url, grpc.ServerCredentials.createInsecure());
     server.start();
   }
 }

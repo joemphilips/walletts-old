@@ -1,5 +1,5 @@
 import anyTest, { default as test, TestInterface } from 'ava';
-import { default as loadConfig, ConfigOverrideOpts } from '../lib/config';
+import { default as loadConfig } from '../lib/config';
 import getClient, { RPCClient } from '../bin/grpc-client';
 import GRPCServer, { RPCServer } from '../bin/grpc-server';
 import WalletRepository from '../lib/wallet-repository';
@@ -35,7 +35,7 @@ test('wallet service has been started', async t => {
 });
 
 test.cb('It can respond to PingRequest', t => {
-  const client: RPCClient = getClient(testConfig.port);
+  const client: RPCClient = getClient(testConfig.url);
   client.ping(undefined, (err, res) => {
     if (err) {
       throw new Error('error while pinging to the server');
