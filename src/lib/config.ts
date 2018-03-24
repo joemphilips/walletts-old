@@ -35,7 +35,7 @@ export interface ConfigOverrideOpts {
 
 const defaultappHome: string =
   process.env[process.platform === 'win32' ? 'USERPROFILE' : 'HOME'] ||
-  '~/.walletts';
+  __dirname;
 const defaultDataDir = path.join(defaultappHome, '.walletts');
 const defaultDebugFile = path.join(defaultDataDir, 'debug.log');
 const defaultConfigFile = path.join(defaultDataDir, 'wallet.conf');
