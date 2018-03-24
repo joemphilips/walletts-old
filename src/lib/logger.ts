@@ -1,6 +1,8 @@
-import Logger, { createLogger, TRACE } from 'bunyan';
+import { createLogger, TRACE } from 'bunyan';
+/* tslint:disable:no-duplicate-imports */
+import * as Logger from 'bunyan';
 
-const getLogger = (debugFile: string) => {
+const getLogger = (debugFile: string): Logger => {
   return createLogger({
     name: 'walletts',
     src: true,
