@@ -47,8 +47,12 @@ test.cb('It can respond to PingRequest', t => {
   });
 });
 
-test.cb("It can create Wallet only with nameSpace", t => {
-  client.createWallet({nameSpace: "testNameSpace"}, (e, r) => {
-    if (e) {throw new Error("Error while creating Wallet")}
-  })
-})
+test.cb('It can create Wallet only with nameSpace', t => {
+  client.createWallet({ nameSpace: 'testNameSpace' }, (e, r) => {
+    if (e) {
+      throw new Error('Error while creating Wallet');
+    }
+    t.true(r);
+    t.end();
+  });
+});
