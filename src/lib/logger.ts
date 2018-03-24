@@ -10,7 +10,7 @@ const getLogger = (debugFile: string) => {
         stream: process.stdout
       },
       {
-        level: 'debug',
+        level: 'trace',
         path: debugFile
       }
     ]
