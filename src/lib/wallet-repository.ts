@@ -3,10 +3,14 @@ import * as path from 'path';
 import { Readable, Writable } from 'stream';
 import { Config } from './config';
 import logger from './logger';
+import * as Logger from 'bunyan';
 
 export default class WalletRepository {
   private contents: string = '';
-  constructor(private cfg: Config) {}
+  private readonly logger: Logger;
+  constructor(private cfg: Config, log: Logger) {
+    this.logger = log.child({ subModule: 'WalletRepository' });
+  }
   public async load(nameSpace: string): Promise<void> {
     if (fs.statSync(this.cfg.walletDBPath)) {
       throw new Error(
@@ -21,7 +25,7 @@ export default class WalletRepository {
     nameSpace: string,
     passPhrase?: string
   ): Promise<boolean> {
-    logger.error('not implemtented');
+    this.logger.error('not implemtented');
     return false;
   }
 
@@ -30,7 +34,7 @@ export default class WalletRepository {
     seed: ReadonlyArray<string>,
     passPhrase?: string
   ): Promise<boolean> {
-    logger.error('not implemented!');
+    this.logger.error('not implemented!');
     return false;
   }
 }

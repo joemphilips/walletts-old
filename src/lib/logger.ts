@@ -1,5 +1,22 @@
-import { createLogger } from 'bunyan';
+import Logger, { createLogger, TRACE } from 'bunyan';
 
-const logger: any = createLogger({ name: 'walletts' });
+const getLogger = (debugFile: string) => {
+  return createLogger({
+    name: 'walletts',
+    src: true,
+    streams: [
+      {
+        name: 'stdout',
+        level: 'info',
+        stream: process.stdout
+      },
+      {
+        name: 'debugStream',
+        level: TRACE,
+        path: debugFile
+      }
+    ]
+  });
+};
 
-export default logger;
+export default getLogger;

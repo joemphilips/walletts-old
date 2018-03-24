@@ -18,12 +18,12 @@ const cli = program
 (async function main(): Promise<void> {
   const datadir = cli.datadir;
   const debugFile = cli.debugFile;
-  const conf = cli.conf;
-  const service = new WalletService({ datadir, debugFile, conf });
+  const configFile = cli.conf;
+  const service = new WalletService({ datadir, debugFile, configFile });
   try {
     await service.run();
   } catch (e) {
-    logger.error(e);
+    process.stderr.write(e.toString());
     process.exit(1);
   }
 })();

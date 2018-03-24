@@ -1,48 +1,85 @@
-import * as btc from 'bitcoinjs-lib';
-import { Command } from 'commander';
 import * as ini from 'ini';
-import { networkInterfaces } from 'os';
 import * as path from 'path';
-
-export interface Config {
-  readonly debugLevel: 'debug' | 'info' | 'quiet';
-  readonly datadir: string;
-  readonly walletDBPath: string;
-  readonly port: string;
-  readonly debugFile: string;
-  readonly network: btc.Network;
-}
+import * as fs from 'fs';
+import * as nodeUrl from 'url';
 
 export class ConfigError extends Error {}
 
-export interface WalletServiceOpts {
+export interface Config {
+  readonly debugLevel: 'info' | 'debug' | 'trace';
   /**
-   * Usually ${datadir}/walletdb/
+   * Usually ~/.walletts/ under users home directory
    */
-  readonly datadir?: string;
+  readonly datadir: string;
   /**
    * Usually ${datadir}/debug.log
    */
-  readonly debugFile?: string;
+  readonly debugFile: string;
+  /**
+   *  Usurally ${datadir}/walletdb
+   */
+  readonly walletDBPath: string;
   /**
    * Usually ${datadir}/wallet.conf
    */
-  readonly conf?: string;
+  readonly configFile: string;
   /**
-   * Usually localhost:58011
+   * Usually 58011
    */
-  readonly port?: string | number;
-  readonly network?: string;
+  readonly port: string | number;
+
+  /**
+   * Usually localhost
+   */
+  readonly ip: string | number;
+
+  /**
+   * port + ":" + "ip"
+   * TODO: make url type safe
+   */
+  readonly url: string;
+
+  /**
+   * specify which blockchain to use.
+   */
+  readonly network: 'mainnet' | 'testnet3';
 }
 
+// paths
 const defaultappHome: string =
   process.env[process.platform === 'win32' ? 'USERPROFILE' : 'HOME'] ||
-  '~/.walletts';
+  __dirname;
 const defaultDataDir = path.join(defaultappHome, '.walletts');
 const defaultDebugFile = path.join(defaultDataDir, 'debug.log');
 const defaultConfigFile = path.join(defaultDataDir, 'wallet.conf');
+const defaultWalletDBPath = path.join(defaultDataDir, 'walletdb');
+
+// networks
 const defaultPort = '58011';
 const defaultDebugLevel = 'info';
+
+const defaultMap: Config = {
+  // paths
+  datadir: defaultDataDir,
+  debugFile: defaultDebugFile,
+  debugLevel: 'info',
+  configFile: defaultConfigFile,
+  walletDBPath: defaultWalletDBPath,
+
+  // networks
+  port: defaultPort,
+  ip: 'localhost',
+  url: 'locahost:' + defaultPort,
+  network: 'testnet3'
+};
+
+function takeWithPriority<K extends keyof Config>(
+  opts: Partial<Config>,
+  fileConf: any,
+  k: K
+): Config[K] {
+  return opts[k] ? opts[k] : fileConf[k] ? fileConf[k] : defaultMap[k];
+}
 
 /**
  * setup global configuration object.
@@ -51,37 +88,45 @@ const defaultDebugLevel = 'info';
  * 2. field defined in opts.conf (global configuration file)
  * 3. default value
  *
- * @param {WalletServiceOpts} opts
+ * @param {Config} opts ... option to override default
  * @returns {Config}
  */
-export default function loadConfig(opts: WalletServiceOpts): Config {
-  const dataDir = opts.datadir || defaultDataDir;
-  const filePath = opts.conf || defaultConfigFile;
-  const fileConf = ini.decode(filePath);
-  const debugFile = opts.debugFile
-    ? opts.debugFile
-    : fileConf.debugFile ? fileConf.debugFile : defaultDebugFile;
-  const networkstring = opts.network
-    ? opts.network
-    : fileConf.network ? fileConf.network : 'testnet3';
-  const network =
-    networkstring === 'mainnet'
-      ? btc.networks.bitcoin
-      : networkstring === 'testnet3' ? btc.networks.testnet : false;
-  if (!network) {
-    throw new ConfigError('network option for config is not good!');
+export default function loadConfig(opts: Partial<Config>): Config {
+  // paths
+  const datadir = opts.datadir || defaultDataDir;
+  const configFile =
+    opts.configFile && fs.existsSync(opts.configFile)
+      ? opts.configFile
+      : defaultConfigFile;
+
+  const fileConf = ini.decode(configFile);
+
+  const debugFile = takeWithPriority(opts, fileConf, 'debugFile');
+  const debugLevel = takeWithPriority(opts, fileConf, 'debugLevel');
+  const walletDBPath = takeWithPriority(opts, fileConf, 'walletDBPath');
+
+  // networks
+  const network = takeWithPriority(opts, fileConf, 'network');
+  const port = takeWithPriority(opts, fileConf, 'port');
+  const ip = takeWithPriority(opts, fileConf, 'ip');
+  const url = ip + ':' + port;
+
+  if (!nodeUrl.parse(url)) {
+    throw new ConfigError(`Invalid URL ${url} !`);
   }
-  const port = opts.port
-    ? opts.port
-    : fileConf.port ? fileConf.port : defaultPort;
-  const walletDBPath = path.join(dataDir + 'walletdb');
 
   return {
-    port,
-    datadir: dataDir,
-    walletDBPath,
-    debugLevel: defaultDebugLevel,
+    // paths
+    datadir,
+    configFile,
     debugFile,
-    network
+    debugLevel,
+    walletDBPath,
+
+    // networks
+    network,
+    port,
+    ip,
+    url
   };
 }
