@@ -1,4 +1,4 @@
-import Logger, { createLogger } from 'bunyan';
+import Logger, { createLogger, TRACE } from 'bunyan';
 
 const getLogger = (debugFile: string) => {
   return createLogger({
@@ -6,11 +6,13 @@ const getLogger = (debugFile: string) => {
     src: true,
     streams: [
       {
+        name: 'stdout',
         level: 'info',
         stream: process.stdout
       },
       {
-        level: 'trace',
+        name: 'debugStream',
+        level: TRACE,
         path: debugFile
       }
     ]
