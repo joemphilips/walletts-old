@@ -13,6 +13,8 @@ const sleep = (msec: number) =>
 
 let service: RPCServer;
 let testConfig: Config;
+let client: RPCClient;
+
 test.before(async t => {
   const Home: string =
     process.env[process.platform === 'win32' ? 'USERPROFILE' : 'HOME'] ||
@@ -24,6 +26,7 @@ test.before(async t => {
   logger.warn(`debug log will be output to ${debugFile}`);
   logger.warn(`create ${dataDir} for testing ...`);
   service = new GRPCServer(logger);
+  client = getClient(testConfig.url);
   testConfig = loadConfig({ datadir: dataDir });
   const repo = new WalletRepository(testConfig, logger);
   service.start(repo, testConfig);
@@ -35,7 +38,6 @@ test('wallet service has been started', async t => {
 });
 
 test.cb('It can respond to PingRequest', t => {
-  const client: RPCClient = getClient(testConfig.url);
   client.ping(undefined, (err, res) => {
     if (err) {
       throw new Error('error while pinging to the server');
@@ -44,3 +46,9 @@ test.cb('It can respond to PingRequest', t => {
     t.end();
   });
 });
+
+test.cb("It can create Wallet only with nameSpace", t => {
+  client.createWallet({nameSpace: "testNameSpace"}, (e, r) => {
+    if (e) {throw new Error("Error while creating Wallet")}
+  })
+})

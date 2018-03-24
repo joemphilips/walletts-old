@@ -4,7 +4,7 @@ import { Config } from '../lib/config';
 
 export interface CreateWalletArg {
   nameSpace: string;
-  passPhrase: string;
+  passPhrase?: string;
   seed?: ReadonlyArray<string>;
 }
 
