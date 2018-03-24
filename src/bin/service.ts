@@ -23,6 +23,7 @@ export default class WalletLauncher {
   constructor(opts: Partial<ConfigOverrideOpts>) {
     this.cfg = loadConfig(opts);
     this.logger = getLogger(this.cfg.debugFile);
+    this.logger.info(`config object is ${this.cfg}`);
     this.walletRepo = new WalletRepository(this.cfg, this.logger);
     this.server = new GRPCServer(this.logger);
     this.uiproxy = container.resolve('uiproxy');
