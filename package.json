@@ -21,7 +21,7 @@
     "test-without-nsp": "run-s test:build && run-p test:lint test:unit",
     "test:build": "run-s clean && tsc -p tsconfig.test.json",
     "test:lint": "tslint --project . && prettier 'src/**/*.ts' --list-different",
-    "test:unit": "nyc ava",
+    "test:unit": "nyc ava --verbose",
     "test:nsp": "nsp check",
     "watch": "run-s clean build:main && run-p 'build:main -- -w' 'test:unit -- --watch'",
     "cov": "run-s build test:unit cov:html && opn coverage/index.html",
