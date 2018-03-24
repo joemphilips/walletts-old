@@ -50,7 +50,7 @@ test.cb('It can create Wallet only with nameSpace', t => {
   const client: RPCClient = getClient(testConfig.url);
   client.createWallet({ nameSpace: 'testNameSpace' }, (e, r) => {
     if (e) {
-      throw new Error('Error while creating Wallet');
+      t.fail('Error while creating Wallet');
     }
     t.true(r);
     t.end();
