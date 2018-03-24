@@ -24,3 +24,8 @@ export default function getClient(url: string): RPCClient {
   );
   return client;
 }
+
+export function getWebClient(url: string): {
+
+}
+
