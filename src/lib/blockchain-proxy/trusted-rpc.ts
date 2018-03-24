@@ -4,11 +4,16 @@ import * as fs from 'fs';
 import * as ini from 'ini';
 import logger from '../logger';
 import { BlockchainProxy } from './index';
+import * as Logger from 'bunyan';
 
-export class RPC implements BlockchainProxy {
+export class TustedBitcoindRPC implements BlockchainProxy {
   public readonly client: any;
-  constructor(confPath: fs.PathLike) {
-    logger.debug(`going to use testnet bitcoin-core specified in ${confPath}`);
+  public readonly logger: Logger;
+  constructor(confPath: fs.PathLike, log: Logger) {
+    this.logger = log.child({ subModule: 'TrustedBitcoindRPC' });
+    this.logger.debug(
+      `going to use testnet bitcoin-core specified in ${confPath}`
+    );
     const conf = ini.parse(fs.readFileSync(confPath, 'utf-8'));
     const opts = {
       username: conf.rpcuser,
@@ -20,13 +25,13 @@ export class RPC implements BlockchainProxy {
   }
 
   public async getPrevHash(tx: Transaction): Promise<ReadonlyArray<string>> {
-    logger.debug(`tx is ${JSON.stringify(tx.toHex())}`);
-    logger.debug(`client is ${JSON.stringify(this.client)}`);
-    logger.debug(`tx id is ${tx.getId()}`);
+    this.logger.debug(`tx is ${JSON.stringify(tx.toHex())}`);
+    this.logger.debug(`client is ${JSON.stringify(this.client)}`);
+    this.logger.debug(`tx id is ${tx.getId()}`);
     const RawTx: string = await this.client.getRawTransaction(tx.getId());
-    logger.debug(`Raw TX is ${RawTx}`);
+    this.logger.debug(`Raw TX is ${RawTx}`);
     const txwithInfo: any = await this.client.decodeRawTransaction(RawTx);
-    logger.debug(`tx withInfo is ${JSON.stringify(txwithInfo)} `);
+    this.logger.debug(`tx withInfo is ${JSON.stringify(txwithInfo)} `);
 
     // using Array.map() will cause bizarre error. So for loop instead.
     const promises: any[] = [];
@@ -42,7 +47,7 @@ export class RPC implements BlockchainProxy {
   }
   public async isConnected(): Promise<void> {
     if (this.client.ping) {
-      logger.error('not implemented !');
+      this.logger.error('not implemented !');
     }
   }
 }

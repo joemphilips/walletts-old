@@ -12,7 +12,7 @@ import {
 import RPCServer, { default as GRPCServer } from '../bin/grpc-server';
 import { CliUIProxy } from '../bin/uiproxy';
 import BackendProxy from './backend/node';
-import { BlockchainInfo, RPC } from './blockchain-proxy';
+import { BlockchainInfo, TustedBitcoindRPC } from './blockchain-proxy';
 import loadConfig from './config';
 import { BasicKeyRepository } from './key-repository';
 import { InMemoryDB } from './keydb';

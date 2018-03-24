@@ -1,7 +1,5 @@
 import * as btc from 'bitcoinjs-lib';
-import { Command } from 'commander';
 import * as ini from 'ini';
-import { networkInterfaces } from 'os';
 import * as path from 'path';
 
 export interface Config {
@@ -15,24 +13,24 @@ export interface Config {
 
 export class ConfigError extends Error {}
 
-export interface WalletServiceOpts {
+export interface ConfigOverrideOpts {
   /**
    * Usually ${datadir}/walletdb/
    */
-  readonly datadir?: string;
+  readonly datadir: string;
   /**
    * Usually ${datadir}/debug.log
    */
-  readonly debugFile?: string;
+  readonly debugFile: string;
   /**
    * Usually ${datadir}/wallet.conf
    */
-  readonly conf?: string;
+  readonly conf: string;
   /**
    * Usually localhost:58011
    */
-  readonly port?: string | number;
-  readonly network?: string;
+  readonly port: string | number;
+  readonly network: string;
 }
 
 const defaultappHome: string =
@@ -51,10 +49,10 @@ const defaultDebugLevel = 'info';
  * 2. field defined in opts.conf (global configuration file)
  * 3. default value
  *
- * @param {WalletServiceOpts} opts
+ * @param {ConfigOverrideOpts} opts
  * @returns {Config}
  */
-export default function loadConfig(opts: WalletServiceOpts): Config {
+export default function loadConfig(opts: Partial<ConfigOverrideOpts>): Config {
   const dataDir = opts.datadir || defaultDataDir;
   const filePath = opts.conf || defaultConfigFile;
   const fileConf = ini.decode(filePath);

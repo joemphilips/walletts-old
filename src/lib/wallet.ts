@@ -3,7 +3,7 @@ import * as uuid from 'node-uuid';
 import { Readable, Writable } from 'stream';
 import { UIProxy, WalletAction } from '../bin/uiproxy';
 import BackendProxy from './backend/node';
-import { BlockchainProxy, RPC } from './blockchain-proxy/';
+import { BlockchainProxy, TustedBitcoindRPC } from './blockchain-proxy/';
 import CoinManager from './coin_manager';
 import {
   FailedToCreateWalletError,
@@ -18,11 +18,14 @@ import logger from './logger';
 import { AccountID } from './primitives/identity';
 import { DecryptStream, EncryptStream } from './stream';
 import WalletRepository from './wallet-repository';
+import * as Logger from 'bunyan';
 
 // Business logic is implemented here.
 // IO/Serialization logic must implemented in coinManager
 // as possible.
-export abstract class AbstractWallet<P extends BlockchainProxy = RPC> {
+export abstract class AbstractWallet<
+  P extends BlockchainProxy = TustedBitcoindRPC
+> {
   public abstract readonly coinManager: CoinManager<P>;
   public abstract readonly bchproxy: P;
   public abstract readonly walletRepository: WalletRepository;
@@ -46,16 +49,17 @@ export interface WalletOpts<
   readonly backend: BackendProxy;
 }
 
-export class BasicWallet implements AbstractWallet<RPC> {
-  public readonly coinManager: CoinManager<RPC>;
+export class BasicWallet implements AbstractWallet<TustedBitcoindRPC> {
+  public readonly coinManager: CoinManager<TustedBitcoindRPC>;
   public readonly id: AccountID;
   constructor(
-    public bchproxy: RPC,
+    public bchproxy: TustedBitcoindRPC,
     public walletRepository: WalletRepository,
     public backend: BackendProxy,
-    public publicKey: Buffer
+    public publicKey: Buffer,
+    log: Logger
   ) {
-    this.coinManager = new CoinManager<RPC>(this.bchproxy);
+    this.coinManager = new CoinManager<TustedBitcoindRPC>(this.bchproxy, log);
     this.id = uuid.v4(); // TODO: derive from public key
   }
 

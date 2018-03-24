@@ -23,7 +23,7 @@ const cli = program
   try {
     await service.run();
   } catch (e) {
-    logger.error(e);
+    process.stderr.write(e.toString());
     process.exit(1);
   }
 })();
