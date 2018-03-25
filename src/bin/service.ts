@@ -23,7 +23,7 @@ export default class WalletLauncher {
     this.walletRepo = new WalletRepository(this.cfg, this.logger);
     this.server = new GRPCServer(this.logger);
     this.uiproxy = container.resolve('uiproxy');
-    this.client = getClient(this.cfg.url);
+    this.client = getClient(this.cfg.url, this.logger); // TODO: give specified logger
   }
 
   public async run(): Promise<void> {
@@ -37,11 +37,10 @@ export default class WalletLauncher {
           nameSpace: action.payload.nameSpace,
           passPhrase: action.payload.passPhrase
         },
-        (err, res) => {
-          if (err) {
-            throw new Error();
+        (e, _) => {
+          if (e) {
+            this.logger.error(e.toString());
           }
-          this.logger.info(`wallet created! response from server is ${res}`);
         }
       );
     } else if (action.kind === 'importWallet') {
@@ -51,11 +50,10 @@ export default class WalletLauncher {
           passPhrase: action.payload.passPhrase,
           seed: action.payload.seed
         },
-        (err, res) => {
-          if (err) {
-            throw new Error();
+        (e, _) => {
+          if (e) {
+            this.logger.error(e.toString());
           }
-          this.logger.info(`wallet created! response from server is ${res}`);
         }
       );
       throw new Error('not supported yet!');
