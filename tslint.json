@@ -11,7 +11,7 @@
     "no-implicit-dependencies": [true, "dev"],
     "object-literal-sort-keys": false,
     "max-classes-per-file": false,
-    "no-null-keyword": true,
+    // "no-null-keyword": true, // since grpc-web uses null
 
     /* tslint-immutable rules */
     // Recommended built-in rules
