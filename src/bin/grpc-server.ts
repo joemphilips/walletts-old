@@ -19,21 +19,31 @@ const createWalletServiceHandlers = (
   return {
     async ping(ctx: Context): Promise<void> {
       ctx.sendMetadata();
-      handlerLogger.info('received ping message ', ctx);
+      handlerLogger.trace('received ping message ', ctx);
       ctx.res = { message: 'ACK!' };
     },
 
-    async createWallet(
-      nameSpace: string,
-      passPhrase?: string,
-      seed?: ReadonlyArray<string>
-    ): Promise<void> {
-      if (seed) {
-        await walletRepo.createFromSeed(nameSpace, seed, passPhrase);
+    async createWallet(ctx: Context): Promise<void> {
+      handlerLogger.trace(
+        `received createWallet request ${JSON.stringify(ctx.req)}`
+      );
+      const nameSpace: string = ctx.req.nameSpace;
+      let isSuccess: boolean;
+      if (ctx.req.seed && ctx.req.seed.length && ctx.req.seed.length !== 0) {
+        isSuccess = await walletRepo.createFromSeed(
+          nameSpace,
+          ctx.req.seed,
+          ctx.req.passPhrase
+        );
       } else {
-        await walletRepo.createNew(nameSpace, passPhrase);
+        isSuccess = await walletRepo.createNew(nameSpace, ctx.req.passPhrase);
       }
-      handlerLogger.info(`wallet created !`);
+      if (isSuccess) {
+        handlerLogger.info(`wallet created !`);
+      } else {
+        handlerLogger.info(`failed to create Wallet`);
+      }
+      ctx.res = { success: isSuccess };
     }
   };
 };
