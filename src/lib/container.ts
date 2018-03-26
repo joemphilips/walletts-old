@@ -18,7 +18,7 @@ import { BasicKeyRepository } from './key-repository';
 import { InMemoryDB } from './keydb';
 import { DecryptStream, EncryptStream } from './stream';
 import { BasicWallet } from './wallet';
-import WalletDB from './wallet-repository';
+import WalletDB from './wallet-service';
 
 const container: AwilixContainer = createContainer({
   injectionMode: InjectionMode.CLASSIC

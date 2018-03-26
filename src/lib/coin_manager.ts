@@ -3,7 +3,7 @@ import { BlockchainProxy } from './blockchain-proxy';
 import Keystore from './key-repository';
 import logger from './logger';
 import { WalletCoin } from './primitives/wallet-coin';
-import WalletDB from './wallet-repository';
+import WalletDB from './wallet-service';
 import * as Logger from 'bunyan';
 
 export default class CoinManager<P extends BlockchainProxy> {

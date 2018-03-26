@@ -17,7 +17,7 @@ import Keystore, {
 import logger from './logger';
 import { AccountID } from './primitives/identity';
 import { DecryptStream, EncryptStream } from './stream';
-import WalletRepository from './wallet-repository';
+import WalletService from './wallet-service';
 import * as Logger from 'bunyan';
 
 // Business logic is implemented here.
@@ -28,7 +28,7 @@ export abstract class AbstractWallet<
 > {
   public abstract readonly coinManager: CoinManager<P>;
   public abstract readonly bchproxy: P;
-  public abstract readonly walletRepository: WalletRepository;
+  public abstract readonly walletRepository: WalletService;
   public abstract readonly id: AccountID;
   public abstract readonly pay: (k: Keystore) => Promise<void>;
   public abstract readonly fromSeed: (
@@ -45,7 +45,7 @@ export interface WalletOpts<
   R extends Readable
 > {
   readonly bchproxy: P;
-  readonly walletrepository: WalletRepository;
+  readonly walletrepository: WalletService;
   readonly backend: BackendProxy;
 }
 
@@ -54,7 +54,7 @@ export class BasicWallet implements AbstractWallet<TustedBitcoindRPC> {
   public readonly id: AccountID;
   constructor(
     public bchproxy: TustedBitcoindRPC,
-    public walletRepository: WalletRepository,
+    public walletRepository: WalletService,
     public backend: BackendProxy,
     public publicKey: Buffer,
     log: Logger

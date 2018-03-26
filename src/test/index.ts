@@ -1,9 +1,8 @@
 import anyTest, { default as test, TestInterface } from 'ava';
-import { default as loadConfig } from '../lib/config';
+import { default as loadConfig, Config } from '../lib/config';
 import getClient, { RPCClient } from '../bin/grpc-client';
 import GRPCServer, { RPCServer } from '../bin/grpc-server';
-import WalletRepository from '../lib/wallet-repository';
-import { Config } from '../lib/config';
+import WalletService from '../lib/wallet-service';
 import { mkdirpSync } from 'fs-extra';
 import getLogger from '../lib/logger';
 import * as path from 'path';
@@ -28,7 +27,7 @@ test.before(async t => {
   logger.warn(`create ${dataDir} for testing ...`);
   service = new GRPCServer(logger);
   testConfig = loadConfig({ datadir: dataDir });
-  const repo = new WalletRepository(testConfig, logger);
+  const repo = new WalletService(testConfig, logger);
   service.start(repo, testConfig);
   await sleep(1000);
 });

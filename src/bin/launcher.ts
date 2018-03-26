@@ -2,7 +2,7 @@ import chalk from 'chalk';
 import { Config, default as loadConfig } from '../lib/config';
 import container from '../lib/container';
 import { BasicWallet } from '../lib/wallet';
-import WalletRepository from '../lib/wallet-repository';
+import WalletService from '../lib/wallet-service';
 import GRPCServer, { RPCServer } from './grpc-server';
 import { UIProxy, WalletAction } from './uiproxy';
 import getClient, { RPCClient } from './grpc-client';
@@ -10,7 +10,7 @@ import getLogger from '../lib/logger';
 
 export default class WalletLauncher {
   public readonly cfg: Config;
-  private readonly walletRepo: WalletRepository;
+  private readonly walletRepo: WalletService;
   private readonly uiproxy: UIProxy;
   private readonly logger: any;
   private readonly server: RPCServer;
@@ -20,7 +20,7 @@ export default class WalletLauncher {
     this.cfg = loadConfig(opts);
     this.logger = getLogger(this.cfg.debugFile);
     this.logger.info(`config object is ${this.cfg}`);
-    this.walletRepo = new WalletRepository(this.cfg, this.logger);
+    this.walletRepo = new WalletService(this.cfg, this.logger);
     this.server = new GRPCServer(this.logger);
     this.uiproxy = container.resolve('uiproxy');
     this.client = getClient(this.cfg.url);

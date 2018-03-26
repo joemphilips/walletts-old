@@ -8,5 +8,5 @@ export * from './bin/grpc-server';
 export * from './lib/stream';
 export * from './bin/uiproxy';
 export * from './lib/wallet';
-export * from './lib/wallet-repository';
+export * from './lib/wallet-service';
 export { PROTO_PATH } from './bin/grpc-common';

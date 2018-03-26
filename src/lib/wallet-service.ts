@@ -4,12 +4,14 @@ import { Readable, Writable } from 'stream';
 import { Config } from './config';
 import logger from './logger';
 import * as Logger from 'bunyan';
+import * as rx from 'rxjs'
 
-export default class WalletRepository {
+export default class WalletService extends rx.Subject<any> {
   private contents: string = '';
   private readonly logger: Logger;
   constructor(private cfg: Config, log: Logger) {
-    this.logger = log.child({ subModule: 'WalletRepository' });
+    super();
+    this.logger = log.child({ subModule: 'WalletService' });
   }
   public async load(nameSpace: string): Promise<void> {
     if (fs.statSync(this.cfg.walletDBPath)) {
@@ -26,7 +28,7 @@ export default class WalletRepository {
     passPhrase?: string
   ): Promise<boolean> {
     this.logger.error('createNew not implemtented');
-    return true;
+    return false;
   }
 
   public async createFromSeed(
@@ -38,3 +40,4 @@ export default class WalletRepository {
     return false;
   }
 }
+
