@@ -1,6 +1,5 @@
 import * as grpc from 'grpc';
 import { PROTO_PATH } from './grpc-common';
-import { Config } from '../lib/config';
 
 export interface CreateWalletArg {
   nameSpace: string;
@@ -12,7 +11,7 @@ export interface RPCClient {
   ping: (arg: undefined, cb: (err: any, res: any) => void) => void;
   createWallet: (
     arg: CreateWalletArg,
-    cb: (err: any, isSuccess: boolean) => void
+    cb: (err: any, isSuccess: { success: boolean }) => void
   ) => void;
 }
 

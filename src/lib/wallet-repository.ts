@@ -25,8 +25,8 @@ export default class WalletRepository {
     nameSpace: string,
     passPhrase?: string
   ): Promise<boolean> {
-    this.logger.error('not implemtented');
-    return false;
+    this.logger.error('createNew not implemtented');
+    return true;
   }
 
   public async createFromSeed(
@@ -34,7 +34,7 @@ export default class WalletRepository {
     seed: ReadonlyArray<string>,
     passPhrase?: string
   ): Promise<boolean> {
-    this.logger.error('not implemented!');
+    this.logger.error('createFrom Seed not implemented!');
     return false;
   }
 }

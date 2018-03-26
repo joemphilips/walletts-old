@@ -7,12 +7,14 @@ import { Config } from '../lib/config';
 import { mkdirpSync } from 'fs-extra';
 import getLogger from '../lib/logger';
 import * as path from 'path';
+import * as Logger from 'bunyan';
 
 const sleep = (msec: number) =>
   new Promise(resolve => setTimeout(resolve, msec));
 
 let service: RPCServer;
 let testConfig: Config;
+let logger: Logger;
 
 test.before(async t => {
   const Home: string =
@@ -21,7 +23,7 @@ test.before(async t => {
   const dataDir = path.join(Home, '.walletts-test');
   mkdirpSync(dataDir);
   const debugFile = path.join(dataDir, 'test.log');
-  const logger = getLogger(debugFile);
+  logger = getLogger(debugFile);
   logger.warn(`debug log will be output to ${debugFile}`);
   logger.warn(`create ${dataDir} for testing ...`);
   service = new GRPCServer(logger);
@@ -50,9 +52,12 @@ test.cb('It can create Wallet only with nameSpace', t => {
   const client: RPCClient = getClient(testConfig.url);
   client.createWallet({ nameSpace: 'testNameSpace' }, (e, r) => {
     if (e) {
+      logger.error(
+        `received this error from WalletServer.createWallet ${e.toString()}`
+      );
       t.fail('Error while creating Wallet');
     }
-    t.true(r);
+    t.true(r.success, `received ${r} from server`);
     t.end();
   });
 });
