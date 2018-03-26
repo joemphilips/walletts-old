@@ -3038,6 +3038,10 @@ hullabaloo-config-manager@^2.0.0-beta.3:
     pkg-dir "^2.0.0"
     resolve-from "^4.0.0"
 
+humanize-number@0.0.2:
+  version "0.0.2"
+  resolved "https://registry.yarnpkg.com/humanize-number/-/humanize-number-0.0.2.tgz#11c0af6a471643633588588048f1799541489c18"
+
 husky@^0.14.3:
   version "0.14.3"
   resolved "https://registry.yarnpkg.com/husky/-/husky-0.14.3.tgz#c69ed74e2d2779769a17ba8399b54ce0b63c12c3"
@@ -3864,6 +3868,14 @@ mali-call-types@~0.1.0:
 mali-compose@~1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/mali-compose/-/mali-compose-1.0.0.tgz#a547e4152e6d5e8650beae6460fb3e3699365265"
+
+mali-logger@^0.2.1:
+  version "0.2.1"
+  resolved "https://registry.yarnpkg.com/mali-logger/-/mali-logger-0.2.1.tgz#9fc46c052e6e56d6e38d1255be71414a15dd7d3d"
+  dependencies:
+    chalk "^2.3.0"
+    humanize-number "0.0.2"
+    is-stream "^1.1.0"
 
 mali@^0.7.1:
   version "0.7.1"

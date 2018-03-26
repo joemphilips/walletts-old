@@ -4,7 +4,7 @@ import { Config } from '../lib/config';
 
 export interface CreateWalletArg {
   nameSpace: string;
-  passPhrase: string;
+  passPhrase?: string;
   seed?: ReadonlyArray<string>;
 }
 
@@ -12,7 +12,7 @@ export interface RPCClient {
   ping: (arg: undefined, cb: (err: any, res: any) => void) => void;
   createWallet: (
     arg: CreateWalletArg,
-    cb: (err: any, res: any) => void
+    cb: (err: any, isSuccess: boolean) => void
   ) => void;
 }
 
