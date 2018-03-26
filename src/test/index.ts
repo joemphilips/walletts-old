@@ -29,7 +29,7 @@ test.before(async t => {
   testConfig = loadConfig({ datadir: dataDir });
   const repo = new WalletRepository(testConfig, logger);
   service.start(repo, testConfig);
-  await sleep(10000000);
+  await sleep(1000);
 });
 
 test('wallet service has been started', async t => {
@@ -37,12 +37,12 @@ test('wallet service has been started', async t => {
 });
 
 test.cb('It can respond to PingRequest', t => {
-  const client: RPCClient = getClient(testConfig.url, logger);
-  client.ping((e, r) => {
+  const client: RPCClient = getClient(testConfig.url);
+  client.ping(undefined, (e, r) => {
     if (e) {
       t.fail(e.toString());
     }
-    t.is(r, 'ACK!');
+    t.is(r.message, 'ACK!');
     t.end();
   });
 });

@@ -23,7 +23,7 @@ export default class WalletLauncher {
     this.walletRepo = new WalletRepository(this.cfg, this.logger);
     this.server = new GRPCServer(this.logger);
     this.uiproxy = container.resolve('uiproxy');
-    this.client = getClient(this.cfg.url, this.logger); // TODO: give specified logger
+    this.client = getClient(this.cfg.url);
   }
 
   public async run(): Promise<void> {
