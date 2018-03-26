@@ -19,7 +19,7 @@ const createWalletServiceHandlers = (
   return {
     async ping(ctx: Context): Promise<void> {
       ctx.sendMetadata();
-      handlerLogger.info('received ping message ', ctx);
+      handlerLogger.trace('received ping message ', ctx);
       ctx.res = { message: 'ACK!' };
     },
 
