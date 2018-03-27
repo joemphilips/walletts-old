@@ -4,6 +4,9 @@
     // Disable some too strict rules in extended modules
     "ordered-imports": false,
 
+    // since this is required for defininig some types in rxjs
+    "no-submodule-imports": false,
+
     // rules
     "interface-name": [true, "never-prefix"],
     // TODO: allow devDependencies only in **/*.spec.ts files:

@@ -4,7 +4,7 @@ import { Readable, Writable } from 'stream';
 import { Config } from './config';
 import logger from './logger';
 import * as Logger from 'bunyan';
-import * as rx from 'rxjs'
+import * as rx from 'rxjs';
 
 export default class WalletService extends rx.Subject<any> {
   private contents: string = '';
@@ -28,7 +28,7 @@ export default class WalletService extends rx.Subject<any> {
     passPhrase?: string
   ): Promise<boolean> {
     this.logger.error('createNew not implemtented');
-    return false;
+    return true;
   }
 
   public async createFromSeed(
@@ -40,4 +40,3 @@ export default class WalletService extends rx.Subject<any> {
     return false;
   }
 }
-
