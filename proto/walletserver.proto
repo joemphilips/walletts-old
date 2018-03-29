@@ -63,6 +63,10 @@ message SetupBlockchainRequest {
   };
   bch_info_source type = 1;
   string conf_path = 2;
+  string rpcusername = 3;
+  string rpcpass = 4;
+  string rpcip = 5;
+  string rpcport = 6;
 }
 
 message SetupBlockchainResponse {

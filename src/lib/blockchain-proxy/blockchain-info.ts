@@ -16,4 +16,9 @@ export class BlockchainInfo implements BlockchainProxy {
     this.logger.trace(`going to get PrevHash for ${tx}`);
     throw new Error('not imlemented!');
   }
+
+  public async ping(): Promise<void> {
+    await this.api.getLatestBlock();
+    return;
+  }
 }

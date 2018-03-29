@@ -8,6 +8,7 @@ export interface BlockchainProxy {
   readonly client?: any;
   readonly network?: Network;
   readonly logger: Logger;
+  readonly ping: () => Promise<void>;
 }
 
 export * from './blockchain-info';

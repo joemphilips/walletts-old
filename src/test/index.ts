@@ -9,6 +9,12 @@ import * as path from 'path';
 import * as Logger from 'bunyan';
 import { BasicWallet } from '../lib/wallet';
 import { bchInfoSource } from '..//bin/grpc-common';
+import {
+  testBitcoindIp,
+  testBitcoindPassword,
+  testBitcoindPort,
+  testBitcoindUsername
+} from './helpers';
 
 const sleep = (msec: number) =>
   new Promise(resolve => setTimeout(resolve, msec));
@@ -75,7 +81,13 @@ test.cb('It can set blockchainProxy after creating Wallet', t => {
     t.true(r.success, `received ${r} from server`);
 
     client.setupBlockchainProxy(
-      { type: bchInfoSource.trusted_rpc },
+      {
+        type: bchInfoSource.trusted_rpc,
+        rpcusername: testBitcoindUsername,
+        rpcpass: testBitcoindPassword,
+        rpcip: testBitcoindIp,
+        rpcport: testBitcoindPort
+      },
       (err, res) => {
         if (err) {
           logger.error(

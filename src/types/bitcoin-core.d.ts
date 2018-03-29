@@ -10,7 +10,7 @@ declare module 'bitcoin-core' {
     logger?: Function;
     network?: 'mainnet' | 'regtest' | 'testnet';
     password?: string;
-    port?: 'string';
+    port?: string;
     ssl?: any;
     timeout?: number;
     username?: string;

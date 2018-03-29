@@ -57,11 +57,22 @@ const createWalletServiceHandlers = (
       const bchType = ctx.req.type;
       if (bchType === bchInfoSource.trusted_rpc || bchType === 'trusted_rpc') {
         if (parent.wallet) {
+          const { conf_path, rpcusername, rpcpass, rpcip, rpcport } = ctx.req;
           parent.wallet.bchproxy = new TrustedBitcoindRPC(
-            ctx.req.conf_path,
+            conf_path,
+            rpcusername,
+            rpcpass,
+            rpcip,
+            rpcport,
             handlerLogger
           );
-          ctx.res = { success: true };
+          try {
+            parent.wallet.bchproxy.ping();
+            ctx.res = { success: true };
+          } catch (e) {
+            handlerLogger.warn(`blockchain seems to be unreachable...`);
+            ctx.res = { success: true };
+          }
         } else {
           handlerLogger.error(
             `there are no wallet! you must initialize wallet before setting up blockchain!`

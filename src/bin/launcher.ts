@@ -67,8 +67,15 @@ export default class WalletLauncher {
     // setup blockchain
     const bchSetupAction = await this.uiproxy.chooseBlockchainProxy();
     if (bchSetupAction.kind === 'trustedRPC') {
+      const { rpcusername, rpcpass, rpcip, rpcport } = bchSetupAction.payload;
       this.client.setupBlockchainProxy(
-        { type: bchInfoSource.trusted_rpc },
+        {
+          type: bchInfoSource.trusted_rpc,
+          rpcusername,
+          rpcpass,
+          rpcip,
+          rpcport
+        },
         (e: NodeJS.ErrnoException, _: { success: boolean }) => {
           if (e) {
             this.logger.error(e.toString());
