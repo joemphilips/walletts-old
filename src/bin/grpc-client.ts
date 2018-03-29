@@ -1,5 +1,5 @@
 import * as grpc from 'grpc';
-import { PROTO_PATH } from './grpc-common';
+import { bchInfoSource, PROTO_PATH } from './grpc-common';
 
 export interface CreateWalletArg {
   nameSpace: string;
@@ -12,6 +12,10 @@ export interface RPCClient {
   createWallet: (
     arg: CreateWalletArg,
     cb: (err: any, isSuccess: { success: boolean }) => void
+  ) => void;
+  setupBlockchainProxy: (
+    arg: { type: bchInfoSource },
+    cb: (err: NodeJS.ErrnoException, isSuccess: { success: boolean }) => void
   ) => void;
 }
 

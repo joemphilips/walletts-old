@@ -15,6 +15,7 @@ message PingResponse {
 service WalletService {
     rpc Ping (PingRequest) returns (PingResponse);
     rpc CreateWallet(CreateWalletRequest) returns (CreateWalletResponse);
+    rpc SetupBlockchainProxy(SetupBlockchainRequest) returns (SetupBlockchainResponse);
 }
 
 message TransactionDetails {
@@ -53,6 +54,19 @@ message CreateWalletRequest {
 }
 message CreateWalletResponse {
    bool success = 1;
+}
+
+message SetupBlockchainRequest {
+  enum bch_info_source {
+    trusted_rpc = 0;
+    blockchain_info = 1;
+  };
+  bch_info_source type = 1;
+  string conf_path = 2;
+}
+
+message SetupBlockchainResponse {
+  bool success = 1;
 }
 
 message GetWalletRequest {}

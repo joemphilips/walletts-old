@@ -1,6 +1,7 @@
 import * as inquirer from 'inquirer';
 import { WalletError } from '../lib/errors';
 
+// action for wallet creation
 export interface CreateWallet {
   kind: 'createWallet';
   payload: {
@@ -8,7 +9,6 @@ export interface CreateWallet {
     passPhrase: string;
   };
 }
-
 export interface ImportWallet {
   kind: 'importWallet';
   payload: {
@@ -17,13 +17,36 @@ export interface ImportWallet {
     passPhrase: string;
   };
 }
-
 export interface DoNothing {
   kind: 'doNothing';
   payload: 'none';
 }
-
 export type WalletAction = CreateWallet | ImportWallet | DoNothing;
+/**
+ * below is default implementation for using the Wallet as CLI.
+ */
+
+interface CreateNewWalletAnswers {
+  readonly create_new: boolean;
+  readonly import: boolean;
+  readonly passPhrase: string;
+}
+
+// action for setting up blockchain proxy
+export interface UseBitcoind {
+  kind: 'trustedRPC';
+  payload: {
+    confPath: string;
+  };
+}
+export interface UseBlockchainInfo {
+  kind: 'blockchainInfo';
+  payload: null;
+}
+export type BlockchainAction = UseBitcoind | UseBlockchainInfo;
+interface SetupBlockchainProxyAnswers {
+  readonly path?: string;
+}
 
 export interface UIProxy {
   readonly mnemonicLength: number;
@@ -33,16 +56,7 @@ export interface UIProxy {
    * 2. information necessary for that action
    */
   readonly setupWalletInteractive: () => Promise<WalletAction>;
-}
-
-/**
- * below is default implementation for using the Wallet as CLI.
- */
-
-interface CreateNewWalletAnswers {
-  readonly create_new: boolean;
-  readonly import: boolean;
-  readonly passPhrase: string;
+  readonly chooseBlockchainProxy: () => Promise<BlockchainAction>;
 }
 
 export class CliUIProxy implements UIProxy {
@@ -119,5 +133,32 @@ export class CliUIProxy implements UIProxy {
     } else {
       return this._askMnemonic();
     }
+  }
+
+  public async chooseBlockchainProxy(): Promise<BlockchainAction> {
+    const questions: inquirer.Questions<SetupBlockchainProxyAnswers> = [
+      {
+        name: 'bchtype',
+        type: 'list',
+        message:
+          'what do you want to use as a source for blockchain information?',
+        choices: ['Bitcoind you trust', 'blockchain.info'],
+        default: 'Bitcoind you trust'
+      },
+      {
+        name: 'path',
+        type: 'input',
+        message: 'where is your bitcoin.conf?',
+        default: process.env.HOME + '.bitcoin/bitcoin.conf',
+        when: (prevAnswers: any) => prevAnswers.bchtype === 'Bitcoind you trust'
+      }
+    ];
+    const answers: SetupBlockchainProxyAnswers = await inquirer.prompt(
+      questions
+    );
+    if (answers.path) {
+      return { kind: 'trustedRPC', payload: { confPath: answers.path } };
+    }
+    return { kind: 'blockchainInfo', payload: null };
   }
 }
