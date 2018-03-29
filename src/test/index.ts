@@ -7,11 +7,13 @@ import { mkdirpSync } from 'fs-extra';
 import getLogger from '../lib/logger';
 import * as path from 'path';
 import * as Logger from 'bunyan';
+import { BasicWallet } from '../lib/wallet';
+import { bchInfoSource } from '..//bin/grpc-common';
 
 const sleep = (msec: number) =>
   new Promise(resolve => setTimeout(resolve, msec));
 
-let service: RPCServer;
+let service: RPCServer<BasicWallet>;
 let testConfig: Config;
 let logger: Logger;
 
@@ -47,7 +49,7 @@ test.cb('It can respond to PingRequest', t => {
   });
 });
 
-test.cb('It can create Wallet only with nameSpace', t => {
+test.cb('It can create Wallet only by nameSpace', t => {
   const client: RPCClient = getClient(testConfig.url);
   client.createWallet({ nameSpace: 'testNameSpace' }, (e, r) => {
     if (e) {
@@ -58,5 +60,32 @@ test.cb('It can create Wallet only with nameSpace', t => {
     }
     t.true(r.success, `received ${r} from server`);
     t.end();
+  });
+});
+
+test.cb('It can set blockchainProxy after creating Wallet', t => {
+  const client: RPCClient = getClient(testConfig.url);
+  client.createWallet({ nameSpace: 'testNameSpace' }, (e, r) => {
+    if (e) {
+      logger.error(
+        `received this error from WalletServer.createWallet ${e.toString()}`
+      );
+      t.fail('Error while creating Wallet');
+    }
+    t.true(r.success, `received ${r} from server`);
+
+    client.setupBlockchainProxy(
+      { type: bchInfoSource.trusted_rpc },
+      (err, res) => {
+        if (err) {
+          logger.error(
+            `received following error from WalletServer ${err.toString()}`
+          );
+          t.fail(`Error while setting blockchain proxy`);
+        }
+        t.true(res.success, `received ${JSON.stringify(res)} from server`);
+        t.end();
+      }
+    );
   });
 });
