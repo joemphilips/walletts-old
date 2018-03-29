@@ -2,25 +2,26 @@ import chalk from 'chalk';
 import { Config, default as loadConfig } from '../lib/config';
 import container from '../lib/container';
 import { BasicWallet } from '../lib/wallet';
-import WalletRepository from '../lib/wallet-repository';
+import WalletService from '../lib/wallet-service';
 import GRPCServer, { RPCServer } from './grpc-server';
 import { UIProxy, WalletAction } from './uiproxy';
 import getClient, { RPCClient } from './grpc-client';
 import getLogger from '../lib/logger';
+import { bchInfoSource } from './grpc-common';
 
 export default class WalletLauncher {
   public readonly cfg: Config;
-  private readonly walletRepo: WalletRepository;
+  private readonly walletRepo: WalletService;
   private readonly uiproxy: UIProxy;
   private readonly logger: any;
-  private readonly server: RPCServer;
+  private readonly server: RPCServer<BasicWallet>;
   private readonly client: RPCClient; // stub for calling wallet server
 
   constructor(opts: Partial<Config>) {
     this.cfg = loadConfig(opts);
     this.logger = getLogger(this.cfg.debugFile);
     this.logger.info(`config object is ${this.cfg}`);
-    this.walletRepo = new WalletRepository(this.cfg, this.logger);
+    this.walletRepo = new WalletService(this.cfg, this.logger);
     this.server = new GRPCServer(this.logger);
     this.uiproxy = container.resolve('uiproxy');
     this.client = getClient(this.cfg.url);
@@ -29,7 +30,7 @@ export default class WalletLauncher {
   public async run(): Promise<void> {
     this.server.start(this.walletRepo, this.cfg);
     chalk(`server has been started`);
-    chalk(`what do you want with your Wallet?`);
+    chalk(`what do you want to do with your Wallet?`);
     const action: WalletAction = await this.uiproxy.setupWalletInteractive();
     if (action.kind === 'createWallet') {
       this.client.createWallet(
@@ -61,6 +62,21 @@ export default class WalletLauncher {
       throw new Error('not supported yet!');
     } else {
       throw new Error(`unReachable!`);
+    }
+
+    // setup blockchain
+    const bchSetupAction = await this.uiproxy.chooseBlockchainProxy();
+    if (bchSetupAction.kind === 'trustedRPC') {
+      this.client.setupBlockchainProxy(
+        { type: bchInfoSource.trusted_rpc },
+        (e: NodeJS.ErrnoException, _: { success: boolean }) => {
+          if (e) {
+            this.logger.error(e.toString());
+          }
+        }
+      );
+    } else {
+      throw new Error(`not supported yet!`);
     }
   }
 }

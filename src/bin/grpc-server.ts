@@ -1,21 +1,24 @@
-import * as grpc from 'grpc';
 import { Config } from '../lib/config';
-import getLogger from '../lib/logger';
-import WalletRepository from '../lib/wallet-repository';
-import { PROTO_PATH } from './grpc-common';
+import WalletService from '../lib/wallet-service';
+import { bchInfoSource, PROTO_PATH } from './grpc-common';
 import Mali, { Context } from 'mali';
 import * as Logger from 'bunyan';
 import maliLogger from 'mali-logger';
+import { Option } from '../lib/primitives/utils';
+import { AbstractWallet, BasicWallet } from '../';
+import { TrustedBitcoindRPC } from '../lib/blockchain-proxy';
 
-export interface RPCServer {
+export interface RPCServer<W extends AbstractWallet> {
   readonly logger: Logger;
-  readonly start: (w: WalletRepository, cfg: Config) => void;
+  readonly start: (w: WalletService, cfg: Config) => void;
+  wallet: Option<W>;
 }
 
 const createWalletServiceHandlers = (
-  walletRepo: WalletRepository,
-  handlerLogger: Logger
+  walletService: WalletService,
+  parent: RPCServer<BasicWallet>
 ) => {
+  const handlerLogger: Logger = parent.logger;
   return {
     async ping(ctx: Context): Promise<void> {
       ctx.sendMetadata();
@@ -28,34 +31,65 @@ const createWalletServiceHandlers = (
         `received createWallet request ${JSON.stringify(ctx.req)}`
       );
       const nameSpace: string = ctx.req.nameSpace;
-      let isSuccess: boolean;
       if (ctx.req.seed && ctx.req.seed.length && ctx.req.seed.length !== 0) {
-        isSuccess = await walletRepo.createFromSeed(
+        parent.wallet = await walletService.createFromSeed(
           nameSpace,
           ctx.req.seed,
           ctx.req.passPhrase
         );
       } else {
-        isSuccess = await walletRepo.createNew(nameSpace, ctx.req.passPhrase);
+        parent.wallet = await walletService.createNew(
+          nameSpace,
+          ctx.req.passPhrase
+        );
       }
-      if (isSuccess) {
+      if (parent.wallet) {
         handlerLogger.info(`wallet created !`);
+        ctx.res = { success: true };
       } else {
         handlerLogger.info(`failed to create Wallet`);
+        ctx.res = { success: false };
       }
-      ctx.res = { success: isSuccess };
+    },
+
+    async setupBlockchainProxy(ctx: Context): Promise<void> {
+      handlerLogger.trace(`received set`);
+      const bchType = ctx.req.type;
+      if (bchType === bchInfoSource.trusted_rpc || bchType === 'trusted_rpc') {
+        if (parent.wallet) {
+          parent.wallet.bchproxy = new TrustedBitcoindRPC(
+            ctx.req.conf_path,
+            handlerLogger
+          );
+          ctx.res = { success: true };
+        } else {
+          handlerLogger.error(
+            `there are no wallet! you must initialize wallet before setting up blockchain!`
+          );
+          ctx.res = { success: false };
+        }
+      } else {
+        handlerLogger.error(
+          `this type of blockchain proxy is not supported yet! ${bchType}`
+        );
+        ctx.res = { success: false };
+      }
     }
   };
 };
 
-export default class GRPCServer implements RPCServer {
+export default class GRPCServer implements RPCServer<BasicWallet> {
   public readonly logger: Logger;
+  public wallet: Option<BasicWallet>;
+
   constructor(log: Logger) {
     this.logger = log.child({ subModule: 'grpc-server' });
     this.logger.info('going to activate server using', PROTO_PATH);
+    this.wallet = null;
   }
-  public start(w: WalletRepository, cfg: Config): void {
-    const handlers = createWalletServiceHandlers(w, this.logger);
+
+  public start(w: WalletService, cfg: Config): void {
+    const handlers = createWalletServiceHandlers(w, this);
     const app = new Mali(PROTO_PATH);
     app.use(maliLogger());
     app.use(handlers);

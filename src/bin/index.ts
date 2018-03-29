@@ -2,7 +2,7 @@
 
 import { Command } from 'commander';
 import logger from '../lib/logger';
-import WalletService from './service';
+import WalletService from './launcher';
 
 const program = new Command();
 

@@ -8,3 +8,8 @@ export const PROTO_PATH = path.join(
   'proto',
   'walletserver.proto'
 );
+
+export enum bchInfoSource {
+  trusted_rpc = 0,
+  blockchain_info = 1
+}

@@ -1,4 +1,4 @@
-import { Client } from 'bitcoin-core';
+import Client, { ClientConstructorOption } from 'bitcoin-core';
 import { Transaction } from 'bitcoinjs-lib';
 import * as fs from 'fs';
 import * as ini from 'ini';
@@ -6,21 +6,39 @@ import logger from '../logger';
 import { BlockchainProxy } from './index';
 import * as Logger from 'bunyan';
 
-export class TustedBitcoindRPC implements BlockchainProxy {
+export class TrustedBitcoindRPC implements BlockchainProxy {
   public readonly client: any;
   public readonly logger: Logger;
-  constructor(confPath: fs.PathLike, log: Logger) {
+  constructor(
+    confPath: fs.PathLike,
+    log: Logger,
+    network?: 'testnet' | 'mainnet' | 'regtest',
+    host?: string
+  ) {
     this.logger = log.child({ subModule: 'TrustedBitcoindRPC' });
     this.logger.debug(
       `going to use testnet bitcoin-core specified in ${confPath}`
     );
-    const conf = ini.parse(fs.readFileSync(confPath, 'utf-8'));
-    const opts = {
-      username: conf.rpcuser,
-      password: conf.rpcpassword,
-      host: conf.rpcconnect,
-      network: conf.testnet ? 'testnet' : 'mainnet'
-    };
+    let conf;
+    let opts: ClientConstructorOption;
+    try {
+      conf = ini.parse(fs.readFileSync(confPath, 'utf-8'));
+      opts = {
+        username: conf.rpcuser,
+        password: conf.rpcpassword,
+        host: conf.rpcconnect,
+        network: conf.testnet ? 'testnet' : 'mainnet'
+      };
+    } catch (e) {
+      this.logger.error(`failed to load config file`);
+      opts = {
+        network,
+        host
+      };
+    }
+    this.logger.info(
+      `setting up blockchain proxy with ${JSON.stringify(opts)} ...`
+    );
     this.client = new Client(opts);
   }
 

@@ -3,7 +3,7 @@ import * as uuid from 'node-uuid';
 import { Readable, Writable } from 'stream';
 import { UIProxy, WalletAction } from '../bin/uiproxy';
 import BackendProxy from './backend/node';
-import { BlockchainProxy, TustedBitcoindRPC } from './blockchain-proxy/';
+import { BlockchainProxy, TrustedBitcoindRPC } from './blockchain-proxy/';
 import CoinManager from './coin_manager';
 import {
   FailedToCreateWalletError,
@@ -14,66 +14,57 @@ import Keystore, {
   BasicKeyRepository,
   default as KeyRepository
 } from './key-repository';
-import logger from './logger';
+import logger, { default as getLogger } from './logger';
 import { AccountID } from './primitives/identity';
-import { DecryptStream, EncryptStream } from './stream';
-import WalletRepository from './wallet-repository';
+import WalletService from './wallet-service';
 import * as Logger from 'bunyan';
+import { Option } from '../lib/primitives/utils';
 
-// Business logic is implemented here.
-// IO/Serialization logic must implemented in coinManager
-// as possible.
-export abstract class AbstractWallet<
-  P extends BlockchainProxy = TustedBitcoindRPC
-> {
-  public abstract readonly coinManager: CoinManager<P>;
-  public abstract readonly bchproxy: P;
-  public abstract readonly walletRepository: WalletRepository;
+export abstract class AbstractWallet {
+  public abstract readonly coinManager: Option<CoinManager>;
+  public abstract readonly bchproxy: Option<BlockchainProxy>;
   public abstract readonly id: AccountID;
-  public abstract readonly pay: (k: Keystore) => Promise<void>;
-  public abstract readonly fromSeed: (
-    seed: ReadonlyArray<string>
+  public abstract readonly publicKey: Buffer;
+  public abstract readonly pay: (
+    k: Keystore,
+    address: string
   ) => Promise<boolean>;
-  public abstract readonly createNewAcount: (
+  public abstract readonly createNewAccount: (
     nameSpace: string
   ) => Promise<boolean>;
 }
 
-export interface WalletOpts<
-  P extends BlockchainProxy,
-  W extends Writable,
-  R extends Readable
-> {
-  readonly bchproxy: P;
-  readonly walletrepository: WalletRepository;
-  readonly backend: BackendProxy;
-}
-
-export class BasicWallet implements AbstractWallet<TustedBitcoindRPC> {
-  public readonly coinManager: CoinManager<TustedBitcoindRPC>;
+export class BasicWallet implements AbstractWallet {
+  public readonly coinManager: Option<CoinManager>;
   public readonly id: AccountID;
+  public readonly accounts: Option<Account[]>;
+  private readonly logger: Option<Logger>;
   constructor(
-    public bchproxy: TustedBitcoindRPC,
-    public walletRepository: WalletRepository,
-    public backend: BackendProxy,
     public publicKey: Buffer,
-    log: Logger
+    public bchproxy: Option<TrustedBitcoindRPC>,
+    public parentLogger?: Logger
   ) {
-    this.coinManager = new CoinManager<TustedBitcoindRPC>(this.bchproxy, log);
+    this.logger = parentLogger
+      ? parentLogger.child({ subModule: 'BasicWallet' })
+      : null;
     this.id = uuid.v4(); // TODO: derive from public key
+    this.accounts = [];
+    this.coinManager = null;
   }
 
-  public async fromSeed(seed: ReadonlyArray<string>): Promise<boolean> {
-    // TODO: rescan
-    return false;
-  }
-
-  public async createNewAcount(nameSpace: string): Promise<boolean> {
-    throw new WalletError('not implemented');
-  }
-
-  public async pay(k: Keystore): Promise<void> {
+  public async pay(k: Keystore, address: string): Promise<boolean> {
+    if (!this.coinManager) {
+      return false;
+    }
     await this.coinManager.sign(k);
+    return true;
+  }
+
+  public async createNewAccount(nameSpace: string): Promise<boolean> {
+    if (this.logger) {
+      this.logger.error(`createAccount is not implemented!`);
+    }
+    return false;
   }
 }
 

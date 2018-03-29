@@ -3,16 +3,17 @@ import { BlockchainProxy } from './blockchain-proxy';
 import Keystore from './key-repository';
 import logger from './logger';
 import { WalletCoin } from './primitives/wallet-coin';
-import WalletDB from './wallet-repository';
+import WalletDB from './wallet-service';
 import * as Logger from 'bunyan';
+import { Option } from '../lib/primitives/utils';
 
-export default class CoinManager<P extends BlockchainProxy> {
-  public readonly bchproxy: P;
+export default class CoinManager {
   public readonly coins: ReadonlyArray<WalletCoin>;
   public readonly builder: btc.TransactionBuilder;
+  public readonly bchproxy: Option<BlockchainProxy>;
   public readonly logger: Logger;
 
-  constructor(p: P, log: Logger) {
+  constructor(p: Option<BlockchainProxy>, log: Logger) {
     this.logger = log.child({ subModule: 'CoinManager' });
     this.builder = new btc.TransactionBuilder();
     this.coins = [];

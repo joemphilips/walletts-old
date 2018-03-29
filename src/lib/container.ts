@@ -12,13 +12,13 @@ import {
 import RPCServer, { default as GRPCServer } from '../bin/grpc-server';
 import { CliUIProxy } from '../bin/uiproxy';
 import BackendProxy from './backend/node';
-import { BlockchainInfo, TustedBitcoindRPC } from './blockchain-proxy';
+import { BlockchainInfo, TrustedBitcoindRPC } from './blockchain-proxy';
 import loadConfig from './config';
 import { BasicKeyRepository } from './key-repository';
 import { InMemoryDB } from './keydb';
 import { DecryptStream, EncryptStream } from './stream';
 import { BasicWallet } from './wallet';
-import WalletDB from './wallet-repository';
+import WalletDB from './wallet-service';
 
 const container: AwilixContainer = createContainer({
   injectionMode: InjectionMode.CLASSIC
