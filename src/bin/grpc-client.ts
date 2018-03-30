@@ -14,7 +14,13 @@ export interface RPCClient {
     cb: (err: any, isSuccess: { success: boolean }) => void
   ) => void;
   setupBlockchainProxy: (
-    arg: { type: bchInfoSource },
+    arg: {
+      type: bchInfoSource;
+      rpcusername: string;
+      rpcpass: string;
+      rpcip: string;
+      rpcport: string;
+    },
     cb: (err: NodeJS.ErrnoException, isSuccess: { success: boolean }) => void
   ) => void;
 }

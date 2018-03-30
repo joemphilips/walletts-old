@@ -1,5 +1,7 @@
 import * as inquirer from 'inquirer';
 import { WalletError } from '../lib/errors';
+import * as ini from 'ini';
+import * as fs from 'fs';
 
 // action for wallet creation
 export interface CreateWallet {
@@ -36,7 +38,11 @@ interface CreateNewWalletAnswers {
 export interface UseBitcoind {
   kind: 'trustedRPC';
   payload: {
-    confPath: string;
+    confPath?: string;
+    rpcusername: string;
+    rpcpass: string;
+    rpcip: string;
+    rpcport: string;
   };
 }
 export interface UseBlockchainInfo {
@@ -45,7 +51,12 @@ export interface UseBlockchainInfo {
 }
 export type BlockchainAction = UseBitcoind | UseBlockchainInfo;
 interface SetupBlockchainProxyAnswers {
+  readonly bchtype: string;
   readonly path?: string;
+  readonly rpcusername: string;
+  readonly rpcpass: string;
+  readonly rpcip: string;
+  readonly rpcport: string;
 }
 
 export interface UIProxy {
@@ -151,13 +162,41 @@ export class CliUIProxy implements UIProxy {
         message: 'where is your bitcoin.conf?',
         default: process.env.HOME + '.bitcoin/bitcoin.conf',
         when: (prevAnswers: any) => prevAnswers.bchtype === 'Bitcoind you trust'
+      },
+      {
+        name: 'rpcusername',
+        type: 'input',
+        message: 'what is your username for bitcoind rpc?',
+        when: (prevAnswers: any) => prevAnswers.bchtype === 'Bitcoind you trust'
+      },
+      {
+        name: 'rpcpass',
+        type: 'input',
+        message: 'And password?',
+        when: (prevAnswers: any) => prevAnswers.bchtype === 'Bitcoind you trust'
+      },
+      {
+        name: 'rpcip',
+        type: 'input',
+        message: 'And its ip? (e.g. `localhost` or `127.0.0.5` )',
+        when: (prevAnswers: any) => prevAnswers.bchtype === 'Bitcoind you trust'
+      },
+      {
+        name: 'rpcport',
+        type: 'input',
+        message: 'And its port? (e.g. 8332)',
+        when: (prevAnswers: any) => prevAnswers.bchtype === 'Bitcoind you trust'
       }
     ];
     const answers: SetupBlockchainProxyAnswers = await inquirer.prompt(
       questions
     );
-    if (answers.path) {
-      return { kind: 'trustedRPC', payload: { confPath: answers.path } };
+    const { rpcusername, rpcpass, rpcip, rpcport } = answers;
+    if (answers.bchtype === 'Bitcoind you trust') {
+      return {
+        kind: 'trustedRPC',
+        payload: { rpcusername, rpcpass, rpcip, rpcport }
+      };
     }
     return { kind: 'blockchainInfo', payload: null };
   }

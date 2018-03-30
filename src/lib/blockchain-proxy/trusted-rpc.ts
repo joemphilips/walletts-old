@@ -11,9 +11,12 @@ export class TrustedBitcoindRPC implements BlockchainProxy {
   public readonly logger: Logger;
   constructor(
     confPath: fs.PathLike,
+    username: string,
+    password: string,
+    rpcip: string,
+    rpcport: string,
     log: Logger,
-    network?: 'testnet' | 'mainnet' | 'regtest',
-    host?: string
+    network?: 'testnet' | 'mainnet' | 'regtest'
   ) {
     this.logger = log.child({ subModule: 'TrustedBitcoindRPC' });
     this.logger.debug(
@@ -33,13 +36,20 @@ export class TrustedBitcoindRPC implements BlockchainProxy {
       this.logger.error(`failed to load config file`);
       opts = {
         network,
-        host
+        host: rpcip,
+        port: rpcport,
+        username,
+        password
       };
     }
     this.logger.info(
       `setting up blockchain proxy with ${JSON.stringify(opts)} ...`
     );
     this.client = new Client(opts);
+  }
+
+  public async ping(): Promise<void> {
+    return this.client.ping();
   }
 
   public async getPrevHash(tx: Transaction): Promise<ReadonlyArray<string>> {
