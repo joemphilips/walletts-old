@@ -58,7 +58,7 @@
   "dependencies": {
     "awilix": "^3.0.6",
     "bip39": "^2.5.0",
-    "bitcoin-core": "^2.0.0",
+    "bitcoin-core": "https://github.com/joemphilips/bitcoin-core#typings",
     "bitcoinjs-lib": "^3.3.2",
     "blockchain.info": "^2.11.0",
     "bunyan": "^1.8.12",

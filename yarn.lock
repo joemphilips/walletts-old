@@ -1228,9 +1228,9 @@ bip66@^1.1.0:
   dependencies:
     safe-buffer "^5.0.1"
 
-bitcoin-core@^2.0.0:
+"bitcoin-core@https://github.com/joemphilips/bitcoin-core#typings":
   version "2.0.0"
-  resolved "https://registry.yarnpkg.com/bitcoin-core/-/bitcoin-core-2.0.0.tgz#defcd4b3bfb6738ea88051b5fe5a944e32c09df0"
+  resolved "https://github.com/joemphilips/bitcoin-core#4ca1687ed613ba5a9bd44ebab9f60c8d76224259"
   dependencies:
     "@uphold/request-logger" "^2.0.0"
     bluebird "^3.4.1"
