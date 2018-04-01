@@ -61,9 +61,8 @@ export default class WalletService extends rx.Subject<any>
     passPhrase?: string
   ): Promise<BasicWallet> {
     this.logger.trace('re-creating Wallet from seed...');
-    const node = bitcoin.HDNode.fromSeedBuffer(
-      bip39.mnemonicToSeed(seed.join(''), passPhrase)
-    );
+    const seedBuffer = bip39.mnemonicToSeed(seed.join(' '), passPhrase);
+    const node = bitcoin.HDNode.fromSeedBuffer(seedBuffer);
     const pubkey = node.getPublicKeyBuffer();
     return new BasicWallet(pubkey, null, this.logger);
   }

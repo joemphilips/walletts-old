@@ -19,12 +19,13 @@ import { AccountID } from './primitives/identity';
 import WalletService from './wallet-service';
 import * as Logger from 'bunyan';
 import { Option } from '../lib/primitives/utils';
+import { crypto } from 'bitcoinjs-lib';
+import hash160 = crypto.hash160;
 
 export abstract class AbstractWallet {
   public abstract readonly coinManager: Option<CoinManager>;
   public abstract readonly bchproxy: Option<BlockchainProxy>;
   public abstract readonly id: AccountID;
-  public abstract readonly publicKey: Buffer;
   public abstract readonly pay: (
     k: Keystore,
     address: string
@@ -40,14 +41,14 @@ export class BasicWallet implements AbstractWallet {
   public readonly accounts: Option<Account[]>;
   private readonly logger: Option<Logger>;
   constructor(
-    public publicKey: Buffer,
+    publicKey: Buffer,
     public bchproxy: Option<TrustedBitcoindRPC>,
     public parentLogger?: Logger
   ) {
     this.logger = parentLogger
       ? parentLogger.child({ subModule: 'BasicWallet' })
       : null;
-    this.id = uuid.v4(); // TODO: derive from public key
+    this.id = hash160(publicKey).toString('hex');
     this.accounts = [];
     this.coinManager = null;
   }

@@ -124,6 +124,7 @@
     "failFast": true,
     "files": [
       "build/main/**/*.spec.js",
+      "build/test/**/*.spec.js",
       "build/test/test/**/*.js"
     ],
     "sources": [

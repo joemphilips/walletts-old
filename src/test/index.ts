@@ -10,6 +10,7 @@ import * as Logger from 'bunyan';
 import { BasicWallet } from '../lib/wallet';
 import { bchInfoSource } from '..//bin/grpc-common';
 import {
+  prePareTest,
   startTestBitcoind,
   testBitcoindIp,
   testBitcoindPassword,
@@ -25,15 +26,8 @@ let testConfig: Config;
 let logger: Logger;
 
 test.before(async t => {
-  const Home: string =
-    process.env[process.platform === 'win32' ? 'USERPROFILE' : 'HOME'] ||
-    __dirname;
-  const dataDir = path.join(Home, '.walletts-test');
-  mkdirpSync(dataDir);
-  const debugFile = path.join(dataDir, 'test.log');
-  logger = getLogger(debugFile);
-  logger.warn(`debug log will be output to ${debugFile}`);
-  logger.warn(`create ${dataDir} for testing ...`);
+  let dataDir: string;
+  [logger, dataDir] = prePareTest();
   await startTestBitcoind(logger);
   service = new GRPCServer(logger);
   testConfig = loadConfig({ datadir: dataDir });

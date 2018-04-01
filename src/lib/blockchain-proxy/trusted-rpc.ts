@@ -7,7 +7,7 @@ import { BlockchainProxy } from './index';
 import * as Logger from 'bunyan';
 
 export class TrustedBitcoindRPC implements BlockchainProxy {
-  public readonly client: any;
+  public readonly client: Client;
   public readonly logger: Logger;
   constructor(
     confPath: fs.PathLike,
@@ -56,7 +56,9 @@ export class TrustedBitcoindRPC implements BlockchainProxy {
     this.logger.debug(`tx is ${JSON.stringify(tx.toHex())}`);
     this.logger.debug(`client is ${JSON.stringify(this.client)}`);
     this.logger.debug(`tx id is ${tx.getId()}`);
-    const RawTx: string = await this.client.getRawTransaction(tx.getId());
+    const RawTx: string = (await this.client.getRawTransaction(
+      tx.getId()
+    )) as string;
     this.logger.debug(`Raw TX is ${RawTx}`);
     const txwithInfo: any = await this.client.decodeRawTransaction(RawTx);
     this.logger.debug(`tx withInfo is ${JSON.stringify(txwithInfo)} `);

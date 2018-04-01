@@ -1230,7 +1230,7 @@ bip66@^1.1.0:
 
 "bitcoin-core@https://github.com/joemphilips/bitcoin-core#typings":
   version "2.0.0"
-  resolved "https://github.com/joemphilips/bitcoin-core#4ca1687ed613ba5a9bd44ebab9f60c8d76224259"
+  resolved "https://github.com/joemphilips/bitcoin-core#e9726d51a6dcf841bf7719d9c5e68eb55f59e0c5"
   dependencies:
     "@uphold/request-logger" "^2.0.0"
     bluebird "^3.4.1"
