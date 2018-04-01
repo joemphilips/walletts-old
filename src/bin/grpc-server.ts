@@ -32,6 +32,7 @@ const createWalletServiceHandlers = (
       );
       const nameSpace: string = ctx.req.nameSpace;
       if (ctx.req.seed && ctx.req.seed.length && ctx.req.seed.length !== 0) {
+        handlerLogger.debug(`going to create wallet from seed...`);
         parent.wallet = await walletService.createFromSeed(
           nameSpace,
           ctx.req.seed,

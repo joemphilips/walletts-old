@@ -11,6 +11,7 @@ import KeyRepository from './key-repository';
 import hash160 = bitcoin.crypto.hash160;
 import { PurposeField, SupportedCoinType } from './primitives/constants';
 import * as util from 'util';
+import {BlockchainProxy} from "lib/blockchain-proxy";
 
 interface AbstractWalletService<W extends AbstractWallet> {
   keyRepo: KeyRepository;
@@ -26,6 +27,7 @@ interface AbstractWalletService<W extends AbstractWallet> {
     type: AccountType,
     cointype: SupportedCoinType
   ) => Promise<W | void>;
+  discoverAccounts: (wallet: W) => Promise<W>
 }
 
 export default class WalletService extends rx.Subject<any>
@@ -65,7 +67,7 @@ export default class WalletService extends rx.Subject<any>
     seed: ReadonlyArray<string>,
     passPhrase?: string
   ): Promise<BasicWallet> {
-    this.logger.trace('re-creating Wallet from seed...');
+    this.logger.trace('creating Wallet from seed...');
     const seedBuffer = bip39.mnemonicToSeed(seed.join(' '), passPhrase);
     const node = bitcoin.HDNode.fromSeedBuffer(seedBuffer);
     const pubkey = node.getPublicKeyBuffer();
@@ -77,6 +79,10 @@ export default class WalletService extends rx.Subject<any>
     );
     this._save(wallet, node);
     return wallet;
+  }
+
+  public async discoverAccounts(wallet: BasicWallet, bch: BlockchainProxy, ) {
+
   }
 
   public async setNewAccountToWallet(

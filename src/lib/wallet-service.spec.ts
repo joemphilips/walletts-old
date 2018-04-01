@@ -73,4 +73,10 @@ test('it can be created, deleted, and resurrected', async t => {
     'id for wallet does not change even after creating account'
   );
   t.is(wallet3.accounts.length, 2);
+  const wallet32 = await service.createFromSeed(`Test Wallet 2`, seed);
+  t.deepEqual(
+    wallet3,
+    wallet32,
+    `Wallet resurrected from seed should have same account from before`
+  );
 });
