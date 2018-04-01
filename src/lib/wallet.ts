@@ -46,7 +46,6 @@ export class BasicWallet implements AbstractWallet {
     this.logger = parentLogger
       ? parentLogger.child({ subModule: 'BasicWallet' })
       : null;
-    this.accounts = [];
     this.coinManager = null;
   }
 

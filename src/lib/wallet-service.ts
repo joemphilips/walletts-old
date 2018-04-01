@@ -89,7 +89,7 @@ export default class WalletService extends rx.Subject<any>
       const rootNode = this.keyRepo.getHDNode(wallet.id);
       this.logger.trace(`rootNode is ${util.inspect(rootNode)}`);
       if (!rootNode) {
-        this.logger.error(`Account can not created if there are no wallet!`);
+        this.logger.error(`Account can not be created if there are no wallet!`);
         return;
       }
       const accountMasterHD = rootNode.derivePath(

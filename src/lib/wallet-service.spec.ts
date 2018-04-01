@@ -72,4 +72,5 @@ test('it can be created, deleted, and resurrected', async t => {
     wallet.id,
     'id for wallet does not change even after creating account'
   );
+  t.is(wallet3.accounts.length, 2);
 });
