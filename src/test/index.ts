@@ -17,6 +17,8 @@ import {
   testBitcoindPort,
   testBitcoindUsername
 } from './helpers';
+import { InMemoryKeyRepository } from '../lib/key-repository';
+import WalletRepository from '../lib/wallet-repository';
 
 const sleep = (msec: number) =>
   new Promise(resolve => setTimeout(resolve, msec));
@@ -31,7 +33,13 @@ test.before(async t => {
   await startTestBitcoind(logger);
   service = new GRPCServer(logger);
   testConfig = loadConfig({ datadir: dataDir });
-  const repo = new WalletService(testConfig, logger);
+  const keyRepo = new InMemoryKeyRepository();
+  const repo = new WalletService(
+    testConfig,
+    keyRepo,
+    new WalletRepository(),
+    logger
+  );
   service.start(repo, testConfig);
   await sleep(400); // to make sure server has started
 });

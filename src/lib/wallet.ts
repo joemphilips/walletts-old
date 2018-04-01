@@ -11,7 +11,7 @@ import {
   WalletNotFoundError
 } from './errors';
 import Keystore, {
-  BasicKeyRepository,
+  InMemoryKeyRepository,
   default as KeyRepository
 } from './key-repository';
 import logger, { default as getLogger } from './logger';
@@ -21,34 +21,31 @@ import * as Logger from 'bunyan';
 import { Option } from '../lib/primitives/utils';
 import { crypto } from 'bitcoinjs-lib';
 import hash160 = crypto.hash160;
+import { Account, NormalAccount } from './account';
 
 export abstract class AbstractWallet {
   public abstract readonly coinManager: Option<CoinManager>;
   public abstract readonly bchproxy: Option<BlockchainProxy>;
   public abstract readonly id: AccountID;
+  public abstract readonly accounts: ReadonlyArray<Account> | null;
   public abstract readonly pay: (
     k: Keystore,
     address: string
-  ) => Promise<boolean>;
-  public abstract readonly createNewAccount: (
-    nameSpace: string
   ) => Promise<boolean>;
 }
 
 export class BasicWallet implements AbstractWallet {
   public readonly coinManager: Option<CoinManager>;
-  public readonly id: AccountID;
-  public readonly accounts: Option<Account[]>;
   private readonly logger: Option<Logger>;
   constructor(
-    publicKey: Buffer,
+    public readonly id: AccountID,
     public bchproxy: Option<TrustedBitcoindRPC>,
+    public readonly accounts: ReadonlyArray<Account> = [],
     public parentLogger?: Logger
   ) {
     this.logger = parentLogger
       ? parentLogger.child({ subModule: 'BasicWallet' })
       : null;
-    this.id = hash160(publicKey).toString('hex');
     this.accounts = [];
     this.coinManager = null;
   }
@@ -59,13 +56,6 @@ export class BasicWallet implements AbstractWallet {
     }
     await this.coinManager.sign(k);
     return true;
-  }
-
-  public async createNewAccount(nameSpace: string): Promise<boolean> {
-    if (this.logger) {
-      this.logger.error(`createAccount is not implemented!`);
-    }
-    return false;
   }
 }
 
