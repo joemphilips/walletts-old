@@ -106,7 +106,9 @@ export default class WalletService extends rx.Subject<any>
       return wallet;
     }
 
-    return wallet;
+    const recoveredWallet = this.syncHDNode(master, bch, wallet);
+
+    return recoveredWallet;
   }
 
   public async setNewAccountToWallet(
@@ -153,7 +155,8 @@ export default class WalletService extends rx.Subject<any>
      * @returns {Account | null}
      */
     async function recoverAddress(
-      node: bitcoin.HDNode
+      node: bitcoin.HDNode,
+      accountNumber: number
     ): Promise<Account | null> {
       const addresses = [];
       for (const j of Array(20)) {
@@ -166,6 +169,7 @@ export default class WalletService extends rx.Subject<any>
         const id = hash160(node.getPublicKeyBuffer()).toString('hex');
         return new NormalAccount(
           id,
+          accountNumber,
           none,
           AccountType.Normal,
           new Balance(balanceSoFar)
@@ -176,21 +180,23 @@ export default class WalletService extends rx.Subject<any>
         (prev, value) => prev + value,
         0
       );
-      return recoverAddress(node);
+      return recoverAddress(node, accountNumber);
     }
 
     let accountIndex = 0;
     const accounts: Account[] = [];
     let endSync = false;
     while (!endSync) {
-      recoverAddress(masternode.derive(accountIndex)).then(account => {
-        if (account) {
-          accountIndex++;
-          accounts.push(account);
-        } else {
-          endSync = true;
+      recoverAddress(masternode.derive(accountIndex), accountIndex).then(
+        account => {
+          if (account) {
+            accountIndex++;
+            accounts.push(account);
+          } else {
+            endSync = true;
+          }
         }
-      });
+      );
     }
     this.logger.info(`recovered ${accountIndex} accounts from seed`);
     return new BasicWallet(wallet.id, accounts, wallet.parentLogger);
