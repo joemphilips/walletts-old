@@ -3,7 +3,7 @@ import { Transaction } from 'bitcoinjs-lib';
 import * as fs from 'fs';
 import * as ini from 'ini';
 import logger from '../logger';
-import { BlockchainProxy } from './index';
+import { BlockchainProxy, SyncInfo } from './index';
 import * as Logger from 'bunyan';
 
 export class TrustedBitcoindRPC implements BlockchainProxy {
@@ -48,8 +48,34 @@ export class TrustedBitcoindRPC implements BlockchainProxy {
     this.client = new Client(opts);
   }
 
+  public async isPruned(): Promise<boolean> {
+    const info = await this.client.getBlockchainInfo();
+    return info.pruned;
+  }
+
   public async ping(): Promise<void> {
     return this.client.ping();
+  }
+
+  public async getAddressesWithBalance(
+    addresses: ReadonlyArray<string>
+  ): Promise<SyncInfo> {
+    throw Error(`Not implemented !`);
+  }
+
+  /**
+   * utility function for regtesting
+   * @param {string} address
+   * @returns {Promise<void>}
+   */
+  public async prepare500BTC(address: string): Promise<boolean> {
+    const info = await this.client.getBlockchainInfo();
+    if (info.blocks > 1000) {
+      return false;
+    }
+    await this.client.generateToAddress(10, address);
+    await this.client.generate(100);
+    return true;
   }
 
   public async getPrevHash(tx: Transaction): Promise<ReadonlyArray<string>> {

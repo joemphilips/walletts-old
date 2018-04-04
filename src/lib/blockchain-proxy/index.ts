@@ -9,6 +9,24 @@ export interface BlockchainProxy {
   readonly network?: Network;
   readonly logger: Logger;
   readonly ping: () => Promise<void>;
+  readonly isPruned: () => Promise<boolean>;
+  readonly getAddressesWithBalance: (
+    addresses: ReadonlyArray<string>
+  ) => Promise<SyncInfo>;
+}
+
+export interface SyncInfo {
+  /**
+   * index of the last address found in the blockchain
+   */
+  i: number;
+
+  /**
+   * address => balance in blockchain
+   */
+  addresses: {
+    [key: string]: number;
+  };
 }
 
 export * from './blockchain-info';

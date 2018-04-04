@@ -1,14 +1,19 @@
 import * as btc from 'bitcoinjs-lib';
 import { Config } from './config';
 import { AccountID } from './primitives/identity';
+/* tslint:disable no-submodule-imports */
+import { Either, either, left, right } from 'fp-ts/lib/Either';
 
 // KeyRepository work as a visitor pattern mostly for CoinManager
 export default interface KeyRepository {
-  readonly getAddress: (id: AccountID, hdpath: string) => string | void;
-  readonly getPrivKey: (id: AccountID) => string | void;
-  readonly setHDNode: (id: AccountID, node: btc.HDNode) => void;
-  readonly getHDNode: (id: AccountID) => btc.HDNode | void;
-  readonly getPubKey: (id: AccountID) => string | void;
+  readonly getAddress: (
+    id: AccountID,
+    hdpath: string
+  ) => Promise<string | void>;
+  readonly getPrivKey: (id: AccountID) => Promise<string | void>;
+  readonly setHDNode: (id: AccountID, node: btc.HDNode) => Promise<void>;
+  readonly getHDNode: (id: AccountID) => Promise<btc.HDNode | void>;
+  readonly getPubKey: (id: AccountID) => Promise<string | void>;
 };
 
 export class InMemoryKeyRepository extends Map<AccountID, btc.HDNode>
@@ -17,7 +22,10 @@ export class InMemoryKeyRepository extends Map<AccountID, btc.HDNode>
     super();
   }
 
-  public getAddress(id: AccountID, hdpath: string): string | void {
+  public async getAddress(
+    id: AccountID,
+    hdpath: string
+  ): Promise<string | void> {
     const hd = this.get(id);
     if (!hd) {
       return;
@@ -25,7 +33,7 @@ export class InMemoryKeyRepository extends Map<AccountID, btc.HDNode>
     hd.derivePath(hdpath).getAddress();
   }
 
-  public getPrivKey(id: AccountID): string | void {
+  public async getPrivKey(id: AccountID): Promise<string | void> {
     const hd = this.get(id);
     if (!hd) {
       return;
@@ -33,12 +41,12 @@ export class InMemoryKeyRepository extends Map<AccountID, btc.HDNode>
     return hd.keyPair.toWIF();
   }
 
-  public setHDNode(id: AccountID, node: btc.HDNode): string | void {
+  public async setHDNode(id: AccountID, node: btc.HDNode): Promise<void> {
     this.set(id, node);
     return;
   }
 
-  public getPubKey(id: AccountID): string | void {
+  public async getPubKey(id: AccountID): Promise<string | void> {
     const hd = this.get(id);
     if (!hd) {
       return;
@@ -46,7 +54,7 @@ export class InMemoryKeyRepository extends Map<AccountID, btc.HDNode>
     return hd.getPublicKeyBuffer().toString('hex');
   }
 
-  public getHDNode(id: AccountID): btc.HDNode | void {
+  public async getHDNode(id: AccountID): Promise<btc.HDNode | void> {
     return this.get(id);
   }
 }

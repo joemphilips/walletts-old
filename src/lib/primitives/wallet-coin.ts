@@ -9,6 +9,7 @@ export class WalletCoin {
     public readonly builder: TransactionBuilder,
     public readonly scripts: ReadonlyArray<Script>,
     public readonly scriptType: string,
+    public readonly amount: number,
     public readonly isChange?: boolean
   ) {}
 

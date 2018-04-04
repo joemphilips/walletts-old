@@ -15,6 +15,7 @@ import loadConfig from '../lib/config';
 import hash160 = crypto.hash160;
 import { InMemoryKeyRepository } from '../lib/key-repository';
 import WalletRepository from '../lib/wallet-repository';
+import NormalAccountService from './account-service';
 
 test('it can be created, deleted, and resurrected', async t => {
   // setup dependencies for wallet service.
@@ -53,7 +54,7 @@ test('it can be created, deleted, and resurrected', async t => {
   ];
   const hdNode = HDNode.fromSeedBuffer(bip39.mnemonicToSeed(seed.join(' ')));
   const pubKey = hdNode.getPublicKeyBuffer();
-  const w = new BasicWallet(hash160(pubKey).toString('hex'), bchProxy);
+  const w = new BasicWallet(hash160(pubKey).toString('hex'), []);
   logger.debug(`seed created from entropy is ${seed}`);
   const wallet = await service.createFromSeed('Test Wallet', seed);
   t.is(
@@ -73,10 +74,18 @@ test('it can be created, deleted, and resurrected', async t => {
     'id for wallet does not change even after creating account'
   );
   t.is(wallet3.accounts.length, 2);
+
+  const accountService = new NormalAccountService(new InMemoryKeyRepository());
+  const [address, change] = await accountService.getAddressForAccount(
+    wallet.accounts[1],
+    1
+  );
+  bchProxy.prepare500BTC(address);
+
   const wallet32 = await service.createFromSeed(`Test Wallet 2`, seed);
   t.deepEqual(
     wallet3,
     wallet32,
-    `Wallet resurrected from seed should have same account from before`
+    `Wallet resurrected from seed should have same account with before`
   );
 });

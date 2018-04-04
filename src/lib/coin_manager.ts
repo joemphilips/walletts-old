@@ -5,7 +5,8 @@ import logger from './logger';
 import { WalletCoin } from './primitives/wallet-coin';
 import WalletDB from './wallet-service';
 import * as Logger from 'bunyan';
-import { Option } from '../lib/primitives/utils';
+/* tslint:disable-next-line:no-submodule-imports */
+import { Option } from './primitives/utils';
 
 export default class CoinManager {
   public readonly coins: ReadonlyArray<WalletCoin>;
