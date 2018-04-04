@@ -3,6 +3,9 @@ import * as Logger from 'bunyan';
 import * as path from 'path';
 import { mkdirpSync } from 'fs-extra';
 import getLogger from '../../lib/logger';
+import * as ps from 'ps-node';
+import * as util from 'util';
+import _ from 'lodash';
 
 export const testBitcoindUsername = 'foo';
 export const testBitcoindPassword = 'bar';
@@ -11,7 +14,7 @@ export const testBitcoindPort = '18332';
 
 export async function startTestBitcoind(logger: Logger): Promise<null> {
   const log = logger.child({ subProcess: 'bitcoind' });
-  const process = await cp.spawn('bitcoind', [
+  const bitcoindArgs = [
     '-printtoconsole',
     '-regtest',
     `-rest`,
@@ -21,12 +24,34 @@ export async function startTestBitcoind(logger: Logger): Promise<null> {
     `-rpcallowip=172.17.0.0/16`,
     `-rpcallowip=192.168.0.0/16`,
     `-rpcallowip=10.211.0.0/16`
-  ]);
-  process.stdout.on('data', d => {
+  ];
+  const lookup = util.promisify(ps.lookup);
+  const resultList = await lookup({
+    command: 'bitcoind'
+  });
+  log.trace(`resultList was ${JSON.stringify(resultList)}`);
+  resultList.forEach((r: any) => {
+    if (_.isEqual(r.arguments[0], bitcoindArgs[0])) {
+      log.info(
+        `there were already running bitcoind, so not going to starting new one.`
+      );
+      return null;
+    } else {
+      log.error(`bitcoind has already been running by different process!
+                 Please shut down before test.`);
+      throw new Error(`Failed to start regtest bitcoind for test`);
+    }
+  });
+  const p = await cp.spawn('bitcoind', bitcoindArgs);
+  p.stdout.on('data', d => {
     log.info(d.toString());
   });
-  process.stderr.on('data', d => {
+  p.stderr.on('data', d => {
     log.error(d.toString());
+  });
+  process.on('exit', () => {
+    log.info(`going to shut down bitcoind ...`);
+    p.kill();
   });
   return null;
 }
@@ -35,8 +60,8 @@ export function prePareTest(): [Logger, string] {
   const dataDir = setupTestDir();
   const debugFile = path.join(dataDir, 'test.log');
   const logger = getLogger(debugFile);
-  logger.warn(`create ${dataDir} for testing ...`);
-  logger.warn(`debug log will be output to ${debugFile}`);
+  logger.info(`create ${dataDir} for testing ...`);
+  logger.info(`debug log will be output to ${debugFile}`);
   return [logger, dataDir];
 }
 

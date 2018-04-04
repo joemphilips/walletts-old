@@ -30,7 +30,7 @@ export class InMemoryKeyRepository extends Map<AccountID, btc.HDNode>
     if (!hd) {
       return;
     }
-    hd.derivePath(hdpath).getAddress();
+    return hd.derivePath(hdpath).getAddress();
   }
 
   public async getPrivKey(id: AccountID): Promise<string | void> {
@@ -58,7 +58,6 @@ export class InMemoryKeyRepository extends Map<AccountID, btc.HDNode>
     return this.get(id);
   }
 }
-
 /*
 export class ExternalKeyRepository implements KeyRepository {
 

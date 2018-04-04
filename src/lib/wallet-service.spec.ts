@@ -75,9 +75,12 @@ test('it can be created, deleted, and resurrected', async t => {
   );
   t.is(wallet3.accounts.length, 2);
 
-  const accountService = new NormalAccountService(new InMemoryKeyRepository());
+  const accountService = new NormalAccountService(
+    new InMemoryKeyRepository(),
+    logger
+  );
   const [address, change] = await accountService.getAddressForAccount(
-    wallet.accounts[1],
+    wallet3.accounts[1],
     1
   );
   bchProxy.prepare500BTC(address);
