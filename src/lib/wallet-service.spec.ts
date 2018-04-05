@@ -5,6 +5,7 @@ import { crypto, HDNode } from 'bitcoinjs-lib';
 import { TrustedBitcoindRPC } from '../lib/blockchain-proxy';
 import {
   prePareTest,
+  sleep,
   testBitcoindIp,
   testBitcoindPassword,
   testBitcoindPort,
@@ -23,12 +24,6 @@ test('it can be created, deleted, and resurrected', async t => {
   // setup dependencies for wallet service.
   const [logger, datadir] = prePareTest();
   const cfg = loadConfig({ datadir });
-  const service = new WalletService(
-    cfg,
-    new InMemoryKeyRepository(),
-    new WalletRepository(),
-    logger
-  );
   const bchProxy = new TrustedBitcoindRPC(
     '',
     testBitcoindUsername,
@@ -38,6 +33,14 @@ test('it can be created, deleted, and resurrected', async t => {
     logger
   );
   const repo = new InMemoryKeyRepository();
+  const accountService = new NormalAccountService(logger, repo);
+  const service = new WalletService(
+    cfg,
+    repo,
+    new WalletRepository(),
+    logger,
+    accountService
+  );
 
   // create wallet
   const seed = [
@@ -64,19 +67,9 @@ test('it can be created, deleted, and resurrected', async t => {
     w.id,
     'wallets created from the same seed must have the same id'
   );
-  const accountService = new NormalAccountService(
-    new InMemoryKeyRepository(),
-    logger
-  );
-  const wallet2 = (await service.setNewAccountToWallet(
-    wallet,
-    accountService
-  )) as BasicWallet;
+  const wallet2 = (await service.setNewAccountToWallet(wallet)) as BasicWallet;
   t.not(wallet2, null);
-  const wallet3 = (await service.setNewAccountToWallet(
-    wallet2,
-    accountService
-  )) as BasicWallet;
+  const wallet3 = (await service.setNewAccountToWallet(wallet2)) as BasicWallet;
   t.not(wallet3, null);
   t.is(
     wallet3.id,
@@ -92,6 +85,8 @@ test('it can be created, deleted, and resurrected', async t => {
     1
   );
   bchProxy.prepare500BTC(address);
+
+  await sleep(500);
 
   t.is(
     wallet3.accounts[1].balance,

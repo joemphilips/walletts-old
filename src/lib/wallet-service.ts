@@ -15,11 +15,17 @@ import { BlockchainProxy } from './blockchain-proxy';
 import { Balance } from './primitives/balance';
 /* tslint:disable no-submodule-imports */
 import { none } from 'fp-ts/lib/Option';
-import NormalAccountService from './account-service';
+import NormalAccountService, {
+  AbstractAccountService
+} from './account-service';
 
-interface AbstractWalletService<W extends AbstractWallet> {
+interface AbstractWalletService<
+  W extends AbstractWallet,
+  AS extends AbstractAccountService<Account>
+> {
   keyRepo: KeyRepository;
   repo: WalletRepository;
+  as: AS;
   createNew: (nameSpace: string, passPhrase?: string) => Promise<W>;
   createFromSeed: (
     nameSpace: string,
@@ -28,7 +34,6 @@ interface AbstractWalletService<W extends AbstractWallet> {
   ) => Promise<W>;
   setNewAccountToWallet: (
     wallet: W,
-    as: NormalAccountService,
     type: AccountType,
     cointype: SupportedCoinType
   ) => Promise<W | void>;
@@ -41,13 +46,17 @@ interface AbstractWalletService<W extends AbstractWallet> {
 }
 
 export default class WalletService extends rx.Subject<any>
-  implements AbstractWalletService<BasicWallet> {
+  implements AbstractWalletService<BasicWallet, NormalAccountService> {
   private readonly logger: Logger;
   constructor(
     private cfg: Config,
     public readonly keyRepo: KeyRepository,
     public readonly repo: WalletRepository = new WalletRepository(),
-    log: Logger
+    log: Logger,
+    public readonly as: NormalAccountService = new NormalAccountService(
+      log,
+      keyRepo
+    )
   ) {
     super();
     this.logger = log.child({ subModule: 'WalletService' });
@@ -115,7 +124,6 @@ export default class WalletService extends rx.Subject<any>
 
   public async setNewAccountToWallet(
     wallet: BasicWallet,
-    as: NormalAccountService,
     type: AccountType = AccountType.Normal,
     cointype: SupportedCoinType = SupportedCoinType.BTC
   ): Promise<BasicWallet | void> {
@@ -132,7 +140,7 @@ export default class WalletService extends rx.Subject<any>
       const accountMasterHD = rootNode.derivePath(
         `${PurposeField}'/${cointype}'/${accountIndex}'`
       );
-      const account = await as.createFromHD(
+      const account = await this.as.createFromHD(
         accountMasterHD,
         wallet.accounts.length
       );
@@ -140,7 +148,7 @@ export default class WalletService extends rx.Subject<any>
         ...wallet.accounts,
         account
       ] as ReadonlyArray<Account>);
-      this._save(walletWithAccount, accountMasterHD);
+      this._save(wallet, rootNode);
       return walletWithAccount;
     } else {
       throw new Error(`Account type for ${type} is not supported yet!`);

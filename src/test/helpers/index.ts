@@ -12,6 +12,9 @@ export const testBitcoindPassword = 'bar';
 export const testBitcoindIp = 'localhost';
 export const testBitcoindPort = '18332';
 
+export const sleep = (msec: number) =>
+  new Promise(resolve => setTimeout(resolve, msec));
+
 export async function startTestBitcoind(logger: Logger): Promise<null> {
   const log = logger.child({ subProcess: 'bitcoind' });
   const bitcoindArgs = [

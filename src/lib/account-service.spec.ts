@@ -9,7 +9,7 @@ let service: NormalAccountService;
 let masterHD: HDNode;
 test.before('', () => {
   const [logger, datadir] = prePareTest();
-  service = new NormalAccountService(new InMemoryKeyRepository(), logger);
+  service = new NormalAccountService(logger, new InMemoryKeyRepository());
   masterHD = HDNode.fromSeedHex('ffffffffffffffffffffffffffffffff')
     .deriveHardened(44)
     .deriveHardened(0); // coin_type

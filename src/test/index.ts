@@ -8,6 +8,7 @@ import { BasicWallet } from '../lib/wallet';
 import { bchInfoSource } from '..//bin/grpc-common';
 import {
   prePareTest,
+  sleep,
   startTestBitcoind,
   testBitcoindIp,
   testBitcoindPassword,
@@ -16,9 +17,6 @@ import {
 } from './helpers';
 import { InMemoryKeyRepository } from '../lib/key-repository';
 import WalletRepository from '../lib/wallet-repository';
-
-const sleep = (msec: number) =>
-  new Promise(resolve => setTimeout(resolve, msec));
 
 let service: RPCServer<BasicWallet>;
 let testConfig: Config;

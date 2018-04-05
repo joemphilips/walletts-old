@@ -58,8 +58,3 @@ export class InMemoryKeyRepository extends Map<AccountID, btc.HDNode>
     return this.get(id);
   }
 }
-/*
-export class ExternalKeyRepository implements KeyRepository {
-
-}
-*/
