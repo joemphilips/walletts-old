@@ -17,6 +17,7 @@ import { InMemoryKeyRepository } from '../lib/key-repository';
 import WalletRepository from '../lib/wallet-repository';
 import NormalAccountService from './account-service';
 import * as util from 'util';
+import { Balance } from './primitives/balance';
 
 test('it can be created, deleted, and resurrected', async t => {
   // setup dependencies for wallet service.
@@ -91,6 +92,12 @@ test('it can be created, deleted, and resurrected', async t => {
     1
   );
   bchProxy.prepare500BTC(address);
+
+  t.is(
+    wallet3.accounts[1].balance,
+    new Balance(500),
+    'BTC transferred to the address derived from an account should be reflected to its Balance'
+  );
 
   const wallet32 = await service.createFromSeed(`Test Wallet 2`, seed);
   t.deepEqual(
