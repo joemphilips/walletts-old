@@ -28,7 +28,9 @@ export default class NormalAccountService
     const address = await this.keyRepo.getAddress(a.id, `0/${index}`);
     const changeAddress = await this.keyRepo.getAddress(a.id, `1/${index}`);
     if (!address || !changeAddress) {
-      throw new Error(`could not retrieve address! This account is not saved to repo!`);
+      throw new Error(
+        `could not retrieve address! This account is not saved to repo!`
+      );
     }
     return [address, changeAddress];
   }

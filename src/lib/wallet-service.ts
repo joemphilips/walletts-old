@@ -15,6 +15,7 @@ import { BlockchainProxy } from './blockchain-proxy';
 import { Balance } from './primitives/balance';
 /* tslint:disable no-submodule-imports */
 import { none } from 'fp-ts/lib/Option';
+import NormalAccountService from './account-service';
 
 interface AbstractWalletService<W extends AbstractWallet> {
   keyRepo: KeyRepository;
@@ -27,6 +28,7 @@ interface AbstractWalletService<W extends AbstractWallet> {
   ) => Promise<W>;
   setNewAccountToWallet: (
     wallet: W,
+    as: NormalAccountService,
     type: AccountType,
     cointype: SupportedCoinType
   ) => Promise<W | void>;
@@ -113,6 +115,7 @@ export default class WalletService extends rx.Subject<any>
 
   public async setNewAccountToWallet(
     wallet: BasicWallet,
+    as: NormalAccountService,
     type: AccountType = AccountType.Normal,
     cointype: SupportedCoinType = SupportedCoinType.BTC
   ): Promise<BasicWallet | void> {
@@ -127,15 +130,17 @@ export default class WalletService extends rx.Subject<any>
         return;
       }
       const accountMasterHD = rootNode.derivePath(
-        `m/${PurposeField}'/${cointype}'/${accountIndex}'`
+        `${PurposeField}'/${cointype}'/${accountIndex}'`
       );
-      const id = hash160(accountMasterHD.getPublicKeyBuffer()).toString('hex');
-      const account = new NormalAccount(id, wallet.accounts.length, none);
+      const account = await as.createFromHD(
+        accountMasterHD,
+        wallet.accounts.length
+      );
       const walletWithAccount = new BasicWallet(wallet.id, [
         ...wallet.accounts,
         account
       ] as ReadonlyArray<Account>);
-      this._save(account as Account, accountMasterHD);
+      this._save(walletWithAccount, accountMasterHD);
       return walletWithAccount;
     } else {
       throw new Error(`Account type for ${type} is not supported yet!`);

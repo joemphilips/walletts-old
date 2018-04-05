@@ -16,6 +16,7 @@ import hash160 = crypto.hash160;
 import { InMemoryKeyRepository } from '../lib/key-repository';
 import WalletRepository from '../lib/wallet-repository';
 import NormalAccountService from './account-service';
+import * as util from 'util';
 
 test('it can be created, deleted, and resurrected', async t => {
   // setup dependencies for wallet service.
@@ -62,10 +63,18 @@ test('it can be created, deleted, and resurrected', async t => {
     w.id,
     'wallets created from the same seed must have the same id'
   );
-  const wallet2 = await service.setNewAccountToWallet(wallet);
+  const accountService = new NormalAccountService(
+    new InMemoryKeyRepository(),
+    logger
+  );
+  const wallet2 = (await service.setNewAccountToWallet(
+    wallet,
+    accountService
+  )) as BasicWallet;
   t.not(wallet2, null);
   const wallet3 = (await service.setNewAccountToWallet(
-    wallet2 as BasicWallet
+    wallet2,
+    accountService
   )) as BasicWallet;
   t.not(wallet3, null);
   t.is(
@@ -73,12 +82,10 @@ test('it can be created, deleted, and resurrected', async t => {
     wallet.id,
     'id for wallet does not change even after creating account'
   );
+  logger.debug(`accounts in wallet2 are ${util.inspect(wallet2.accounts)}`);
+  logger.debug(`accounts in wallet3 are ${util.inspect(wallet3.accounts)}`);
   t.is(wallet3.accounts.length, 2);
 
-  const accountService = new NormalAccountService(
-    new InMemoryKeyRepository(),
-    logger
-  );
   const [address, change] = await accountService.getAddressForAccount(
     wallet3.accounts[1],
     1
