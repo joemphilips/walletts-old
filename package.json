@@ -19,7 +19,7 @@
     "fix:tslint": "tslint --fix --project . --exclude 'src/proto/*'",
     "test": "run-s test:build && run-p test:lint test:unit test:nsp",
     "test-without-nsp": "run-s test:build && run-p test:lint test:unit",
-    "test:build": "run-s clean protoc && tsc -p tsconfig.test.json",
+    "test:build": "run-s clean && tsc -p tsconfig.test.json",
     "test:lint": "tslint --project . --exclude 'src/proto/*' && prettier 'src/**/*.ts' --list-different",
     "test:unit": "nyc ava --verbose",
     "test:nsp": "nsp check",
