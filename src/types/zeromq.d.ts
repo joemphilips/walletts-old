@@ -15,50 +15,50 @@
 import EventEmitter = NodeJS.EventEmitter;
 
 export interface SocketTypes {
-    pub: number;
-    xpub: number;
-    sub: number;
-    xsub: number;
-    req: number;
-    xreq: number;
-    rep: number;
-    xrep: number;
-    push: number;
-    pull: number;
-    dealer: number;
-    router: number;
-    pair: number;
-    stream: number;
+  pub: number;
+  xpub: number;
+  sub: number;
+  xsub: number;
+  req: number;
+  xreq: number;
+  rep: number;
+  xrep: number;
+  push: number;
+  pull: number;
+  dealer: number;
+  router: number;
+  pair: number;
+  stream: number;
 }
 
 export interface SocketOptions {
-    _fd: number;
-    _ioevents: number;
-    _receiveMore: number;
-    _subscribe: number;
-    _unsubscribe: number;
-    affinity: number;
-    backlog: number;
-    hwm: number;
-    identity: number;
-    linger: number;
-    mcast_loop: number;
-    rate: number;
-    rcvbuf: number;
-    last_endpoint: number;
-    reconnect_ivl: number;
-    recovery_ivl: number;
-    sndbuf: number;
-    swap: number;
-    mechanism: number;
-    plain_server: number;
-    plain_username: number;
-    plain_password: number;
-    curve_server: number;
-    curve_publickey: number;
-    curve_secretkey: number;
-    curve_serverkey: number;
-    zap_domain: number;
+  _fd: number;
+  _ioevents: number;
+  _receiveMore: number;
+  _subscribe: number;
+  _unsubscribe: number;
+  affinity: number;
+  backlog: number;
+  hwm: number;
+  identity: number;
+  linger: number;
+  mcast_loop: number;
+  rate: number;
+  rcvbuf: number;
+  last_endpoint: number;
+  reconnect_ivl: number;
+  recovery_ivl: number;
+  sndbuf: number;
+  swap: number;
+  mechanism: number;
+  plain_server: number;
+  plain_username: number;
+  plain_password: number;
+  curve_server: number;
+  curve_publickey: number;
+  curve_secretkey: number;
+  curve_serverkey: number;
+  zap_domain: number;
 }
 
 export class Socket extends EventEmitter {
@@ -165,7 +165,6 @@ export class Socket extends EventEmitter {
    */
   close(): Socket;
 
-
   pause(): void;
 
   resume(): void;
@@ -200,23 +199,22 @@ export class Socket extends EventEmitter {
   curve_secretkey: string | Buffer;
   curve_serverkey: string | Buffer;
   zap_domain: any;
-  addListener (event: string | symbol, listener: (...args: any[]) => void): this
+  addListener(event: string | symbol, listener: (...args: any[]) => void): this;
 }
-
 
 /** The key material returned from a call to curveKeypair(). */
 export interface CurveKeyPair {
-    /**
-     * A Z85 string denoting the public portion of the Curve25519 key.
-     *
-     */
-    public: string;
+  /**
+   * A Z85 string denoting the public portion of the Curve25519 key.
+   *
+   */
+  public: string;
 
-    /**
-     * A Z85 string denoting the private, secret portion of the Curve25519 key.
-     *
-     */
-    secret: string;
+  /**
+   * A Z85 string denoting the private, secret portion of the Curve25519 key.
+   *
+   */
+  secret: string;
 }
 
 /**
@@ -231,7 +229,7 @@ export let options: SocketOptions;
  * Creates a ZeroMQ socket of the specified type.
  * @return The created socket in an unconnected state.
  */
-export function socket(type: string|number, options?: any): Socket;
+export function socket(type: string | number, options?: any): Socket;
 
 /**
  * Creates a ZeroMQ socket of the specified type.
@@ -254,4 +252,8 @@ export function curveKeypair(): CurveKeyPair;
  * @param capture If defined, this socket will receive all messages from frontend and backend socket
  *                Capture socket should be a 'pub', 'dealer', 'push' or 'pair' socket.
  */
-export function proxy(frontend: Socket, backend: Socket, capture ?: Socket): void;
+export function proxy(
+  frontend: Socket,
+  backend: Socket,
+  capture?: Socket
+): void;

@@ -1,10 +1,15 @@
 import { AccountID } from './primitives/identity';
 import { Balance } from './primitives/balance';
 import { WalletCoin } from './primitives/wallet-coin';
-/* tslint:disable-next-line:no-submodule-imports */
+/* tslint:disable:no-submodule-imports */
 import { Option, some } from 'fp-ts/lib/Option';
-/* tslint:disable-next-line:no-submodule-imports */
 import { Either, left, right } from 'fp-ts/lib/Either';
+import { Subject } from 'rxjs/Subject';
+import {
+  getObservableBlockchain,
+  ObservableBlockchain
+} from './blockchain-proxy';
+import { Observable } from 'rxjs/Observable';
 
 export enum AccountType {
   Normal
@@ -15,19 +20,24 @@ export interface Account {
   readonly hdIndex: number;
   readonly type: AccountType;
   readonly coins: Option<ReadonlyArray<WalletCoin>>;
+  readonly observableBlockchain: Observable<string>;
   readonly balance: Balance;
   readonly debit: (coin: WalletCoin[]) => Either<Error, Account>;
   readonly credit: (coin: WalletCoin[]) => Account;
 }
 
-export class NormalAccount {
+export class NormalAccount extends Subject<any> {
   constructor(
     public id: AccountID,
     public hdIndex: number,
     public coins: Option<ReadonlyArray<WalletCoin>>,
     public type = AccountType.Normal,
-    public balance = new Balance(0)
-  ) {}
+    public balance = new Balance(0),
+    public observableBlockchain = getObservableBlockchain()
+  ) {
+    super();
+    observableBlockchain.subscribe(this.credit);
+  }
 
   public debit(coin: WalletCoin[]): Either<Error, NormalAccount> {
     const totalAmount = coin.reduce((a, b) => a + b.amount, 0);
