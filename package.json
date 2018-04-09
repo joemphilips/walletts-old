@@ -56,6 +56,7 @@
     "node": ">=8.9"
   },
   "dependencies": {
+    "@joemphilips/rxjs": "^5.5.8-rc",
     "awilix": "^3.0.6",
     "bip39": "^2.5.0",
     "bitcoin-core": "https://github.com/joemphilips/bitcoin-core#typings",
@@ -77,9 +78,9 @@
     "node-pre-gyp": "mapbox/node-pre-gyp#master",
     "node-uuid": "^1.4.8",
     "protobufjs": "^6.8.6",
-    "rxjs": "^5.5.7",
     "secure-random": "^1.1.1",
-    "sha.js": "^2.4.10"
+    "sha.js": "^2.4.10",
+    "zeromq": "^4.6.0"
   },
   "devDependencies": {
     "@types/bitcoinjs-lib": "^3.3.1",
@@ -97,6 +98,8 @@
     "@types/node-uuid": "^0.0.28",
     "@types/protobufjs": "^6.0.0",
     "@types/request": "^2.47.0",
+    "@types/zeromq": "^4.6.1",
+    "@types/zmq": "^0.0.22",
     "ava": "^1.0.0-beta.3",
     "codecov": "^3.0.0",
     "cz-conventional-changelog": "^2.1.0",

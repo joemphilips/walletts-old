@@ -1,7 +1,7 @@
 import * as bitcoin from 'bitcoinjs-lib';
 import { Config } from './config';
 import * as Logger from 'bunyan';
-import * as rx from 'rxjs';
+import * as rx from '@joemphilips/rxjs';
 import { AbstractWallet, BasicWallet } from '../lib/wallet';
 import WalletRepository from '../lib/wallet-repository';
 import secureRandom from 'secure-random';
@@ -11,7 +11,7 @@ import KeyRepository from './key-repository';
 import hash160 = bitcoin.crypto.hash160;
 import { PurposeField, SupportedCoinType } from './primitives/constants';
 import * as util from 'util';
-import { BlockchainProxy } from './blockchain-proxy';
+import { BlockchainProxy, ObservableBlockchain } from './blockchain-proxy';
 import { Balance } from './primitives/balance';
 /* tslint:disable no-submodule-imports */
 import { none } from 'fp-ts/lib/Option';
@@ -34,12 +34,14 @@ interface AbstractWalletService<
   ) => Promise<W>;
   setNewAccountToWallet: (
     wallet: W,
+    informationSource: ObservableBlockchain,
     type: AccountType,
     cointype: SupportedCoinType
   ) => Promise<W | void>;
   discoverAccounts: (
     wallet: W,
     bch: BlockchainProxy,
+    informationSource: ObservableBlockchain,
     startHeight: number,
     stopHeight: number
   ) => Promise<W | null>;
@@ -101,6 +103,7 @@ export default class WalletService extends rx.Subject<any>
   public async discoverAccounts(
     wallet: BasicWallet,
     bch: BlockchainProxy,
+    accountsInformationSource: ObservableBlockchain, // not necessary for syncing process, but required in Account.
     startHeight = 0,
     stopHeight = 0
   ): Promise<BasicWallet> {
@@ -117,13 +120,19 @@ export default class WalletService extends rx.Subject<any>
       return wallet;
     }
 
-    const recoveredWallet = this.syncHDNode(master, bch, wallet);
+    const recoveredWallet = this.syncHDNode(
+      master,
+      bch,
+      wallet,
+      accountsInformationSource
+    );
 
     return recoveredWallet;
   }
 
   public async setNewAccountToWallet(
     wallet: BasicWallet,
+    informationSource: ObservableBlockchain,
     type: AccountType = AccountType.Normal,
     cointype: SupportedCoinType = SupportedCoinType.BTC
   ): Promise<BasicWallet | void> {
@@ -142,7 +151,8 @@ export default class WalletService extends rx.Subject<any>
       );
       const account = await this.as.createFromHD(
         accountMasterHD,
-        wallet.accounts.length
+        wallet.accounts.length,
+        informationSource
       );
       const walletWithAccount = new BasicWallet(wallet.id, [
         ...wallet.accounts,
@@ -158,7 +168,8 @@ export default class WalletService extends rx.Subject<any>
   private syncHDNode(
     masternode: bitcoin.HDNode,
     proxy: BlockchainProxy,
-    wallet: BasicWallet
+    wallet: BasicWallet,
+    accountsInformationSource: ObservableBlockchain
   ): BasicWallet {
     let i: number = 0;
     let balanceSoFar = 0;
@@ -169,7 +180,8 @@ export default class WalletService extends rx.Subject<any>
      */
     async function recoverAddress(
       node: bitcoin.HDNode,
-      accountNumber: number
+      accountNumber: number,
+      bch: ObservableBlockchain
     ): Promise<Account | null> {
       const addresses = [];
       for (const j of Array(20)) {
@@ -183,6 +195,7 @@ export default class WalletService extends rx.Subject<any>
         return new NormalAccount(
           id,
           accountNumber,
+          bch,
           none,
           AccountType.Normal,
           new Balance(balanceSoFar)
@@ -193,23 +206,25 @@ export default class WalletService extends rx.Subject<any>
         (prev, value) => prev + value,
         0
       );
-      return recoverAddress(node, accountNumber);
+      return recoverAddress(node, accountNumber, bch);
     }
 
     let accountIndex = 0;
     const accounts: Account[] = [];
     let endSync = false;
     while (!endSync) {
-      recoverAddress(masternode.derive(accountIndex), accountIndex).then(
-        account => {
-          if (account) {
-            accountIndex++;
-            accounts.push(account);
-          } else {
-            endSync = true;
-          }
+      recoverAddress(
+        masternode.derive(accountIndex),
+        accountIndex,
+        accountsInformationSource
+      ).then(account => {
+        if (account) {
+          accountIndex++;
+          accounts.push(account);
+        } else {
+          endSync = true;
         }
-      );
+      });
     }
     this.logger.info(`recovered ${accountIndex} accounts from seed`);
     return new BasicWallet(wallet.id, accounts, wallet.parentLogger);

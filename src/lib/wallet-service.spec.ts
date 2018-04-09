@@ -2,14 +2,18 @@ import test from 'ava';
 import WalletService from './wallet-service';
 import { BasicWallet } from './wallet';
 import { crypto, HDNode } from 'bitcoinjs-lib';
-import { TrustedBitcoindRPC } from '../lib/blockchain-proxy';
+import {
+  getObservableBlockchain,
+  TrustedBitcoindRPC
+} from '../lib/blockchain-proxy';
 import {
   prePareTest,
   sleep,
   testBitcoindIp,
   testBitcoindPassword,
   testBitcoindPort,
-  testBitcoindUsername
+  testBitcoindUsername,
+  testZmqPubUrl
 } from '../test/helpers';
 import * as bip39 from 'bip39';
 import loadConfig from '../lib/config';
@@ -24,6 +28,7 @@ test('it can be created, deleted, and resurrected', async t => {
   // setup dependencies for wallet service.
   const [logger, datadir] = prePareTest();
   const cfg = loadConfig({ datadir });
+  const infoSource = getObservableBlockchain(testZmqPubUrl);
   const bchProxy = new TrustedBitcoindRPC(
     '',
     testBitcoindUsername,
@@ -67,9 +72,15 @@ test('it can be created, deleted, and resurrected', async t => {
     w.id,
     'wallets created from the same seed must have the same id'
   );
-  const wallet2 = (await service.setNewAccountToWallet(wallet)) as BasicWallet;
+  const wallet2 = (await service.setNewAccountToWallet(
+    wallet,
+    infoSource
+  )) as BasicWallet;
   t.not(wallet2, null);
-  const wallet3 = (await service.setNewAccountToWallet(wallet2)) as BasicWallet;
+  const wallet3 = (await service.setNewAccountToWallet(
+    wallet2,
+    infoSource
+  )) as BasicWallet;
   t.not(wallet3, null);
   t.is(
     wallet3.id,
