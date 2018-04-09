@@ -13,7 +13,8 @@ import {
   testBitcoindIp,
   testBitcoindPassword,
   testBitcoindPort,
-  testBitcoindUsername
+  testBitcoindUsername,
+  testZmqPubUrl
 } from './helpers';
 import { InMemoryKeyRepository } from '../lib/key-repository';
 import WalletRepository from '../lib/wallet-repository';
@@ -85,7 +86,8 @@ test.cb('It can set blockchainProxy after creating Wallet', t => {
         rpcusername: testBitcoindUsername,
         rpcpass: testBitcoindPassword,
         rpcip: testBitcoindIp,
-        rpcport: testBitcoindPort
+        rpcport: testBitcoindPort,
+        zmqurl: testZmqPubUrl
       },
       (err, res) => {
         if (err) {

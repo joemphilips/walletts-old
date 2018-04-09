@@ -4,39 +4,37 @@ import { WalletCoin } from './primitives/wallet-coin';
 /* tslint:disable:no-submodule-imports */
 import { Option, some } from 'fp-ts/lib/Option';
 import { Either, left, right } from 'fp-ts/lib/Either';
-import { Subject } from 'rxjs/Subject';
+import { Subject, Observable } from '@joemphilips/rxjs';
 import {
   getObservableBlockchain,
   ObservableBlockchain
 } from './blockchain-proxy';
-import { Observable } from 'rxjs/Observable';
 
 export enum AccountType {
   Normal
 }
 
-export interface Account {
+export interface Account extends Observable<any> {
   readonly id: AccountID;
   readonly hdIndex: number;
   readonly type: AccountType;
   readonly coins: Option<ReadonlyArray<WalletCoin>>;
-  readonly observableBlockchain: Observable<string>;
+  readonly observableBlockchain: ObservableBlockchain;
   readonly balance: Balance;
   readonly debit: (coin: WalletCoin[]) => Either<Error, Account>;
   readonly credit: (coin: WalletCoin[]) => Account;
 }
 
-export class NormalAccount extends Subject<any> {
+export class NormalAccount extends Observable<any> {
   constructor(
     public id: AccountID,
     public hdIndex: number,
+    public observableBlockchain: ObservableBlockchain,
     public coins: Option<ReadonlyArray<WalletCoin>>,
     public type = AccountType.Normal,
-    public balance = new Balance(0),
-    public observableBlockchain = getObservableBlockchain()
+    public balance = new Balance(0)
   ) {
     super();
-    observableBlockchain.subscribe(this.credit);
   }
 
   public debit(coin: WalletCoin[]): Either<Error, NormalAccount> {
@@ -48,7 +46,14 @@ export class NormalAccount extends Subject<any> {
     const newBalance = new Balance(nextAmount);
     const coins = this.coins.map(l => [...l, ...coin]);
     return right(
-      new NormalAccount(this.id, this.hdIndex, coins, this.type, newBalance)
+      new NormalAccount(
+        this.id,
+        this.hdIndex,
+        this.observableBlockchain,
+        coins,
+        this.type,
+        newBalance
+      )
     );
   }
 
@@ -61,6 +66,7 @@ export class NormalAccount extends Subject<any> {
     return new NormalAccount(
       this.id,
       this.hdIndex,
+      this.observableBlockchain,
       coins,
       this.type,
       newBalance

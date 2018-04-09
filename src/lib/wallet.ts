@@ -11,7 +11,7 @@ import { crypto } from 'bitcoinjs-lib';
 import hash160 = crypto.hash160;
 import { Account, NormalAccount } from './account';
 /* tslint:disable-next-line  */
-import { Observable } from 'rxjs/Observable';
+import { Observable } from '@joemphilips/rxjs';
 
 export abstract class AbstractWallet {
   public abstract readonly coinManager: Option<CoinManager>;

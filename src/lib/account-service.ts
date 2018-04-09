@@ -6,11 +6,19 @@ import hash160 = crypto.hash160;
 import { none } from 'fp-ts/lib/Option';
 import * as Logger from 'bunyan';
 import { AccountID } from './primitives/identity';
+import {
+  getObservableBlockchain,
+  ObservableBlockchain
+} from './blockchain-proxy';
 
 export interface AbstractAccountService<A extends Account> {
   readonly keyRepo: KeyRepository;
   getAddressForAccount: (a: A, index: number) => Promise<[string, string]>;
-  createFromHD: (masterHD: HDNode, index: number) => Promise<A>;
+  createFromHD: (
+    masterHD: HDNode,
+    index: number,
+    observableBlockchain: ObservableBlockchain
+  ) => Promise<A>;
 }
 
 export default class NormalAccountService
@@ -40,13 +48,14 @@ export default class NormalAccountService
 
   public async createFromHD(
     masterHD: HDNode,
-    index: number
+    index: number,
+    observableBlockchain: ObservableBlockchain
   ): Promise<NormalAccount> {
     const pubkey = masterHD.deriveHardened(index).getPublicKeyBuffer();
     const id = hash160(pubkey).toString('hex');
     this.logger.debug(`Account ${id} has been created from HD`);
     await this._save(id, masterHD);
-    return new NormalAccount(id, index, none);
+    return new NormalAccount(id, index, observableBlockchain, none);
   }
 
   private async _save(id: AccountID, key: HDNode): Promise<void> {

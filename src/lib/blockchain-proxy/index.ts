@@ -2,9 +2,8 @@ import { Network, Transaction } from 'bitcoinjs-lib';
 import * as Logger from 'bunyan';
 /* tslint:disable no-submodule-imports */
 import { Observable } from '@joemphilips/rxjs';
-import { Socket, socket } from 'zeromq';
-import EventEmitter = NodeJS.EventEmitter;
-import {NodeStyleEventEmitter} from "@joemphilips/rxjs/dist/package/observable/FromEventObservable";
+import { socket } from 'zeromq';
+import { EventEmitter } from 'events';
 
 export interface BlockchainProxy {
   readonly getPrevHash: (tx: Transaction) => Promise<any>;
@@ -34,24 +33,23 @@ export interface SyncInfo {
   };
 }
 
-export class ObservableBlockchain extends EventEmitter {
+export class BlockchainEventEmitter extends EventEmitter {
   constructor(url: string) {
     super();
     const sock = socket('sub');
-    sock.bindSync(url);
-    sock.subscribe("Kitty cat");
+    sock.connect(url);
+    sock.subscribe('rawblock');
     sock.on('message', (topic, message) => {
-      this.emit('zeromq', [topic, message]);
-    })
+      this.emit('zeromq', [topic, message.toString('hex')]);
+    });
   }
 }
 
-export const getObservableBlockchain = (url: string): Observable<[string, string]> => {
-  const sock = new ObservableBlockchain(url);
-  return Observable.fromEvent(
-    sock as NodeStyleEventEmitter,
-    'message'
-  );
+export type ObservableBlockchain = Observable<[string, string]>;
+
+export const getObservableBlockchain = (url: string): ObservableBlockchain => {
+  const sock = new BlockchainEventEmitter(url);
+  return Observable.fromEvent(sock, 'zeromq');
 };
 
 export * from './blockchain-info';

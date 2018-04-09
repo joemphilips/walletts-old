@@ -11,6 +11,7 @@ export const testBitcoindUsername = 'foo';
 export const testBitcoindPassword = 'bar';
 export const testBitcoindIp = 'localhost';
 export const testBitcoindPort = '18332';
+export const testZmqPubUrl = 'tcp://127.0.0.1:28332';
 
 export const sleep = (msec: number) =>
   new Promise(resolve => setTimeout(resolve, msec));
@@ -26,7 +27,9 @@ export async function startTestBitcoind(logger: Logger): Promise<null> {
     `-rpcport=${testBitcoindPort}`,
     `-rpcallowip=172.17.0.0/16`,
     `-rpcallowip=192.168.0.0/16`,
-    `-rpcallowip=10.211.0.0/16`
+    `-rpcallowip=10.211.0.0/16`,
+    `-zmqpubrawblock=${testZmqPubUrl}`,
+    `-zmqpubrawtx=${testZmqPubUrl}`
   ];
   const lookup = util.promisify(ps.lookup);
   const resultList = await lookup({
