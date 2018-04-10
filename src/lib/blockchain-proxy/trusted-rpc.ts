@@ -10,7 +10,7 @@ export class TrustedBitcoindRPC implements BlockchainProxy {
   public readonly client: Client;
   public readonly logger: Logger;
   constructor(
-    confPath: fs.PathLike,
+    confPath: string,
     username: string,
     password: string,
     rpcip: string,

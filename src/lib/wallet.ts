@@ -1,4 +1,4 @@
-import CoinManager from './coin_manager';
+import CoinManager from './coin-manager';
 import Keystore, {
   InMemoryKeyRepository,
   default as KeyRepository

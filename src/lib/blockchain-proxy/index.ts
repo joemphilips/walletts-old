@@ -1,4 +1,4 @@
-import { Network, Transaction } from 'bitcoinjs-lib';
+import { Block, Network, Transaction } from 'bitcoinjs-lib';
 import * as Logger from 'bunyan';
 /* tslint:disable no-submodule-imports */
 import { Observable } from '@joemphilips/rxjs';
@@ -45,11 +45,26 @@ export class BlockchainEventEmitter extends EventEmitter {
   }
 }
 
-export type ObservableBlockchain = Observable<[string, string]>;
+export type ObservationType = 'rawtx' | 'rawblock';
+/* tslint:disable interface-over-type-literal */
+export type TransactionArrived = Transaction;
+export type BlockArrived = Block;
+export type Reorg = {
+  height: number;
+};
+export type BlockchainEvent = TransactionArrived | BlockArrived | Reorg;
+export type ObservableBlockchain = Observable<BlockchainEvent>;
 
 export const getObservableBlockchain = (url: string): ObservableBlockchain => {
   const sock = new BlockchainEventEmitter(url);
-  return Observable.fromEvent(sock, 'zeromq');
+  return Observable.merge(
+    Observable.fromEvent<[ObservationType, string]>(sock, 'zeromq')
+      .filter(([topic, _]: [ObservationType, string]) => topic === 'rawblock')
+      .map(([_, msg]: [ObservationType, string]) => Block.fromHex(msg)),
+    Observable.fromEvent<[ObservationType, string]>(sock, 'zeromq')
+      .filter(([topic, _]: [ObservationType, string]) => topic === 'rawtx')
+      .map(([_, msg]: [ObservationType, string]) => Transaction.fromHex(msg))
+  );
 };
 
 export * from './blockchain-info';
