@@ -2,7 +2,7 @@
 
 import { Command } from 'commander';
 import logger from '../lib/logger';
-import WalletService from './launcher';
+import WalletLauncher from './launcher';
 
 const program = new Command();
 
@@ -19,7 +19,7 @@ const cli = program
   const datadir = cli.datadir;
   const debugFile = cli.debugFile;
   const configFile = cli.conf;
-  const service = new WalletService({ datadir, debugFile, configFile });
+  const service = new WalletLauncher({ datadir, debugFile, configFile });
   try {
     await service.run();
   } catch (e) {

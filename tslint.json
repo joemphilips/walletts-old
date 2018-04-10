@@ -3,6 +3,7 @@
   "rules": {
     // Disable some too strict rules in extended modules
     "ordered-imports": false,
+    "no-submodule-imports": false,
 
     // rules
     "interface-name": [true, "never-prefix"],

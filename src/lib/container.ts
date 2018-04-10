@@ -14,8 +14,7 @@ import { CliUIProxy } from '../bin/uiproxy';
 import BackendProxy from './backend/node';
 import { BlockchainInfo, TrustedBitcoindRPC } from './blockchain-proxy';
 import loadConfig from './config';
-import { BasicKeyRepository } from './key-repository';
-import { InMemoryDB } from './keydb';
+import { InMemoryKeyRepository } from './key-repository';
 import { DecryptStream, EncryptStream } from './stream';
 import { BasicWallet } from './wallet';
 import WalletDB from './wallet-service';
@@ -31,9 +30,8 @@ container.register({
   bchproxy: asClass(BlockchainInfo).inject(() => ({
     confPath: '~/.bitcoin/bitcoin.conf'
   })),
-  keyRepository: asClass(BasicKeyRepository),
+  keyRepository: asClass(InMemoryKeyRepository),
   // TODO: Use encrypted DB (or Hareware Wallet)
-  keyCryptoDB: asClass(InMemoryDB),
   server: asClass(GRPCServer),
   backend: asClass(BackendProxy),
   db: asClass(WalletDB),

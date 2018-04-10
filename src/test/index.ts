@@ -3,41 +3,39 @@ import { default as loadConfig, Config } from '../lib/config';
 import getClient, { RPCClient } from '../bin/grpc-client';
 import GRPCServer, { RPCServer } from '../bin/grpc-server';
 import WalletService from '../lib/wallet-service';
-import { mkdirpSync } from 'fs-extra';
-import getLogger from '../lib/logger';
-import * as path from 'path';
 import * as Logger from 'bunyan';
 import { BasicWallet } from '../lib/wallet';
 import { bchInfoSource } from '..//bin/grpc-common';
 import {
+  prePareTest,
+  sleep,
   startTestBitcoind,
   testBitcoindIp,
   testBitcoindPassword,
   testBitcoindPort,
-  testBitcoindUsername
+  testBitcoindUsername,
+  testZmqPubUrl
 } from './helpers';
-
-const sleep = (msec: number) =>
-  new Promise(resolve => setTimeout(resolve, msec));
+import { InMemoryKeyRepository } from '../lib/key-repository';
+import WalletRepository from '../lib/wallet-repository';
 
 let service: RPCServer<BasicWallet>;
 let testConfig: Config;
 let logger: Logger;
 
 test.before(async t => {
-  const Home: string =
-    process.env[process.platform === 'win32' ? 'USERPROFILE' : 'HOME'] ||
-    __dirname;
-  const dataDir = path.join(Home, '.walletts-test');
-  mkdirpSync(dataDir);
-  const debugFile = path.join(dataDir, 'test.log');
-  logger = getLogger(debugFile);
-  logger.warn(`debug log will be output to ${debugFile}`);
-  logger.warn(`create ${dataDir} for testing ...`);
+  let dataDir: string;
+  [logger, dataDir] = prePareTest();
   await startTestBitcoind(logger);
   service = new GRPCServer(logger);
   testConfig = loadConfig({ datadir: dataDir });
-  const repo = new WalletService(testConfig, logger);
+  const keyRepo = new InMemoryKeyRepository();
+  const repo = new WalletService(
+    testConfig,
+    keyRepo,
+    new WalletRepository(),
+    logger
+  );
   service.start(repo, testConfig);
   await sleep(400); // to make sure server has started
 });
@@ -88,7 +86,8 @@ test.cb('It can set blockchainProxy after creating Wallet', t => {
         rpcusername: testBitcoindUsername,
         rpcpass: testBitcoindPassword,
         rpcip: testBitcoindIp,
-        rpcport: testBitcoindPort
+        rpcport: testBitcoindPort,
+        zmqurl: testZmqPubUrl
       },
       (err, res) => {
         if (err) {

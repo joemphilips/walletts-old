@@ -8,6 +8,8 @@ import { UIProxy, WalletAction } from './uiproxy';
 import getClient, { RPCClient } from './grpc-client';
 import getLogger from '../lib/logger';
 import { bchInfoSource } from './grpc-common';
+import { InMemoryKeyRepository } from '../';
+import WalletRepository from '../lib/wallet-repository';
 
 export default class WalletLauncher {
   public readonly cfg: Config;
@@ -21,7 +23,12 @@ export default class WalletLauncher {
     this.cfg = loadConfig(opts);
     this.logger = getLogger(this.cfg.debugFile);
     this.logger.info(`config object is ${this.cfg}`);
-    this.walletRepo = new WalletService(this.cfg, this.logger);
+    this.walletRepo = new WalletService(
+      this.cfg,
+      new InMemoryKeyRepository(),
+      new WalletRepository(),
+      this.logger
+    );
     this.server = new GRPCServer(this.logger);
     this.uiproxy = container.resolve('uiproxy');
     this.client = getClient(this.cfg.url);
@@ -67,14 +74,21 @@ export default class WalletLauncher {
     // setup blockchain
     const bchSetupAction = await this.uiproxy.chooseBlockchainProxy();
     if (bchSetupAction.kind === 'trustedRPC') {
-      const { rpcusername, rpcpass, rpcip, rpcport } = bchSetupAction.payload;
+      const {
+        rpcusername,
+        rpcpass,
+        rpcip,
+        rpcport,
+        zmqurl
+      } = bchSetupAction.payload;
       this.client.setupBlockchainProxy(
         {
           type: bchInfoSource.trusted_rpc,
           rpcusername,
           rpcpass,
           rpcip,
-          rpcport
+          rpcport,
+          zmqurl
         },
         (e: NodeJS.ErrnoException, _: { success: boolean }) => {
           if (e) {

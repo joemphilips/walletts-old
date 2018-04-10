@@ -1,7 +1,7 @@
 import { Transaction } from 'bitcoinjs-lib';
 import { blockexplorer, usingNetwork } from 'blockchain.info';
 import logger from '../logger';
-import { BlockchainProxy } from './index';
+import { BlockchainProxy, SyncInfo } from './index';
 import * as Logger from 'bunyan';
 
 export class BlockchainInfo implements BlockchainProxy {
@@ -20,5 +20,15 @@ export class BlockchainInfo implements BlockchainProxy {
   public async ping(): Promise<void> {
     await this.api.getLatestBlock();
     return;
+  }
+
+  public async isPruned(): Promise<boolean> {
+    return false;
+  }
+
+  public async getAddressesWithBalance(
+    addresses: ReadonlyArray<string>
+  ): Promise<SyncInfo> {
+    throw new Error(`Not implemented!`);
   }
 }

@@ -67,6 +67,7 @@ message SetupBlockchainRequest {
   string rpcpass = 4;
   string rpcip = 5;
   string rpcport = 6;
+  string zmqurl = 7;
 }
 
 message SetupBlockchainResponse {

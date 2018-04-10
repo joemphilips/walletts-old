@@ -3,14 +3,14 @@ import { Transaction } from 'bitcoinjs-lib';
 import * as fs from 'fs';
 import * as ini from 'ini';
 import logger from '../logger';
-import { BlockchainProxy } from './index';
+import { BlockchainProxy, SyncInfo } from './index';
 import * as Logger from 'bunyan';
 
 export class TrustedBitcoindRPC implements BlockchainProxy {
-  public readonly client: any;
+  public readonly client: Client;
   public readonly logger: Logger;
   constructor(
-    confPath: fs.PathLike,
+    confPath: string,
     username: string,
     password: string,
     rpcip: string,
@@ -48,15 +48,43 @@ export class TrustedBitcoindRPC implements BlockchainProxy {
     this.client = new Client(opts);
   }
 
+  public async isPruned(): Promise<boolean> {
+    const info = await this.client.getBlockchainInfo();
+    return info.pruned;
+  }
+
   public async ping(): Promise<void> {
     return this.client.ping();
+  }
+
+  public async getAddressesWithBalance(
+    addresses: ReadonlyArray<string>
+  ): Promise<SyncInfo> {
+    throw Error(`Not implemented !`);
+  }
+
+  /**
+   * utility function for regtesting
+   * @param {string} address
+   * @returns {Promise<void>}
+   */
+  public async prepare500BTC(address: string): Promise<boolean> {
+    const info = await this.client.getBlockchainInfo();
+    if (info.blocks > 1000) {
+      return false;
+    }
+    await this.client.generateToAddress(10, address);
+    await this.client.generate(100);
+    return true;
   }
 
   public async getPrevHash(tx: Transaction): Promise<ReadonlyArray<string>> {
     this.logger.debug(`tx is ${JSON.stringify(tx.toHex())}`);
     this.logger.debug(`client is ${JSON.stringify(this.client)}`);
     this.logger.debug(`tx id is ${tx.getId()}`);
-    const RawTx: string = await this.client.getRawTransaction(tx.getId());
+    const RawTx: string = (await this.client.getRawTransaction(
+      tx.getId()
+    )) as string;
     this.logger.debug(`Raw TX is ${RawTx}`);
     const txwithInfo: any = await this.client.decodeRawTransaction(RawTx);
     this.logger.debug(`tx withInfo is ${JSON.stringify(txwithInfo)} `);

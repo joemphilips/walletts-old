@@ -43,6 +43,7 @@ export interface UseBitcoind {
     rpcpass: string;
     rpcip: string;
     rpcport: string;
+    zmqurl: string;
   };
 }
 export interface UseBlockchainInfo {
@@ -57,6 +58,7 @@ interface SetupBlockchainProxyAnswers {
   readonly rpcpass: string;
   readonly rpcip: string;
   readonly rpcport: string;
+  readonly zmqurl: string;
 }
 
 export interface UIProxy {
@@ -186,16 +188,22 @@ export class CliUIProxy implements UIProxy {
         type: 'input',
         message: 'And its port? (e.g. 8332)',
         when: (prevAnswers: any) => prevAnswers.bchtype === 'Bitcoind you trust'
+      },
+      {
+        name: 'zmqurl',
+        type: 'input',
+        message: 'what is an url for zmq?',
+        when: (prevAnswers: any) => prevAnswers.bchtype === 'Bitcoind you trust'
       }
     ];
     const answers: SetupBlockchainProxyAnswers = await inquirer.prompt(
       questions
     );
-    const { rpcusername, rpcpass, rpcip, rpcport } = answers;
+    const { rpcusername, rpcpass, rpcip, rpcport, zmqurl } = answers;
     if (answers.bchtype === 'Bitcoind you trust') {
       return {
         kind: 'trustedRPC',
-        payload: { rpcusername, rpcpass, rpcip, rpcport }
+        payload: { rpcusername, rpcpass, rpcip, rpcport, zmqurl }
       };
     }
     return { kind: 'blockchainInfo', payload: null };

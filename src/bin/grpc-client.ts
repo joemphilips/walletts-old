@@ -20,6 +20,7 @@ export interface RPCClient {
       rpcpass: string;
       rpcip: string;
       rpcport: string;
+      zmqurl: string;
     },
     cb: (err: NodeJS.ErrnoException, isSuccess: { success: boolean }) => void
   ) => void;
