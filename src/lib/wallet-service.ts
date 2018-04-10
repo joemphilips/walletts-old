@@ -18,10 +18,12 @@ import { none } from 'fp-ts/lib/Option';
 import NormalAccountService, {
   AbstractAccountService
 } from './account-service';
+import CoinManager from './coin-manager';
 
 interface AbstractWalletService<
   W extends AbstractWallet,
-  AS extends AbstractAccountService<Account>
+  A extends Account,
+  AS extends AbstractAccountService<A>
 > {
   keyRepo: KeyRepository;
   repo: WalletRepository;
@@ -35,6 +37,7 @@ interface AbstractWalletService<
   setNewAccountToWallet: (
     wallet: W,
     informationSource: ObservableBlockchain,
+    bchProxy: BlockchainProxy,
     type: AccountType,
     cointype: SupportedCoinType
   ) => Promise<W | void>;
@@ -48,7 +51,8 @@ interface AbstractWalletService<
 }
 
 export default class WalletService extends rx.Subject<any>
-  implements AbstractWalletService<BasicWallet, NormalAccountService> {
+  implements
+    AbstractWalletService<BasicWallet, NormalAccount, NormalAccountService> {
   private readonly logger: Logger;
   constructor(
     private cfg: Config,
@@ -133,6 +137,7 @@ export default class WalletService extends rx.Subject<any>
   public async setNewAccountToWallet(
     wallet: BasicWallet,
     informationSource: ObservableBlockchain,
+    bchProxy: BlockchainProxy,
     type: AccountType = AccountType.Normal,
     cointype: SupportedCoinType = SupportedCoinType.BTC
   ): Promise<BasicWallet | void> {
@@ -152,7 +157,8 @@ export default class WalletService extends rx.Subject<any>
       const account = await this.as.createFromHD(
         accountMasterHD,
         wallet.accounts.length,
-        informationSource
+        informationSource,
+        bchProxy
       );
       const walletWithAccount = new BasicWallet(wallet.id, [
         ...wallet.accounts,
@@ -165,6 +171,7 @@ export default class WalletService extends rx.Subject<any>
     }
   }
 
+  // TODO: decouple this function as separate object.
   private syncHDNode(
     masternode: bitcoin.HDNode,
     proxy: BlockchainProxy,
@@ -178,11 +185,11 @@ export default class WalletService extends rx.Subject<any>
      * returns the last index of address found in the blockchain.
      * @returns {Account | null}
      */
-    async function recoverAddress(
+    const recoverAddress = async (
       node: bitcoin.HDNode,
       accountNumber: number,
       bch: ObservableBlockchain
-    ): Promise<Account | null> {
+    ): Promise<Account | null> => {
       const addresses = [];
       for (const j of Array(20)) {
         i
@@ -192,9 +199,11 @@ export default class WalletService extends rx.Subject<any>
       const res = await proxy.getAddressesWithBalance(addresses);
       if (!res) {
         const id = hash160(node.getPublicKeyBuffer()).toString('hex');
+        const manager = new CoinManager(this.logger, this.keyRepo, proxy);
         return new NormalAccount(
           id,
           accountNumber,
+          manager,
           bch,
           none,
           AccountType.Normal,
@@ -207,7 +216,7 @@ export default class WalletService extends rx.Subject<any>
         0
       );
       return recoverAddress(node, accountNumber, bch);
-    }
+    };
 
     let accountIndex = 0;
     const accounts: Account[] = [];

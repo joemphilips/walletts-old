@@ -1,4 +1,4 @@
-export * from './lib/coin_manager';
+export * from './lib/coin-manager';
 export * from './lib/config';
 export * from './lib/container';
 export * from './lib/errors';

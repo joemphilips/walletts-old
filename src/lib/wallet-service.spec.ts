@@ -23,6 +23,7 @@ import WalletRepository from '../lib/wallet-repository';
 import NormalAccountService from './account-service';
 import * as util from 'util';
 import { Balance } from './primitives/balance';
+import { NormalAccount } from './account';
 
 test('it can be created, deleted, and resurrected', async t => {
   // setup dependencies for wallet service.
@@ -74,12 +75,14 @@ test('it can be created, deleted, and resurrected', async t => {
   );
   const wallet2 = (await service.setNewAccountToWallet(
     wallet,
-    infoSource
+    infoSource,
+    bchProxy
   )) as BasicWallet;
   t.not(wallet2, null);
   const wallet3 = (await service.setNewAccountToWallet(
     wallet2,
-    infoSource
+    infoSource,
+    bchProxy
   )) as BasicWallet;
   t.not(wallet3, null);
   t.is(
@@ -92,7 +95,7 @@ test('it can be created, deleted, and resurrected', async t => {
   t.is(wallet3.accounts.length, 2);
 
   const [address, change] = await accountService.getAddressForAccount(
-    wallet3.accounts[1],
+    wallet3.accounts[1] as NormalAccount,
     1
   );
   bchProxy.prepare500BTC(address);

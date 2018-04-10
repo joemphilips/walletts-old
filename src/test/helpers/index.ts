@@ -6,6 +6,7 @@ import getLogger from '../../lib/logger';
 import * as ps from 'ps-node';
 import * as util from 'util';
 import _ from 'lodash';
+import { existsSync } from 'fs';
 
 export const testBitcoindUsername = 'foo';
 export const testBitcoindPassword = 'bar';
@@ -66,7 +67,6 @@ export function prePareTest(): [Logger, string] {
   const dataDir = setupTestDir();
   const debugFile = path.join(dataDir, 'test.log');
   const logger = getLogger(debugFile);
-  logger.info(`create ${dataDir} for testing ...`);
   logger.info(`debug log will be output to ${debugFile}`);
   return [logger, dataDir];
 }
@@ -76,6 +76,8 @@ export function setupTestDir(): string {
     process.env[process.platform === 'win32' ? 'USERPROFILE' : 'HOME'] ||
     __dirname;
   const dataDir = path.join(Home, '.walletts-test');
-  mkdirpSync(dataDir);
+  existsSync(dataDir)
+    ? mkdirpSync(dataDir)
+    : util.debuglog(`${dataDir} already exists. so not creating`);
   return dataDir;
 }
