@@ -68,6 +68,14 @@ export function prePareTest(): [Logger, string] {
   const debugFile = path.join(dataDir, 'test.log');
   const logger = getLogger(debugFile);
   logger.info(`debug log will be output to ${debugFile}`);
+
+  process.on('unhandledRejection', err => {
+    // something went unhandled.
+    // Do any cleanup and exit anyway!
+
+    logger.error(err);
+  });
+
   return [logger, dataDir];
 }
 
