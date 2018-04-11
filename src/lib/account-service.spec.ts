@@ -85,4 +85,6 @@ test(`handles incoming events from blockchain correctly`, async t => {
   // TODO: pipe event into mockObservable and check wallet balance has been updated.
   const tx = new TransactionBuilder();
   tx.addOutput(address, 2);
+
+  t.is(account.balance.amount, 2);
 });
