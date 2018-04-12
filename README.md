@@ -10,3 +10,14 @@ first `yarn install` and
 `work` methods definition to take `AsyncAction` instead of `VirtualAction`
 **
 ref https://github.com/ReactiveX/rxjs/issues/3031
+
+next, run bitcoind in regtest with
+```
+docker compose up -d
+```
+
+and run
+```
+yarn test-withoug-nsp
+```
+for testing

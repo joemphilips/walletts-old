@@ -2,6 +2,9 @@ node_modules
 build
 src/**.js
 src/proto/
+test-volume/*
+test-volume/**/*
+!test-volume/
 
 coverage
 .nyc_output

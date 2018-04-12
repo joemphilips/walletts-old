@@ -25,5 +25,3 @@ test('ping', async t => {
   await proxy.ping();
   t.pass();
 });
-
-
