@@ -9,7 +9,6 @@ import { bchInfoSource } from '..//bin/grpc-common';
 import {
   prePareTest,
   sleep,
-  startTestBitcoind,
   testBitcoindIp,
   testBitcoindPassword,
   testBitcoindPort,
@@ -26,7 +25,6 @@ let logger: Logger;
 test.before(async t => {
   let dataDir: string;
   [logger, dataDir] = prePareTest();
-  await startTestBitcoind(logger);
   service = new GRPCServer(logger);
   testConfig = loadConfig({ datadir: dataDir });
   const keyRepo = new InMemoryKeyRepository();
