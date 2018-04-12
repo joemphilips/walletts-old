@@ -6,6 +6,25 @@ import logger from '../logger';
 import { BlockchainProxy, SyncInfo } from './index';
 import * as Logger from 'bunyan';
 
+interface ValidateAddressResult {
+  isvalid: boolean;
+  address?: string;
+  scriptPubKey?: string;
+  ismine?: boolean;
+  iswatchonly?: boolean;
+  isscript?: boolean;
+  script?: string;
+  hex?: string;
+  addresses?: string[];
+  sigsrequired?: number;
+  pubkey?: string;
+  iscompressed?: boolean;
+  account?: string;
+  timestamp?: number;
+  hdkeypath?: string;
+  hdmasterkeyid?: string;
+}
+
 export class TrustedBitcoindRPC implements BlockchainProxy {
   public readonly client: Client;
   public readonly logger: Logger;
@@ -51,6 +70,12 @@ export class TrustedBitcoindRPC implements BlockchainProxy {
   public async isPruned(): Promise<boolean> {
     const info = await this.client.getBlockchainInfo();
     return info.pruned;
+  }
+
+  public async validateAddress(
+    address: string
+  ): Promise<ValidateAddressResult> {
+    return this.client.validateAddress(address);
   }
 
   public async ping(): Promise<void> {
