@@ -4,6 +4,7 @@ import { bchInfoSource, PROTO_PATH } from './grpc-common';
 export interface CreateWalletArg {
   nameSpace: string;
   passPhrase?: string;
+  network?: string;
   seed?: ReadonlyArray<string>;
 }
 

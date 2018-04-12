@@ -8,6 +8,7 @@ export interface CreateWallet {
   kind: 'createWallet';
   payload: {
     nameSpace: string;
+    network: string;
     passPhrase: string;
   };
 }
@@ -15,8 +16,9 @@ export interface ImportWallet {
   kind: 'importWallet';
   payload: {
     nameSpace: string;
-    seed: ReadonlyArray<string>;
+    network: string;
     passPhrase: string;
+    seed: ReadonlyArray<string>;
   };
 }
 export interface DoNothing {
@@ -31,6 +33,7 @@ export type WalletAction = CreateWallet | ImportWallet | DoNothing;
 interface CreateNewWalletAnswers {
   readonly create_new: boolean;
   readonly import: boolean;
+  readonly network: string;
   readonly passPhrase: string;
 }
 
@@ -96,6 +99,13 @@ export class CliUIProxy implements UIProxy {
         default: false
       },
       {
+        type: 'list',
+        name: 'network',
+        message: 'testnet or mainnet?',
+        choices: ['testnet', 'mainnet'],
+        default: 'testnet'
+      },
+      {
         type: 'input',
         name: 'passPhrase',
         message: 'what is your wallet passphrase?',
@@ -114,7 +124,11 @@ export class CliUIProxy implements UIProxy {
       const nameSpace = await inquirer.prompt<string>(q);
       return {
         kind: 'createWallet',
-        payload: { nameSpace, passPhrase: answers.passPhrase }
+        payload: {
+          nameSpace,
+          passPhrase: answers.passPhrase,
+          network: answers.network
+        }
       };
     } else if (answers.import) {
       const mnemonic = await this._askMnemonic();
@@ -122,6 +136,7 @@ export class CliUIProxy implements UIProxy {
         kind: 'importWallet',
         payload: {
           nameSpace: 'hogeWallet',
+          network: answers.network,
           seed: mnemonic,
           passPhrase: 'passPhrase'
         }

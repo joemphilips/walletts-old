@@ -44,6 +44,7 @@ const createWalletServiceHandlers = (
         parent.wallet = await walletService.createFromSeed(
           nameSpace,
           ctx.req.seed,
+          ctx.req.network,
           ctx.req.passPhrase
         );
         parent.wallet =
@@ -57,6 +58,7 @@ const createWalletServiceHandlers = (
       } else {
         parent.wallet = await walletService.createNew(
           nameSpace,
+          ctx.req.network,
           ctx.req.passPhrase
         );
       }

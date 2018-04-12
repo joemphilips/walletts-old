@@ -10,7 +10,12 @@ import {
 import loadConfig from './config';
 import NormalAccountService from './account-service';
 import { InMemoryKeyRepository } from './key-repository';
-import { HDNode, TransactionBuilder } from 'bitcoinjs-lib';
+import {
+  HDNode,
+  networks,
+  Transaction,
+  TransactionBuilder
+} from 'bitcoinjs-lib';
 import {
   BlockchainEvent,
   getObservableBlockchain,
@@ -19,15 +24,21 @@ import {
   TrustedBitcoindRPC
 } from './blockchain-proxy';
 import { Observable } from '@joemphilips/rxjs';
+import * as Logger from 'bunyan';
 
 let service: NormalAccountService;
 let masterHD: HDNode;
 let infoSource: ObservableBlockchain;
 let bchProxy: TrustedBitcoindRPC;
+let logger: Logger;
+let datadir: string;
 test.before('', () => {
-  const [logger, datadir] = prePareTest();
+  [logger, datadir] = prePareTest();
   service = new NormalAccountService(logger, new InMemoryKeyRepository());
-  masterHD = HDNode.fromSeedHex('ffffffffffffffffffffffffffffffff')
+  masterHD = HDNode.fromSeedHex(
+    'ffffffffffffffffffffffffffffffff',
+    networks.testnet
+  )
     .deriveHardened(44)
     .deriveHardened(0); // coin_type
   infoSource = getObservableBlockchain(testZmqPubUrl);
@@ -82,9 +93,8 @@ test(`handles incoming events from blockchain correctly`, async t => {
     bchProxy
   );
   const [address, change] = await service.getAddressForAccount(account, 0);
+  logger.error(`pleaseCreateTxFor ${address}`);
   // TODO: pipe event into mockObservable and check wallet balance has been updated.
-  const tx = new TransactionBuilder();
-  tx.addOutput(address, 2);
 
   t.is(account.balance.amount, 2);
 });
