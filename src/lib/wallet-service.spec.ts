@@ -1,7 +1,7 @@
 import anyTest, { ExecutionContext, TestInterface } from 'ava';
 import WalletService from './wallet-service';
 import { BasicWallet } from './wallet';
-import { crypto, HDNode } from 'bitcoinjs-lib';
+import { crypto, HDNode, networks } from 'bitcoinjs-lib';
 import {
   getObservableBlockchain,
   ObservableBlockchain,
@@ -45,6 +45,20 @@ let datadir: string;
 let infoSource: ObservableBlockchain;
 let bchProxy: TrustedBitcoindRPC;
 let cfg: Config;
+const seed = [
+  'zoo',
+  'zoo',
+  'zoo',
+  'zoo',
+  'zoo',
+  'zoo',
+  'zoo',
+  'zoo',
+  'zoo',
+  'zoo',
+  'zoo',
+  'wrong'
+];
 test.before(
   'prepare wallet service',
   async (t: ExecutionContext<WalletServiceTestContext>) => {
@@ -79,36 +93,28 @@ test.beforeEach(
   }
 );
 
-test('it can be created, deleted, and resurrected', async (t: ExecutionContext<
+test('wallet can be created, and can set accounts to it.', async (t: ExecutionContext<
   WalletServiceTestContext
 >) => {
-  // setup dependencies for wallet service.
-
   // create wallet
-  const seed = [
-    'zoo',
-    'zoo',
-    'zoo',
-    'zoo',
-    'zoo',
-    'zoo',
-    'zoo',
-    'zoo',
-    'zoo',
-    'zoo',
-    'zoo',
-    'wrong'
-  ];
-  const hdNode = HDNode.fromSeedBuffer(bip39.mnemonicToSeed(seed.join(' ')));
+  const hdNode = HDNode.fromSeedBuffer(
+    bip39.mnemonicToSeed(seed.join(' ')),
+    networks.testnet
+  );
   const pubKey = hdNode.getPublicKeyBuffer();
   const w = new BasicWallet(hash160(pubKey).toString('hex'), []);
   logger.debug(`seed created from entropy is ${seed}`);
-  const wallet = await t.context.ws.createFromSeed('Test Wallet', seed);
+  const wallet = await t.context.ws.createFromSeed(
+    'Test Wallet',
+    seed,
+    networks.testnet
+  );
   t.is(
     wallet.id,
     w.id,
     'wallets created from the same seed must have the same id'
   );
+
   const wallet2 = (await t.context.ws.setNewAccountToWallet(
     wallet,
     infoSource,
@@ -124,22 +130,75 @@ test('it can be created, deleted, and resurrected', async (t: ExecutionContext<
   t.is(
     wallet3.id,
     wallet.id,
-    'id for wallet does not change even after creating account'
+    'id for a wallet does not change even after creating account'
   );
-  logger.debug(`accounts in wallet2 are ${util.inspect(wallet2.accounts)}`);
-  logger.debug(`accounts in wallet3 are ${util.inspect(wallet3.accounts)}`);
+
   t.is(wallet3.accounts.length, 2);
 
+  t.not(
+    wallet3.accounts[0].id,
+    wallet3.accounts[1].id,
+    `each account must have different ID`
+  );
+});
+
+test('It is possible to get address for accounts in wallet', async (t: ExecutionContext<
+  WalletServiceTestContext
+>) => {
+  // prepare wallet with one account.
+  const wallet = await t.context.ws.createFromSeed(
+    'Test Wallet',
+    seed,
+    networks.testnet
+  );
+  const wallet2 = (await t.context.ws.setNewAccountToWallet(
+    wallet,
+    infoSource,
+    bchProxy
+  )) as BasicWallet;
   const [address, change] = await t.context.as.getAddressForAccount(
-    wallet3.accounts[1] as NormalAccount,
+    wallet2.accounts[0] as NormalAccount,
     1
   );
+
+  // check address is valid
+  const result = await bchProxy.validateAddress(address);
+  const resultForChange = await bchProxy.validateAddress(change);
+  t.true(result.isvalid);
+  t.true(resultForChange.isvalid);
+});
+
+test('accounts in a wallet will be recovered when it is re-created from the seed.', async (t: ExecutionContext<
+  WalletServiceTestContext
+>) => {
+  const wallet = await t.context.ws.createFromSeed(
+    'Test Wallet',
+    seed,
+    networks.testnet
+  );
+  const wallet2 = (await t.context.ws.setNewAccountToWallet(
+    wallet,
+    infoSource,
+    bchProxy
+  )) as BasicWallet;
+  const wallet3 = (await t.context.ws.setNewAccountToWallet(
+    wallet2,
+    infoSource,
+    bchProxy
+  )) as BasicWallet;
+
+  const [address, change] = await t.context.as.getAddressForAccount(
+    wallet3.accounts[0] as NormalAccount,
+    1
+  );
+  logger.error(`address for testing was ${address}`);
+
   bchProxy.prepare500BTC(address);
 
   await sleep(500);
 
   t.is(
-    wallet3.accounts[1].balance,
+    wallet3.accounts[0].balance,
     new Balance(500),
     'BTC transferred to the address derived from an account should be reflected to its Balance'
   );
