@@ -28,7 +28,6 @@ import * as util from 'util';
 import { Balance } from './primitives/balance';
 import { NormalAccount } from './account';
 import * as Logger from 'bunyan';
-import { CONFIG_FILENAME } from 'tslint/lib/configuration';
 
 // define context.
 /* tslint:disable interface-over-type-literal */
@@ -191,7 +190,6 @@ test('accounts in a wallet will be recovered when it is re-created from the seed
     wallet3.accounts[0] as NormalAccount,
     1
   );
-  logger.error(`address for testing was ${address}`);
 
   bchProxy.prepare500BTC(address);
 
