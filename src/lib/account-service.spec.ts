@@ -70,7 +70,7 @@ test('create from hd', async t => {
 
 test('get address for account', async t => {
   const account = await service.createFromHD(masterHD, 0, infoSource, bchProxy);
-  const [addr, change] = await service.getAddressForAccount(account, 0);
+  const [account2, addr, change] = await service.getAddressForAccount(account, 0);
   const addr2 = masterHD
     .derive(0)
     .derive(0)
@@ -91,7 +91,7 @@ test(`handles incoming events from blockchain correctly`, async t => {
     mockObservable,
     bchProxy
   );
-  const [addr, change] = await service.getAddressForAccount(account, 0);
+  const [account2, addr, change] = await service.getAddressForAccount(account, 0);
   logger.error(`pleaseCreateTxFor ${addr}`);
   // TODO: pipe event into mockObservable and check wallet balance has been updated.
   const builder = new TransactionBuilder(networks.testnet);
@@ -102,5 +102,5 @@ test(`handles incoming events from blockchain correctly`, async t => {
   logger.debug(`piping Transaction for test ... ${tx}`);
   mockObservable.next(tx);
 
-  t.is(account.balance.amount, 2);
+  t.is(account2.balance.amount, 2);
 });

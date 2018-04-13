@@ -32,8 +32,8 @@ export interface Account extends Observable<any> {
   readonly observableBlockchain: ObservableBlockchain;
   readonly balance: Balance;
   readonly watchingAddresses: Option<ReadonlyArray<string>>;
-  readonly debit: (coin: MyWalletCoin[]) => Either<Error, Account>;
-  readonly credit: (coin: MyWalletCoin[]) => Account;
+  readonly debit: (coin: MyWalletCoin[]) => Either<Error, any>;
+  readonly credit: (coin: MyWalletCoin[]) => any;
 }
 
 type AccountEvent = 'debit' | 'credit';
@@ -42,7 +42,7 @@ type AccountEvent = 'debit' | 'credit';
  * This class must communicate with the blockchain only in reactive manner using ObservableBlockchain, not proactively.
  * quering to the blockchain must be delegated to CoinManager.
  */
-export class NormalAccount extends Observable<AccountEvent> {
+export class NormalAccount extends Observable<AccountEvent> implements Account {
   constructor(
     public id: AccountID,
     public hdIndex: number,

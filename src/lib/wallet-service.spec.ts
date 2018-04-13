@@ -155,7 +155,7 @@ test('It is possible to get address for accounts in wallet', async (t: Execution
     infoSource,
     bchProxy
   )) as BasicWallet;
-  const [address, change] = await t.context.as.getAddressForAccount(
+  const [_, address, change] = await t.context.as.getAddressForAccount(
     wallet2.accounts[0] as NormalAccount,
     1
   );
@@ -186,7 +186,7 @@ test('accounts in a wallet will be recovered when it is re-created from the seed
     bchProxy
   )) as BasicWallet;
 
-  const [address, change] = await t.context.as.getAddressForAccount(
+  const [_, address, change] = await t.context.as.getAddressForAccount(
     wallet3.accounts[0] as NormalAccount,
     1
   );
