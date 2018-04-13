@@ -51,7 +51,6 @@ export default class NormalAccountService
       a.hdIndex,
       a.coinManager,
       a.observableBlockchain,
-      a.coins,
       a.type,
       a.balance,
       some([...a.watchingAddresses.getOrElse([]), address, changeAddress])
@@ -75,7 +74,6 @@ export default class NormalAccountService
       index,
       coinManager,
       observableBlockchain,
-      none
     );
   }
 

@@ -53,6 +53,17 @@ export default class CoinManager {
     return false;
   }
 
+  public async chooseCoinsFromAmount(amount: number): Promise<MyWalletCoin[]> {
+    return new MyWalletCoin()
+  }
+
+  public async crateTx(coins: MyWalletCoin[]): Promise<Transaction> {
+  }
+
+  public async broadCast(tx: Transaction): Promise<void> {
+
+  }
+
   /**
    * Contextify Transaction output as a WalletCoin and put it into CoinMaps
    * @param {AccountID} id
