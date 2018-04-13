@@ -51,7 +51,6 @@ export default class NormalAccountService
       a.hdIndex,
       a.coinManager,
       a.observableBlockchain,
-      a.coins,
       a.type,
       a.balance,
       some([...a.watchingAddresses.getOrElse([]), address, changeAddress])
@@ -70,13 +69,7 @@ export default class NormalAccountService
     const coinManager = new CoinManager(this.logger, this.keyRepo, bchProxy);
     this.logger.debug(`Account ${id} has been created from HD`);
     await this._save(id, masterHD);
-    return new NormalAccount(
-      id,
-      index,
-      coinManager,
-      observableBlockchain,
-      none
-    );
+    return new NormalAccount(id, index, coinManager, observableBlockchain);
   }
 
   private async _save(id: AccountID, key: HDNode): Promise<void> {
