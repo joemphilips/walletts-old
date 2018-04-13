@@ -2,13 +2,14 @@ import * as inquirer from 'inquirer';
 import { WalletError } from '../lib/errors';
 import * as ini from 'ini';
 import * as fs from 'fs';
+import { grpcNetworkInfo } from './grpc-common';
 
 // action for wallet creation
 export interface CreateWallet {
   kind: 'createWallet';
   payload: {
     nameSpace: string;
-    network: string;
+    network: grpcNetworkInfo;
     passPhrase: string;
   };
 }
@@ -16,7 +17,7 @@ export interface ImportWallet {
   kind: 'importWallet';
   payload: {
     nameSpace: string;
-    network: string;
+    network: grpcNetworkInfo;
     passPhrase: string;
     seed: ReadonlyArray<string>;
   };
@@ -127,7 +128,10 @@ export class CliUIProxy implements UIProxy {
         payload: {
           nameSpace,
           passPhrase: answers.passPhrase,
-          network: answers.network
+          network:
+            answers.network === 'testnet?'
+              ? grpcNetworkInfo.btctest
+              : grpcNetworkInfo.btcmain
         }
       };
     } else if (answers.import) {
@@ -136,7 +140,10 @@ export class CliUIProxy implements UIProxy {
         kind: 'importWallet',
         payload: {
           nameSpace: 'hogeWallet',
-          network: answers.network,
+          network:
+            answers.network === 'testnet'
+              ? grpcNetworkInfo.btctest
+              : grpcNetworkInfo.btcmain,
           seed: mnemonic,
           passPhrase: 'passPhrase'
         }
