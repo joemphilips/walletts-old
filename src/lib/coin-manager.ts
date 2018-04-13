@@ -10,6 +10,7 @@ import { AccountID } from './primitives/identity';
 import { Either, left, right } from 'fp-ts/lib/Either';
 import { Outpoint } from 'bitcoin-core';
 import * as _ from 'lodash';
+import {Balance} from "lib/primitives/balance";
 
 export interface OutpointWithScriptAndAmount {
   id: string;
@@ -51,9 +52,15 @@ export default class CoinManager {
     return false;
   }
 
+  public get total(): Balance {
+    return new Balance(Array.from(this.coins.entries()).map((k, v) => v).reduce((a, b) => a + b, 0))
+  }
+
   // TODO: Implement Murch's algorithm.  refs: https://github.com/bitcoin/bitcoin/pull/10637
   public async chooseCoinsFromAmount(amount: number): Promise<MyWalletCoin[]> {
-    return this.coins.get();
+    if (this.total.amount < amount) {
+      throw Error(`not enought funds!`)
+    }
   }
 
   public crateTx(

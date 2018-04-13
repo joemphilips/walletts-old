@@ -12,7 +12,7 @@ import {
 } from './blockchain-proxy';
 import { address, Block, Out, Transaction } from 'bitcoinjs-lib';
 import CoinManager from './coin-manager';
-import { OtherUser, OuterEntity } from './primitives/entities';
+import {isOtherUser, OtherUser, OuterEntity} from './primitives/entities';
 
 export enum AccountType {
   Normal
@@ -66,6 +66,11 @@ export class NormalAccount extends Observable<AccountEvent> implements Account {
     if (nextAmount < 0) {
       throw new Error(`Balance can not be negative!`);
     }
+
+    if (destinations.some(d => !isOtherUser(d))){
+      throw new Error(`Right now, only paying to other Users is supported`)
+    }
+
     const newBalance = new Balance(nextAmount);
     const coins = await this.coinManager.chooseCoinsFromAmount(amount);
     const addressAndAmounts = destinations.map((d: OuterEntity, i) => ({
