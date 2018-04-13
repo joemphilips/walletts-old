@@ -26,6 +26,7 @@ import {
 } from './blockchain-proxy';
 import { Observable, Subject } from '@joemphilips/rxjs';
 import * as Logger from 'bunyan';
+import { some } from 'fp-ts/lib/Option';
 
 let service: NormalAccountService;
 let masterHD: HDNode;
@@ -84,6 +85,12 @@ test('get address for account', async t => {
     .getAddress();
   t.is(addr, addr2);
   t.is(change, change2);
+
+  t.deepEqual(
+    account2.watchingAddresses,
+    some([addr, change]),
+    'watchingAddress in account must be updated when create a new address'
+  );
 });
 
 test(`handles incoming events from blockchain correctly`, async t => {

@@ -52,7 +52,9 @@ export class TrustedBitcoindRPC implements BlockchainProxy {
         network: conf.testnet ? 'testnet' : 'mainnet'
       };
     } catch (e) {
-      this.logger.error(`failed to load config file`);
+      this.logger.info(
+        `failed to load config file for bitcoind, rolling back to default`
+      );
       opts = {
         network,
         host: rpcip,

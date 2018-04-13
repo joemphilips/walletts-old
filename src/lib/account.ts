@@ -12,7 +12,6 @@ import {
 } from './blockchain-proxy';
 import { address, Block, Out, Transaction } from 'bitcoinjs-lib';
 import CoinManager from './coin-manager';
-import { Outpoint } from 'bitcoin-core';
 
 export enum AccountType {
   Normal
