@@ -9,6 +9,7 @@ tslint.json
 .prettierignore
 build/docs
 build/test
+test-volume
 **/*.spec.*
 coverage
 .nyc_output

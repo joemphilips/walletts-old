@@ -1,0 +1,30 @@
+version: '3'
+services:
+  bitcoind:
+    image: seegno/bitcoind
+    restart: unless-stopped
+    ports:
+      ## Comment these if they conflict with something else you're running.
+      #-- Mainnet
+      - "8333:8333"
+      - "8332:8332" # RPC
+      - "8334:8334" # Wallet
+      #-- Testnet
+      - "18333:18333"
+      - "18332:18332" # RPC
+    volumes:
+      - ./test-volume/bitcoind/:/home/bitcoin/.bitcoin
+    command:
+      -printtoconsole
+      -regtest=1
+      -rest
+      -rpcallowip=10.211.0.0/16
+      -rpcallowip=172.17.0.0/16
+      -rpcallowip=192.168.0.0/16
+      -rpcallowip=0.0.0.0/0
+      -rpcuser=foo
+      -rpcpassword=bar
+      -rpcport=18332
+      -server
+      -zmqpubrawblock='tcp://127.0.0.1:288332'
+      -zmqpubrawtx='tcp://127.0.0.1:288332'

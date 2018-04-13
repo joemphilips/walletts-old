@@ -6,6 +6,25 @@ import logger from '../logger';
 import { BlockchainProxy, SyncInfo } from './index';
 import * as Logger from 'bunyan';
 
+interface ValidateAddressResult {
+  isvalid: boolean;
+  address?: string;
+  scriptPubKey?: string;
+  ismine?: boolean;
+  iswatchonly?: boolean;
+  isscript?: boolean;
+  script?: string;
+  hex?: string;
+  addresses?: string[];
+  sigsrequired?: number;
+  pubkey?: string;
+  iscompressed?: boolean;
+  account?: string;
+  timestamp?: number;
+  hdkeypath?: string;
+  hdmasterkeyid?: string;
+}
+
 export class TrustedBitcoindRPC implements BlockchainProxy {
   public readonly client: Client;
   public readonly logger: Logger;
@@ -33,7 +52,9 @@ export class TrustedBitcoindRPC implements BlockchainProxy {
         network: conf.testnet ? 'testnet' : 'mainnet'
       };
     } catch (e) {
-      this.logger.error(`failed to load config file`);
+      this.logger.info(
+        `failed to load config file for bitcoind, rolling back to default`
+      );
       opts = {
         network,
         host: rpcip,
@@ -53,8 +74,22 @@ export class TrustedBitcoindRPC implements BlockchainProxy {
     return info.pruned;
   }
 
+  public async validateAddress(
+    address: string
+  ): Promise<ValidateAddressResult> {
+    return this.client.validateAddress(address);
+  }
+
   public async ping(): Promise<void> {
     return this.client.ping();
+  }
+
+  public async send(hexTx: string): Promise<void> {
+    try {
+      this.client.sendRawTransaction(hexTx);
+    } catch(e) {
+      this.logger.error(`failed to send Transaction ${hexTx} !`)
+    }
   }
 
   public async getAddressesWithBalance(

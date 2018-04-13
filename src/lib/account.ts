@@ -12,7 +12,7 @@ import {
 } from './blockchain-proxy';
 import { address, Block, Out, Transaction } from 'bitcoinjs-lib';
 import CoinManager from './coin-manager';
-import { Outpoint } from 'bitcoin-core';
+import { OtherUser, OuterEntity } from './primitives/entities';
 
 export enum AccountType {
   Normal
@@ -28,83 +28,81 @@ export interface Account extends Observable<any> {
   readonly hdIndex: number;
   readonly type: AccountType;
   readonly coinManager: CoinManager;
-  readonly coins: Option<ReadonlyArray<MyWalletCoin>>;
   readonly observableBlockchain: ObservableBlockchain;
   readonly balance: Balance;
   readonly watchingAddresses: Option<ReadonlyArray<string>>;
-  readonly debit: (coin: MyWalletCoin[]) => Either<Error, Account>;
-  readonly credit: (coin: MyWalletCoin[]) => Account;
+  readonly pay: (amount: number, destinations: ReadonlyArray<OuterEntity>) => Promise<any>; // TODO: this should not return any.
+  readonly beg: (begTo: OuterEntity) => Promise<any>;
 }
 
-type AccountEvent = 'debit' | 'credit';
+type AccountEvent = 'pay' | 'credit';
 
 /**
  * This class must communicate with the blockchain only in reactive manner using ObservableBlockchain, not proactively.
- * quering to the blockchain must be delegated to CoinManager.
+ * Query to the blockchain must be delegated to CoinManager.
  */
-export class NormalAccount extends Observable<AccountEvent> {
+export class NormalAccount extends Observable<AccountEvent> implements Account {
   constructor(
     public id: AccountID,
     public hdIndex: number,
     public coinManager: CoinManager,
     public observableBlockchain: ObservableBlockchain,
-    public coins: Option<ReadonlyArray<MyWalletCoin>>,
     public type = AccountType.Normal,
     public balance = new Balance(0),
     public watchingAddresses: Option<ReadonlyArray<string>> = none
   ) {
     super();
-    this.observableBlockchain.subscribe(this._handleUpdate);
+    this.observableBlockchain.subscribe(this._handleUpdate.bind(this));
   }
 
-  public debit(coin: MyWalletCoin[]): Either<Error, NormalAccount> {
-    const totalAmount = coin
-      .map(c => c.amount.amount)
-      .reduce((a, b) => a + b, 0);
-    const nextAmount = this.balance.amount - totalAmount;
-    if (nextAmount) {
-      return left(new Error(`Balance can not be negative!`));
+  public async pay(
+    amount: number,
+    destinations: ReadonlyArray<OtherUser>
+  ): Promise<NormalAccount> {
+    const nextAmount = this.balance.amount - amount;
+    if (nextAmount < 0) {
+      throw new Error(`Balance can not be negative!`);
     }
     const newBalance = new Balance(nextAmount);
-    const coins = this.coins.map(l => [...l, ...coin]);
-    return right(
-      new NormalAccount(
-        this.id,
-        this.hdIndex,
-        this.coinManager,
-        this.observableBlockchain,
-        coins,
-        this.type,
-        newBalance,
-        this.watchingAddresses
-      )
-    );
-  }
-
-  public credit(coin: MyWalletCoin[]): NormalAccount {
-    const totalAmount = coin
-      .map(c => c.amount.amount)
-      .reduce((a, b) => a + b, 0);
-    const newBalance = new Balance(this.balance.amount + totalAmount);
-    const coins = this.coins.map(l =>
-      l.filter(c => coin.some(newCoin => newCoin === c))
+    const coins = await this.coinManager.chooseCoinsFromAmount(amount);
+    const addressAndAmounts = destinations.map(
+      (d: OtherUser, i) => ({ address: d.nextAddressToPay, amount})
+      );
+    this.coinManager.crateTx(coins, addressAndAmounts).map(
+      (tx: Transaction) => this.coinManager
+        .broadCast(tx)
+        .catch(e => `Failed to broadcast TX! the error was ${e.toString()}`)
     );
     return new NormalAccount(
       this.id,
       this.hdIndex,
       this.coinManager,
       this.observableBlockchain,
-      coins,
       this.type,
       newBalance,
       this.watchingAddresses
     );
   }
 
+  public async beg(begTo: OuterEntity): Promise<any> {
+    if (begTo.kind !== 'otherUser') {
+      throw new Error('Normal Account can only beg to other user!');
+    }
+    return;
+  }
+
   private _handleUpdate(payload: BlockchainEvent): void {
+    if (!this || !this.watchingAddresses) {
+      /* tslint:disable-next-line */
+      console.log(`could not find watching address in ${this.id}`);
+      return;
+    }
     if (payload instanceof Transaction) {
       // check if incoming transaction is concerned to this account.
-      const matchedOuts: Out[] = payload.outs.filter((o, i) =>
+      /* tslint:disable-next-line */
+      console.log(`lets see txs address is in ${this.watchingAddresses} ...`);
+
+      const matchedOuts: Out[] = payload.outs.filter(o =>
         this.watchingAddresses.map(ourAddresses =>
           ourAddresses.some(a => a === address.fromOutputScript(o.script))
         )

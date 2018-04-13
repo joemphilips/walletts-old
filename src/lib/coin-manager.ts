@@ -35,7 +35,6 @@ export class CoinID {
  */
 export default class CoinManager {
   public readonly coins: Map<CoinID, MyWalletCoin>;
-  public readonly builder: TransactionBuilder;
   public readonly logger: Logger;
 
   constructor(
@@ -44,13 +43,30 @@ export default class CoinManager {
     public bchProxy: BlockchainProxy
   ) {
     this.logger = log.child({ subModule: 'CoinManager' });
-    this.builder = new TransactionBuilder();
     this.coins = new Map<CoinID, MyWalletCoin>();
-    this.logger.info('coinmanager intialized');
+    this.logger.trace('coinmanager intialized');
   }
 
   public sign<K extends Keystore>(key: K): boolean {
     return false;
+  }
+
+  // TODO: Implement Murch's algorithm.  refs: https://github.com/bitcoin/bitcoin/pull/10637
+  public async chooseCoinsFromAmount(amount: number): Promise<MyWalletCoin[]> {
+    return this.coins.get();
+  }
+
+  public crateTx(coins: MyWalletCoin[], addressAndAmount: ReadonlyArray<{address: string, amount: number}>):
+  Either<Error, Transaction> {
+    const builder = new TransactionBuilder();
+    coins.map((c, i)  => builder.addInput(c.txid, i));
+    addressAndAmount.map(a => builder.addOutput(a.address, a.amount));
+    return right(builder.build());
+  }
+
+  public async broadCast(tx: Transaction): Promise<void> {
+    const hexTx = tx.toHex();
+    await this.bchProxy.send(hexTx)
   }
 
   /**
@@ -93,6 +109,7 @@ export default class CoinManager {
       );
     });
     this.logger.info(`successfully imported our Coin from Blockchain`);
+    this.logger.info(`So coins inside coinmanager are ${this.coins}`);
     return null;
   }
 }

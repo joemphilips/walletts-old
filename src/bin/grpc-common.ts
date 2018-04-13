@@ -13,3 +13,8 @@ export enum bchInfoSource {
   trusted_rpc = 0,
   blockchain_info = 1
 }
+
+export enum grpcNetworkInfo {
+  btcmain = 0,
+  btctest = 1
+}

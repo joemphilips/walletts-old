@@ -28,10 +28,15 @@ interface AbstractWalletService<
   keyRepo: KeyRepository;
   repo: WalletRepository;
   as: AS;
-  createNew: (nameSpace: string, passPhrase?: string) => Promise<W>;
+  createNew: (
+    nameSpace: string,
+    network: bitcoin.Network,
+    passPhrase?: string
+  ) => Promise<W>;
   createFromSeed: (
     nameSpace: string,
     seed: ReadonlyArray<string>,
+    network: bitcoin.Network,
     passPhrase: string
   ) => Promise<W>;
   setNewAccountToWallet: (
@@ -70,12 +75,16 @@ export default class WalletService extends rx.Subject<any>
 
   public async createNew(
     nameSpace: string,
+    network: bitcoin.Network = bitcoin.networks.bitcoin,
     passPhrase?: string
   ): Promise<BasicWallet> {
     this.logger.trace('creating new wallet ...');
-    const node = bitcoin.HDNode.fromSeedBuffer(secureRandom(16, {
-      type: 'Buffer'
-    }) as Buffer);
+    const node = bitcoin.HDNode.fromSeedBuffer(
+      secureRandom(16, {
+        type: 'Buffer'
+      }) as Buffer,
+      network
+    );
     const pubKey = node.getPublicKeyBuffer();
     const wallet = new BasicWallet(
       hash160(pubKey).toString('hex'),
@@ -89,11 +98,12 @@ export default class WalletService extends rx.Subject<any>
   public async createFromSeed(
     nameSpace: string,
     seed: ReadonlyArray<string>,
+    network: bitcoin.Network = bitcoin.networks.bitcoin,
     passPhrase?: string
   ): Promise<BasicWallet> {
     this.logger.trace('creating Wallet from seed...');
     const seedBuffer = bip39.mnemonicToSeed(seed.join(' '), passPhrase);
-    const node = bitcoin.HDNode.fromSeedBuffer(seedBuffer);
+    const node = bitcoin.HDNode.fromSeedBuffer(seedBuffer, network);
     const pubkey = node.getPublicKeyBuffer();
     const wallet = new BasicWallet(
       hash160(pubkey).toString('hex'),

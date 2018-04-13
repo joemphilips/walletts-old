@@ -43,7 +43,8 @@ export default class WalletLauncher {
       this.client.createWallet(
         {
           nameSpace: action.payload.nameSpace,
-          passPhrase: action.payload.passPhrase
+          passPhrase: action.payload.passPhrase,
+          network: action.payload.network
         },
         (e, _) => {
           if (e) {
@@ -56,6 +57,7 @@ export default class WalletLauncher {
         {
           nameSpace: action.payload.nameSpace,
           passPhrase: action.payload.passPhrase,
+          network: action.payload.network,
           seed: action.payload.seed
         },
         (e, _) => {

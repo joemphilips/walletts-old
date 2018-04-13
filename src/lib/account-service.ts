@@ -3,7 +3,7 @@ import KeyRepository, { InMemoryKeyRepository } from './key-repository';
 import { crypto, HDNode } from 'bitcoinjs-lib';
 import hash160 = crypto.hash160;
 /* tslint:disable-next-line:no-submodule-imports */
-import { none } from 'fp-ts/lib/Option';
+import { none, some } from 'fp-ts/lib/Option';
 import * as Logger from 'bunyan';
 import { AccountID } from './primitives/identity';
 import {
@@ -15,7 +15,7 @@ import CoinManager from './coin-manager';
 
 export interface AbstractAccountService<A extends Account> {
   readonly keyRepo: KeyRepository;
-  getAddressForAccount: (a: A, index: number) => Promise<[string, string]>;
+  getAddressForAccount: (a: A, index: number) => Promise<[A, string, string]>;
   createFromHD: (
     masterHD: HDNode,
     index: number,
@@ -34,7 +34,7 @@ export default class NormalAccountService
   public async getAddressForAccount(
     a: NormalAccount,
     index: number
-  ): Promise<[string, string]> {
+  ): Promise<[NormalAccount, string, string]> {
     this.logger.trace(`going to get address for Account ${a.id}`);
     const address = await this.keyRepo.getAddress(a.id, `0/${index}`);
     const changeAddress = await this.keyRepo.getAddress(a.id, `1/${index}`);
@@ -46,7 +46,16 @@ export default class NormalAccountService
         `could not retrieve address! This account is not saved to repo!`
       );
     }
-    return [address, changeAddress];
+    const newAccount = new NormalAccount(
+      a.id,
+      a.hdIndex,
+      a.coinManager,
+      a.observableBlockchain,
+      a.type,
+      a.balance,
+      some([...a.watchingAddresses.getOrElse([]), address, changeAddress])
+    );
+    return [newAccount, address, changeAddress];
   }
 
   public async createFromHD(
@@ -60,13 +69,7 @@ export default class NormalAccountService
     const coinManager = new CoinManager(this.logger, this.keyRepo, bchProxy);
     this.logger.debug(`Account ${id} has been created from HD`);
     await this._save(id, masterHD);
-    return new NormalAccount(
-      id,
-      index,
-      coinManager,
-      observableBlockchain,
-      none
-    );
+    return new NormalAccount(id, index, coinManager, observableBlockchain);
   }
 
   private async _save(id: AccountID, key: HDNode): Promise<void> {

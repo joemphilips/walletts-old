@@ -1,9 +1,10 @@
 import * as grpc from 'grpc';
-import { bchInfoSource, PROTO_PATH } from './grpc-common';
+import { bchInfoSource, grpcNetworkInfo, PROTO_PATH } from './grpc-common';
 
 export interface CreateWalletArg {
   nameSpace: string;
   passPhrase?: string;
+  network?: grpcNetworkInfo;
   seed?: ReadonlyArray<string>;
 }
 

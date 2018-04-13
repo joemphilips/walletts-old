@@ -47,10 +47,16 @@ message NetworkResponse {
     uint32 active_network = 1;
 }
 
+enum Network {
+  btcmain = 0;
+  btctest = 1;
+}
+
 message CreateWalletRequest {
     string nameSpace = 1;
     string passPhrase = 2;
-    repeated string seed = 3;
+    Network network = 3;
+    repeated string seed = 4;
 }
 message CreateWalletResponse {
    bool success = 1;

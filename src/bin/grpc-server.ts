@@ -1,6 +1,6 @@
 import { Config } from '../lib/config';
 import WalletService from '../lib/wallet-service';
-import { bchInfoSource, PROTO_PATH } from './grpc-common';
+import { bchInfoSource, grpcNetworkInfo, PROTO_PATH } from './grpc-common';
 import Mali, { Context } from 'mali';
 import * as Logger from 'bunyan';
 import maliLogger from 'mali-logger';
@@ -13,6 +13,7 @@ import {
   ObservableBlockchain,
   TrustedBitcoindRPC
 } from '../lib/blockchain-proxy';
+import { networks } from 'bitcoinjs-lib';
 
 export interface RPCServer<W extends AbstractWallet> {
   readonly logger: Logger;
@@ -39,11 +40,18 @@ const createWalletServiceHandlers = (
         `received createWallet request ${JSON.stringify(ctx.req)}`
       );
       const nameSpace: string = ctx.req.nameSpace;
+      const network =
+        ctx.req.network && ctx.req.network === grpcNetworkInfo.btcmain
+          ? networks.bitcoin
+          : ctx.req.network && ctx.req.network === grpcNetworkInfo.btctest
+            ? networks.testnet
+            : undefined;
       if (ctx.req.seed && ctx.req.seed.length && ctx.req.seed.length !== 0) {
         handlerLogger.debug(`going to create wallet from seed...`);
         parent.wallet = await walletService.createFromSeed(
           nameSpace,
           ctx.req.seed,
+          network,
           ctx.req.passPhrase
         );
         parent.wallet =
@@ -57,6 +65,7 @@ const createWalletServiceHandlers = (
       } else {
         parent.wallet = await walletService.createNew(
           nameSpace,
+          network,
           ctx.req.passPhrase
         );
       }
