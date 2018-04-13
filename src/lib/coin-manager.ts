@@ -56,17 +56,19 @@ export default class CoinManager {
     return this.coins.get();
   }
 
-  public crateTx(coins: MyWalletCoin[], addressAndAmount: ReadonlyArray<{address: string, amount: number}>):
-  Either<Error, Transaction> {
+  public crateTx(
+    coins: MyWalletCoin[],
+    addressAndAmount: ReadonlyArray<{ address: string; amount: number }>
+  ): Either<Error, Transaction> {
     const builder = new TransactionBuilder();
-    coins.map((c, i)  => builder.addInput(c.txid, i));
+    coins.map((c, i) => builder.addInput(c.txid, i));
     addressAndAmount.map(a => builder.addOutput(a.address, a.amount));
     return right(builder.build());
   }
 
   public async broadCast(tx: Transaction): Promise<void> {
     const hexTx = tx.toHex();
-    await this.bchProxy.send(hexTx)
+    await this.bchProxy.send(hexTx);
   }
 
   /**

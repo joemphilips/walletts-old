@@ -87,8 +87,8 @@ export class TrustedBitcoindRPC implements BlockchainProxy {
   public async send(hexTx: string): Promise<void> {
     try {
       this.client.sendRawTransaction(hexTx);
-    } catch(e) {
-      this.logger.error(`failed to send Transaction ${hexTx} !`)
+    } catch (e) {
+      this.logger.error(`failed to send Transaction ${hexTx} !`);
     }
   }
 

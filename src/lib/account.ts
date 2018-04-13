@@ -31,7 +31,10 @@ export interface Account extends Observable<any> {
   readonly observableBlockchain: ObservableBlockchain;
   readonly balance: Balance;
   readonly watchingAddresses: Option<ReadonlyArray<string>>;
-  readonly pay: (amount: number, destinations: ReadonlyArray<OuterEntity>) => Promise<any>; // TODO: this should not return any.
+  readonly pay: (
+    amount: number,
+    destinations: ReadonlyArray<OuterEntity>
+  ) => Promise<any>; // TODO: this should not return any.
   readonly beg: (begTo: OuterEntity) => Promise<any>;
 }
 
@@ -65,14 +68,17 @@ export class NormalAccount extends Observable<AccountEvent> implements Account {
     }
     const newBalance = new Balance(nextAmount);
     const coins = await this.coinManager.chooseCoinsFromAmount(amount);
-    const addressAndAmounts = destinations.map(
-      (d: OtherUser, i) => ({ address: d.nextAddressToPay, amount})
+    const addressAndAmounts = destinations.map((d: OtherUser, i) => ({
+      address: d.nextAddressToPay,
+      amount
+    }));
+    this.coinManager
+      .crateTx(coins, addressAndAmounts)
+      .map((tx: Transaction) =>
+        this.coinManager
+          .broadCast(tx)
+          .catch(e => `Failed to broadcast TX! the error was ${e.toString()}`)
       );
-    this.coinManager.crateTx(coins, addressAndAmounts).map(
-      (tx: Transaction) => this.coinManager
-        .broadCast(tx)
-        .catch(e => `Failed to broadcast TX! the error was ${e.toString()}`)
-    );
     return new NormalAccount(
       this.id,
       this.hdIndex,
