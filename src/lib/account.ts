@@ -31,15 +31,15 @@ export interface Account extends Observable<any> {
   readonly observableBlockchain: ObservableBlockchain;
   readonly balance: Balance;
   readonly watchingAddresses: Option<ReadonlyArray<string>>;
-  readonly debit: (coin: MyWalletCoin[]) => Either<Error, any>;
-  readonly credit: (coin: MyWalletCoin[]) => any;
+  readonly debit: (coin: MyWalletCoin[]) => Either<Error, any>; // TODO: this should not return any.
+  readonly credit: (coin: MyWalletCoin[]) => any; // TODO: This should not return any too.
 }
 
 type AccountEvent = 'debit' | 'credit';
 
 /**
  * This class must communicate with the blockchain only in reactive manner using ObservableBlockchain, not proactively.
- * quering to the blockchain must be delegated to CoinManager.
+ * Query to the blockchain must be delegated to CoinManager.
  */
 export class NormalAccount extends Observable<AccountEvent> implements Account {
   constructor(
@@ -53,7 +53,7 @@ export class NormalAccount extends Observable<AccountEvent> implements Account {
     public watchingAddresses: Option<ReadonlyArray<string>> = none
   ) {
     super();
-    this.observableBlockchain.subscribe(this._handleUpdate);
+    this.observableBlockchain.subscribe(this._handleUpdate.bind(this));
   }
 
   public debit(coin: MyWalletCoin[]): Either<Error, NormalAccount> {
@@ -101,9 +101,17 @@ export class NormalAccount extends Observable<AccountEvent> implements Account {
   }
 
   private _handleUpdate(payload: BlockchainEvent): void {
+    if (!this || !this.watchingAddresses) {
+      /* tslint:disable-next-line */
+      console.log(`could not find watching address in ${this.id}`);
+      return;
+    }
     if (payload instanceof Transaction) {
       // check if incoming transaction is concerned to this account.
-      const matchedOuts: Out[] = payload.outs.filter((o, i) =>
+      /* tslint:disable-next-line */
+      console.log(`lets see txs address is in ${this.watchingAddresses} ...`);
+
+      const matchedOuts: Out[] = payload.outs.filter(o =>
         this.watchingAddresses.map(ourAddresses =>
           ourAddresses.some(a => a === address.fromOutputScript(o.script))
         )

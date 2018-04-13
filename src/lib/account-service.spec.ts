@@ -1,6 +1,7 @@
 import test from 'ava';
 import {
   prePareTest,
+  sleep,
   testBitcoindIp,
   testBitcoindPassword,
   testBitcoindPort,
@@ -113,6 +114,8 @@ test(`handles incoming events from blockchain correctly`, async t => {
 
   logger.debug(`piping Transaction for test ... ${tx}`);
   mockObservable.next(tx);
+
+  await sleep(10);
 
   t.is(account2.balance.amount, 2);
 });
