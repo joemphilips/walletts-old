@@ -12,7 +12,7 @@ import {
 } from './blockchain-proxy';
 import { address, Block, Out, Transaction } from 'bitcoinjs-lib';
 import CoinManager from './coin-manager';
-import {OtherUser, OuterEntity} from "./primitives/entities";
+import { OtherUser, OuterEntity } from './primitives/entities';
 
 export enum AccountType {
   Normal
@@ -31,8 +31,8 @@ export interface Account extends Observable<any> {
   readonly observableBlockchain: ObservableBlockchain;
   readonly balance: Balance;
   readonly watchingAddresses: Option<ReadonlyArray<string>>;
-  readonly pay: (amount: number, destination: string) => Promise<any>; // TODO: this should not return any.
-  readonly beg: (begTo: OuterEntity) => Promise<any>
+  readonly pay: (amount: number, destinations: ReadonlyArray<OuterEntity>) => Promise<any>; // TODO: this should not return any.
+  readonly beg: (begTo: OuterEntity) => Promise<any>;
 }
 
 type AccountEvent = 'pay' | 'credit';
@@ -55,15 +55,23 @@ export class NormalAccount extends Observable<AccountEvent> implements Account {
     this.observableBlockchain.subscribe(this._handleUpdate.bind(this));
   }
 
-  public async pay(amount: number, destination: string): Promise<NormalAccount> {
+  public async pay(
+    amount: number,
+    destinations: ReadonlyArray<OtherUser>
+  ): Promise<NormalAccount> {
     const nextAmount = this.balance.amount - amount;
     if (nextAmount < 0) {
       throw new Error(`Balance can not be negative!`);
     }
     const newBalance = new Balance(nextAmount);
     const coins = await this.coinManager.chooseCoinsFromAmount(amount);
-    const tx = await this.coinManager.crateTx(coins);
-    this.coinManager.broadCast(tx).catch((e) => `Failed to broadcast TX! the error was ${e.toString()}`);
+    const addressAndAmounts = destinations.map(
+      (d: OtherUser, i) => ({ address: d.nextAddressToPay, amount})
+      );
+    const tx = await this.coinManager.crateTx(coins, addressAndAmounts);
+    this.coinManager
+      .broadCast(tx)
+      .catch(e => `Failed to broadcast TX! the error was ${e.toString()}`);
     return new NormalAccount(
       this.id,
       this.hdIndex,
@@ -76,10 +84,10 @@ export class NormalAccount extends Observable<AccountEvent> implements Account {
   }
 
   public async beg(begTo: OuterEntity): Promise<any> {
-    if (begTo.kind !== "otherUser") {
-      throw new Error("Normal Account can only beg to other user!")
+    if (begTo.kind !== 'otherUser') {
+      throw new Error('Normal Account can only beg to other user!');
     }
-    return
+    return;
   }
 
   private _handleUpdate(payload: BlockchainEvent): void {
