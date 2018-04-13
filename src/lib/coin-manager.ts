@@ -51,18 +51,23 @@ export default class CoinManager {
     return false;
   }
 
-  // TODO: Implement Murch's algorithm refs: https://github.com/bitcoin/bitcoin/pull/10637
+  // TODO: Implement Murch's algorithm.  refs: https://github.com/bitcoin/bitcoin/pull/10637
   public async chooseCoinsFromAmount(amount: number): Promise<MyWalletCoin[]> {
     return this.coins.get();
   }
 
-  public async crateTx(coins: MyWalletCoin[], addressAndAmount: ReadonlyArray<{address: string, amount: number}>):
-    Promise<Transaction> {
+  public crateTx(coins: MyWalletCoin[], addressAndAmount: ReadonlyArray<{address: string, amount: number}>):
+  Either<Error, Transaction> {
     const builder = new TransactionBuilder();
-    coins.map((c, i)  => builder.addInput(c.txid, i))
+    coins.map((c, i)  => builder.addInput(c.txid, i));
+    addressAndAmount.map(a => builder.addOutput(a.address, a.amount));
+    return right(builder.build());
   }
 
-  public async broadCast(tx: Transaction): Promise<void> {}
+  public async broadCast(tx: Transaction): Promise<void> {
+    const hexTx = tx.toHex();
+    await this.bchProxy.send(hexTx)
+  }
 
   /**
    * Contextify Transaction output as a WalletCoin and put it into CoinMaps

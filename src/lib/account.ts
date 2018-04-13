@@ -68,10 +68,11 @@ export class NormalAccount extends Observable<AccountEvent> implements Account {
     const addressAndAmounts = destinations.map(
       (d: OtherUser, i) => ({ address: d.nextAddressToPay, amount})
       );
-    const tx = await this.coinManager.crateTx(coins, addressAndAmounts);
-    this.coinManager
-      .broadCast(tx)
-      .catch(e => `Failed to broadcast TX! the error was ${e.toString()}`);
+    this.coinManager.crateTx(coins, addressAndAmounts).map(
+      (tx: Transaction) => this.coinManager
+        .broadCast(tx)
+        .catch(e => `Failed to broadcast TX! the error was ${e.toString()}`)
+    );
     return new NormalAccount(
       this.id,
       this.hdIndex,

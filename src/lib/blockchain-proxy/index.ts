@@ -17,6 +17,7 @@ export interface BlockchainProxy {
   readonly getAddressesWithBalance: (
     addresses: ReadonlyArray<string>
   ) => Promise<SyncInfo>;
+  readonly send: (hexTx: string) => Promise<void>
 }
 
 export interface SyncInfo {
