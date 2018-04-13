@@ -11,6 +11,7 @@ import loadConfig from './config';
 import NormalAccountService from './account-service';
 import { InMemoryKeyRepository } from './key-repository';
 import {
+  address,
   HDNode,
   networks,
   Transaction,
@@ -23,7 +24,7 @@ import {
   TransactionArrived,
   TrustedBitcoindRPC
 } from './blockchain-proxy';
-import { Observable } from '@joemphilips/rxjs';
+import { Observable, Subject } from '@joemphilips/rxjs';
 import * as Logger from 'bunyan';
 
 let service: NormalAccountService;
@@ -69,8 +70,8 @@ test('create from hd', async t => {
 
 test('get address for account', async t => {
   const account = await service.createFromHD(masterHD, 0, infoSource, bchProxy);
-  const [address, change] = await service.getAddressForAccount(account, 0);
-  const address2 = masterHD
+  const [addr, change] = await service.getAddressForAccount(account, 0);
+  const addr2 = masterHD
     .derive(0)
     .derive(0)
     .getAddress();
@@ -78,23 +79,28 @@ test('get address for account', async t => {
     .derive(1)
     .derive(0)
     .getAddress();
-  t.is(address, address2);
+  t.is(addr, addr2);
   t.is(change, change2);
 });
 
 test(`handles incoming events from blockchain correctly`, async t => {
-  const mockObservable: ObservableBlockchain = Observable.from<
-    TransactionArrived
-  >([]);
+  const mockObservable = new Subject<TransactionArrived>();
   const account = await service.createFromHD(
     masterHD,
     0,
     mockObservable,
     bchProxy
   );
-  const [address, change] = await service.getAddressForAccount(account, 0);
-  logger.error(`pleaseCreateTxFor ${address}`);
+  const [addr, change] = await service.getAddressForAccount(account, 0);
+  logger.error(`pleaseCreateTxFor ${addr}`);
   // TODO: pipe event into mockObservable and check wallet balance has been updated.
+  const builder = new TransactionBuilder(networks.testnet);
+  builder.addOutput(addr, 50000000); // 0.5 btc
+  builder.addOutput(change, 150000000); // 1.5 btc
+  const tx = builder.buildIncomplete();
+
+  logger.debug(`piping Transaction for test ... ${tx}`);
+  mockObservable.next(tx);
 
   t.is(account.balance.amount, 2);
 });
