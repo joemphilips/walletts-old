@@ -60,7 +60,7 @@ export class NormalAccount extends Observable<AccountEvent> implements Account {
 
   public async pay(
     amount: number,
-    destinations: ReadonlyArray<OtherUser>
+    destinations: ReadonlyArray<OuterEntity>
   ): Promise<NormalAccount> {
     const nextAmount = this.balance.amount - amount;
     if (nextAmount < 0) {
@@ -68,7 +68,7 @@ export class NormalAccount extends Observable<AccountEvent> implements Account {
     }
     const newBalance = new Balance(nextAmount);
     const coins = await this.coinManager.chooseCoinsFromAmount(amount);
-    const addressAndAmounts = destinations.map((d: OtherUser, i) => ({
+    const addressAndAmounts = destinations.map((d: OuterEntity, i) => ({
       address: d.nextAddressToPay,
       amount
     }));

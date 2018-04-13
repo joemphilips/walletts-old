@@ -22,6 +22,20 @@ export interface Community {
 /* tslint:disable-next-line */
 export interface PublicDomain {
   readonly kind: 'publicDomain';
+  readonly knownAddresses: ReadonlyArray<string>;
+  readonly nextAddressToPay: string;
+}
+
+export function isOtherUser(entity: OuterEntity): entity is OtherUser {
+  return entity.kind === 'otherUser';
+}
+
+export function iSCommunity(entity: OuterEntity): entity is Community {
+  return entity.kind === 'community';
+}
+
+export function PublicDomain(entity: OuterEntity): entity is OuterEntity {
+  return entity.kind === 'publicDomain';
 }
 
 export type OuterEntity = OtherUser | Community | PublicDomain;

@@ -44,7 +44,7 @@ export default class CoinManager {
   ) {
     this.logger = log.child({ subModule: 'CoinManager' });
     this.coins = new Map<CoinID, MyWalletCoin>();
-    this.logger.trace('coinmanager intialized');
+    this.logger.trace('coinmanager initialized');
   }
 
   public sign<K extends Keystore>(key: K): boolean {
