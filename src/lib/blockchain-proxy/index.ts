@@ -4,6 +4,7 @@ import * as Logger from 'bunyan';
 import { Observable } from '@joemphilips/rxjs';
 import { socket } from 'zeromq';
 import { EventEmitter } from 'events';
+import {FeeEstimateMode} from "bitcoin-core";
 
 export interface BlockchainProxy {
   readonly getPrevHash: (tx: Transaction) => Promise<any>;
@@ -18,6 +19,7 @@ export interface BlockchainProxy {
     addresses: ReadonlyArray<string>
   ) => Promise<SyncInfo>;
   readonly send: (hexTx: string) => Promise<void>;
+  readonly estimateSmartFee?: (target: number, mode: FeeEstimateMode) => Promise<number>
 }
 
 export interface SyncInfo {

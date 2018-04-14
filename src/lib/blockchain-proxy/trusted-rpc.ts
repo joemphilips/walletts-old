@@ -1,4 +1,4 @@
-import Client, { ClientConstructorOption } from 'bitcoin-core';
+import Client, {ClientConstructorOption, FeeEstimateMode} from 'bitcoin-core';
 import { Transaction } from 'bitcoinjs-lib';
 import * as fs from 'fs';
 import * as ini from 'ini';
@@ -90,6 +90,10 @@ export class TrustedBitcoindRPC implements BlockchainProxy {
     } catch (e) {
       this.logger.error(`failed to send Transaction ${hexTx} !`);
     }
+  }
+
+  public async estimateSmartFee(target: number, mode: FeeEstimateMode): Promise<number> {
+    return this.client.estimateSmartFee(target, mode).then(r => r.feerate ? r.feerate : -1)
   }
 
   public async getAddressesWithBalance(

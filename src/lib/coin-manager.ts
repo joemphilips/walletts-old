@@ -10,7 +10,7 @@ import { AccountID } from './primitives/identity';
 import { Either, left, right } from 'fp-ts/lib/Either';
 import { Outpoint } from 'bitcoin-core';
 import * as _ from 'lodash';
-import {Balance} from "lib/primitives/balance";
+import {Balance} from "./primitives/balance";
 
 export interface OutpointWithScriptAndAmount {
   id: string;
@@ -37,6 +37,7 @@ export class CoinID {
 export default class CoinManager {
   public readonly coins: Map<CoinID, MyWalletCoin>;
   public readonly logger: Logger;
+  public readonly feeProvider: (target?: number) => number;
 
   constructor(
     log: Logger,
@@ -46,6 +47,7 @@ export default class CoinManager {
     this.logger = log.child({ subModule: 'CoinManager' });
     this.coins = new Map<CoinID, MyWalletCoin>();
     this.logger.trace('coinmanager initialized');
+    this.feeProvider = this.bchProxy.estimateSmartFee;
   }
 
   public sign<K extends Keystore>(key: K): boolean {
@@ -59,17 +61,36 @@ export default class CoinManager {
   // TODO: Implement Murch's algorithm.  refs: https://github.com/bitcoin/bitcoin/pull/10637
   public async chooseCoinsFromAmount(amount: number): Promise<MyWalletCoin[]> {
     if (this.total.amount < amount) {
-      throw Error(`not enought funds!`)
+      throw Error(`not enough funds!`)
     }
+    const result: MyWalletCoin[] = [];
+    for (const [id, coin] of this.coins.entries()) {
+      if (result.map(c => c.amount).reduce((a, b) => a + b.amount, 0) < amount) {
+        result.push(coin)
+      }
+    }
+    return result;
   }
 
   public crateTx(
+    id: AccountID,
     coins: MyWalletCoin[],
-    addressAndAmount: ReadonlyArray<{ address: string; amount: number }>
+    addressAndAmount: ReadonlyArray<{ address: string; amount: number }>,
   ): Either<Error, Transaction> {
     const builder = new TransactionBuilder();
     coins.map((c, i) => builder.addInput(c.txid, i));
     addressAndAmount.map(a => builder.addOutput(a.address, a.amount));
+
+    // prepare change.
+    const totalOut = addressAndAmount.map(e => e.amount).reduce((a, b) => a + b, 0);
+    const totalIn = coins.map(c => c.amount).reduce((a, b) => a + b.amount, 0);
+    const delta = totalOut - totalIn;
+    const feeRate = this.feeProvider();
+    const fee = feeRate * builder.buildIncomplete().byteLength();
+    const changeAmount = delta - fee;
+    const changeAddress = this.keyRepo.getAddress(id);
+    builder.addOutput(changeAddress, changeAmount);
+
     return right(builder.build());
   }
 

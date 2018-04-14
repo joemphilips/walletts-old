@@ -78,7 +78,7 @@ export class NormalAccount extends Observable<AccountEvent> implements Account {
       amount
     }));
     this.coinManager
-      .crateTx(coins, addressAndAmounts)
+      .crateTx(this.id, coins, addressAndAmounts)
       .map((tx: Transaction) =>
         this.coinManager
           .broadCast(tx)
