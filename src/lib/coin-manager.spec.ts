@@ -59,7 +59,7 @@ async function prepareCoins(
   const coinBaseHash = blocks.map((a: any) => a.tx[0]);
 
   return Array(num)
-    .fill('This can be anything...')
+    .fill('foo') // to avoid null value error.
     .map(
       i =>
         new MyWalletCoin(
@@ -106,27 +106,30 @@ test('get total amount', async (t: ExecutionContext<
   for (const c of coins) {
     t.context.man.coins.set(new CoinID(uuid.v4()), c);
   }
-
-  t.context.logger.info(
+  t.context.logger.trace(
     `Prepared coins are ${JSON.stringify([...t.context.man.coins])}`
   );
-  t.is(t.context.man.total, new Balance(300));
+  t.deepEqual(t.context.man.total, new Balance(300));
 });
+
 test('chooseCoinsFromAmount', async (t: ExecutionContext<
   CoinManagerTestContext
 >) => {
   t.pass();
 });
+
 test('creating transaction', async (t: ExecutionContext<
   CoinManagerTestContext
 >) => {
   t.pass();
 });
+
 test('broadCasting Transaction', async (t: ExecutionContext<
   CoinManagerTestContext
 >) => {
   t.pass();
 });
+
 test('import outpoint as its own coin.', async (t: ExecutionContext<
   CoinManagerTestContext
 >) => {

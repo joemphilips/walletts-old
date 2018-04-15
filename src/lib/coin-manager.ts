@@ -65,8 +65,8 @@ export default class CoinManager {
   public get total(): Balance {
     return new Balance(
       Array.from(this.coins.entries())
-        .map((k, v) => v)
-        .reduce((a, b) => a + b, 0)
+        .map(([k, v]) => v)
+        .reduce((a, b) => a + b.amount.amount, 0)
     );
   }
 
