@@ -106,6 +106,7 @@ test('get total amount', async (t: ExecutionContext<
   for (const c of coins) {
     t.context.man.coins.set(new CoinID(uuid.v4()), c);
   }
+
   t.context.logger.trace(
     `Prepared coins are ${JSON.stringify([...t.context.man.coins])}`
   );
@@ -115,7 +116,11 @@ test('get total amount', async (t: ExecutionContext<
 test('chooseCoinsFromAmount', async (t: ExecutionContext<
   CoinManagerTestContext
 >) => {
-  t.pass();
+  const coinsToInsert = await prepareCoins(t.context.bch, 1);
+  t.context.man.coins.set(new CoinID(uuid.v4()), coinsToInsert[0]);
+  const coins = await t.context.man.chooseCoinsFromAmount(3);
+  t.is(coins.length, 1);
+  t.is(coins[0].amount.amount, 50);
 });
 
 test('creating transaction', async (t: ExecutionContext<
