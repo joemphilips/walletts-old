@@ -20,7 +20,16 @@ export interface AbstractCoin {
   // readonly fromOutandHDNode: (out: Out, txid: string, node: HDNode) => AbstractCoin,
   readonly [key: string]: any;
 }
-
+export type ScriptType =
+  | 'witnesspubkeyhash'
+  | 'witnessscripthash'
+  | 'pubkeyhash'
+  | 'scripthash'
+  | 'multisig'
+  | 'pubkey'
+  | 'witnesscommitment'
+  | 'nulldata'
+  | 'nonstandard';
 // Transaction Output with Metadata including script for spending
 export class MyWalletCoin implements AbstractCoin {
   public static fromOutpointAndPubKey(
@@ -32,18 +41,18 @@ export class MyWalletCoin implements AbstractCoin {
     return new MyWalletCoin(
       scriptPubKey,
       script.classifyOutput(scriptPubKey),
-      out.id,
-      none,
       pubKey,
+      none,
+      out.id,
       new Balance(amount)
     );
   }
   constructor(
     public readonly scriptPubKey: Buffer,
-    public readonly scriptType: string,
-    public readonly txid: string,
-    public readonly label: Option<string>,
+    public readonly scriptType: ScriptType,
     public readonly redeemScript: Script,
+    public readonly label: Option<string>,
+    public readonly txid: string,
     public readonly amount: Balance = new Balance(0),
     public readonly confirmation: number = 0,
     public readonly isChange?: boolean

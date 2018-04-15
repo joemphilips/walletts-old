@@ -1,0 +1,34 @@
+{
+  "txid": "a0ff943d3f644d8832b1fa74be4d0ad2577615dc28a7ef74ff8c271b603a082a",
+  "hash": "a0ff943d3f644d8832b1fa74be4d0ad2577615dc28a7ef74ff8c271b603a082a",
+  "version": 1,
+  "size": 192,
+  "vsize": 192,
+  "locktime": 0,
+  "vin": [
+    {
+      "txid": "fefefefefefefefefefefefefefefefefefefefefefefefefefefefefefefef1",
+      "vout": 0,
+      "scriptSig": {
+        "asm": "30450221008732a460737d956fd94d49a31890b2908f7ed7025a9c1d0f25e43290f1841716022004fa7d608a291d44ebbbebbadaac18f943031e7de39ef3bf9920998c43e60c04[ALL] 0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+        "hex": "4830450221008732a460737d956fd94d49a31890b2908f7ed7025a9c1d0f25e43290f1841716022004fa7d608a291d44ebbbebbadaac18f943031e7de39ef3bf9920998c43e60c0401210279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"
+      },
+      "sequence": 4294967295
+    }
+  ],
+  "vout": [
+    {
+      "value": 0.00100000,
+      "n": 0,
+      "scriptPubKey": {
+        "asm": "OP_DUP OP_HASH160 c42e7ef92fdb603af844d064faad95db9bcdfd3d OP_EQUALVERIFY OP_CHECKSIG",
+        "hex": "76a914c42e7ef92fdb603af844d064faad95db9bcdfd3d88ac",
+        "reqSigs": 1,
+        "type": "pubkeyhash",
+        "addresses": [
+          "myQGSFVupuQvHqV8bpKtdh4sVUeCyyxs6M"
+        ]
+      }
+    }
+  ]
+}

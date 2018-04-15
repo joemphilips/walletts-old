@@ -35,7 +35,7 @@ let infoSource: ObservableBlockchain;
 let bchProxy: TrustedBitcoindRPC;
 let logger: Logger;
 let datadir: string;
-test.before('', () => {
+test.before('set up AccountService test', () => {
   [logger, datadir] = prePareTest();
   service = new NormalAccountService(logger, new InMemoryKeyRepository());
   masterHD = HDNode.fromSeedHex(
@@ -106,6 +106,7 @@ test(`handles incoming events from blockchain correctly`, async t => {
     account,
     0
   );
+
   // TODO: pipe event into mockObservable and check wallet balance has been updated.
   const builder = new TransactionBuilder(networks.testnet);
   builder.addOutput(addr, 50000000); // 0.5 btc

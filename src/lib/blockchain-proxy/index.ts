@@ -4,13 +4,13 @@ import * as Logger from 'bunyan';
 import { Observable } from '@joemphilips/rxjs';
 import { socket } from 'zeromq';
 import { EventEmitter } from 'events';
-import {FeeEstimateMode} from "bitcoin-core";
+import { FeeEstimateMode, ValidateAddressResult } from 'bitcoin-core';
 
 export interface BlockchainProxy {
   readonly getPrevHash: (tx: Transaction) => Promise<any>;
   readonly baseUrl?: string;
   readonly api?: any;
-  readonly client?: any;
+  readonly client: any;
   readonly network?: Network;
   readonly logger: Logger;
   readonly ping: () => Promise<void>;
@@ -19,7 +19,12 @@ export interface BlockchainProxy {
     addresses: ReadonlyArray<string>
   ) => Promise<SyncInfo>;
   readonly send: (hexTx: string) => Promise<void>;
-  readonly estimateSmartFee?: (target: number, mode: FeeEstimateMode) => Promise<number>
+  readonly validateAddress: (address: string) => Promise<ValidateAddressResult>;
+  readonly estimateSmartFee: (
+    target: number,
+    mode: FeeEstimateMode
+  ) => Promise<number>;
+  readonly prepare500BTC: (address: string) => Promise<boolean>;
 }
 
 export interface SyncInfo {

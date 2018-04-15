@@ -12,7 +12,7 @@ import {
 } from './blockchain-proxy';
 import { address, Block, Out, Transaction } from 'bitcoinjs-lib';
 import CoinManager from './coin-manager';
-import {isOtherUser, OtherUser, OuterEntity} from './primitives/entities';
+import { isOtherUser, OtherUser, OuterEntity } from './primitives/entities';
 
 export enum AccountType {
   Normal
@@ -31,10 +31,6 @@ export interface Account extends Observable<any> {
   readonly observableBlockchain: ObservableBlockchain;
   readonly balance: Balance;
   readonly watchingAddresses: Option<ReadonlyArray<string>>;
-  readonly pay: (
-    amount: number,
-    destinations: ReadonlyArray<OuterEntity>
-  ) => Promise<any>; // TODO: this should not return any.
   readonly beg: (begTo: OuterEntity) => Promise<any>;
 }
 
@@ -56,43 +52,6 @@ export class NormalAccount extends Observable<AccountEvent> implements Account {
   ) {
     super();
     this.observableBlockchain.subscribe(this._handleUpdate.bind(this));
-  }
-
-  public async pay(
-    amount: number,
-    destinations: ReadonlyArray<OuterEntity>
-  ): Promise<NormalAccount> {
-    const nextAmount = this.balance.amount - amount;
-    if (nextAmount < 0) {
-      throw new Error(`Balance can not be negative!`);
-    }
-
-    if (destinations.some(d => !isOtherUser(d))){
-      throw new Error(`Right now, only paying to other Users is supported`)
-    }
-
-    const newBalance = new Balance(nextAmount);
-    const coins = await this.coinManager.chooseCoinsFromAmount(amount);
-    const addressAndAmounts = destinations.map((d: OuterEntity, i) => ({
-      address: d.nextAddressToPay,
-      amount
-    }));
-    this.coinManager
-      .crateTx(this.id, coins, addressAndAmounts)
-      .map((tx: Transaction) =>
-        this.coinManager
-          .broadCast(tx)
-          .catch(e => `Failed to broadcast TX! the error was ${e.toString()}`)
-      );
-    return new NormalAccount(
-      this.id,
-      this.hdIndex,
-      this.coinManager,
-      this.observableBlockchain,
-      this.type,
-      newBalance,
-      this.watchingAddresses
-    );
   }
 
   public async beg(begTo: OuterEntity): Promise<any> {
