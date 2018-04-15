@@ -12,10 +12,12 @@ import { InMemoryKeyRepository } from './key-repository';
 import { BlockchainProxy, TrustedBitcoindRPC } from './blockchain-proxy';
 import { MyWalletCoin } from './primitives/wallet-coin';
 import fixtures from '../test/fixtures/transaction.json';
-import { address, script, Transaction } from 'bitcoinjs-lib';
+import { address, networks, script, Transaction } from 'bitcoinjs-lib';
 import { some } from 'fp-ts/lib/Option';
 import { Balance } from './primitives/balance';
 import * as util from 'util';
+import { BatchOption } from 'bitcoin-core';
+import * as Logger from 'bunyan';
 
 function flatten(arr: any[]): any[] {
   return arr.reduce((flat, toFlatten): any => {
@@ -38,20 +40,23 @@ async function prepareCoins(
 ): Promise<MyWalletCoin[]> {
   const args = Array(num).fill({ method: 'getnewaddress', parameters: [] });
   const addrs: string[] = await bchProxy.client.command(args);
-  util.debug(`addrs are ${addrs}`);
-  const blockhashes: string[][] = await Promise.all(
-    addrs.map(a => bchProxy.client.generateToAddress(1, a))
+  const args2 = addrs.map(a => ({
+    method: 'generatetoaddress',
+    parameters: [1, a]
+  }));
+  const blockhashes: string[][] = await bchProxy.client.command(
+    args2 as BatchOption[]
   );
   util.debug(`blockchashes are ${blockhashes}`);
   await bchProxy.client.generate(100);
   const scriptPubkeys: ReadonlyArray<Buffer> = addrs.map(a =>
-    address.toOutputScript(a)
+    address.toOutputScript(a, networks.testnet)
   );
-  util.debug(scriptPubkeys.toString());
   const blocks = await Promise.all(
-    flatten(blockhashes).map((a: string) => bchProxy.client.getBlock(a, 2))
+    flatten(blockhashes).map(b => bchProxy.client.getBlock(b, true))
   );
-  const coinBaseHash = blocks.map((a: any) => a.tx[0].txid);
+  util.debug(`first block in blocks is ${JSON.stringify(blocks[0])}`);
+  const coinBaseHash = blocks.map((a: any) => a.tx[0]);
   return Array(num).map(
     i =>
       new MyWalletCoin(
@@ -69,6 +74,7 @@ async function prepareCoins(
 type CoinManagerTestContext = {
   man: CoinManager;
   bch: BlockchainProxy;
+  logger: Logger;
 };
 const test = anyTest as TestInterface<CoinManagerTestContext>;
 
@@ -86,6 +92,7 @@ test.beforeEach(
     );
     t.context.bch = bch;
     t.context.man = new CoinManager(logger, new InMemoryKeyRepository(), bch);
+    t.context.logger = logger;
   }
 );
 
@@ -94,6 +101,9 @@ test('get total amount', async (t: ExecutionContext<
 >) => {
   await prepareCoins(t.context.bch, 6).then(coins =>
     coins.map(c => t.context.man.coins.set(new CoinID(uuid.v4()), c))
+  );
+  t.context.logger.info(
+    `Prepared coins are ${JSON.stringify(t.context.man.coins.entries())}`
   );
   t.is(t.context.man.total, new Balance(300));
 });
