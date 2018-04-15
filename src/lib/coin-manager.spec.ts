@@ -6,18 +6,25 @@ import {
   testBitcoindIp,
   testBitcoindPassword,
   testBitcoindPort,
-  testBitcoindUsername
+  testBitcoindUsername,
+  testZmqPubUrl
 } from '../test/helpers';
 import { InMemoryKeyRepository } from './key-repository';
-import { BlockchainProxy, TrustedBitcoindRPC } from './blockchain-proxy';
+import {
+  BlockchainProxy,
+  getObservableBlockchain,
+  TrustedBitcoindRPC
+} from './blockchain-proxy';
 import { MyWalletCoin } from './primitives/wallet-coin';
 import fixtures from '../test/fixtures/transaction.json';
-import { address, networks, script, Transaction } from 'bitcoinjs-lib';
+import { address, HDNode, networks, script, Transaction } from 'bitcoinjs-lib';
 import { some } from 'fp-ts/lib/Option';
 import { Balance } from './primitives/balance';
 import * as util from 'util';
-import { BatchOption } from 'bitcoin-core';
+import { BatchOption, Block } from 'bitcoin-core';
 import * as Logger from 'bunyan';
+import NormalAccountService from './account-service';
+import { right } from 'fp-ts/lib/Either';
 
 function flatten(arr: any[]): any[] {
   return arr.reduce((flat, toFlatten): any => {
@@ -47,21 +54,19 @@ async function prepareCoins(
   const blockhashes: string[][] = await bchProxy.client.command(
     args2 as BatchOption[]
   );
-  util.debug(`blockchashes are ${blockhashes}`);
   await bchProxy.client.generate(100);
   const scriptPubkeys: ReadonlyArray<Buffer> = addrs.map(a =>
     address.toOutputScript(a, networks.testnet)
   );
-  const blocks = await Promise.all(
+  const blocks = (await Promise.all(
     flatten(blockhashes).map(b => bchProxy.client.getBlock(b, true))
-  );
-  util.debug(`first block in blocks is ${JSON.stringify(blocks[0])}`);
-  const coinBaseHash = blocks.map((a: any) => a.tx[0]);
+  )) as Block[];
+  const coinBaseHash = blocks.map(a => a.tx[0]) as string[];
 
   return Array(num)
     .fill('foo') // to avoid null value error.
     .map(
-      i =>
+      (_, i) =>
         new MyWalletCoin(
           scriptPubkeys[i],
           'pubkeyhash',
@@ -135,11 +140,37 @@ test('coin selection will throw Error if not enough funds available', async (t: 
 test('creating transaction', async (t: ExecutionContext<
   CoinManagerTestContext
 >) => {
+  // 1. prepare account
   const man = t.context.man;
-  const coinsToInsert = await prepareCoins(t.context.bch, 1);
-  man.coins.set(new CoinID(uuid.v4()), coinsToInsert[0]);
-  const coins = await man.chooseCoinsFromAmount(40);
-  t.is(coins[0].amount.amount, 50);
+  const as = new NormalAccountService(
+    t.context.logger,
+    new InMemoryKeyRepository()
+  );
+  const masterHD = HDNode.fromSeedHex(
+    'ffffffffffffffffffffffffffffffff',
+    networks.testnet
+  )
+    .deriveHardened(44)
+    .deriveHardened(0); // coin_type
+  const obs = getObservableBlockchain(testZmqPubUrl);
+  const account = await as.createFromHD(masterHD, 0, obs, t.context.bch);
+
+  // 2. set coins
+  const coins = await prepareCoins(t.context.bch, 1);
+  t.context.logger.info(`going to set coins ${coins}`);
+  t.context.man.coins.set(new CoinID(uuid.v4()), coins[0]);
+
+  // 3. create Tx
+  const addressToPay = [
+    {
+      address: 'mhwVU9YLs5PSGqVjPK2RewGNeKBLV4eEXo', // random address.
+      amount: 10
+    }
+  ];
+
+  const tx = await man.createTx(account.id, coins, addressToPay, 0);
+  t.context.logger.info(`successfully created tx ${tx}!`);
+  t.truthy(tx);
 });
 
 test('broadCasting Transaction', async (t: ExecutionContext<

@@ -63,7 +63,7 @@ export default class NormalAccountService
       address: d.nextAddressToPay,
       amount
     }));
-    const txResult = await from.coinManager.crateTx(
+    const txResult = await from.coinManager.createTx(
       from.id,
       coins,
       addressAndAmounts,

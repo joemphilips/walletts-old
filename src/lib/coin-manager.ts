@@ -9,7 +9,14 @@ import { MyWalletCoin } from './primitives/wallet-coin';
 import WalletDB from './wallet-service';
 import * as Logger from 'bunyan';
 /* tslint:disable-next-line:no-submodule-imports */
-import { address, Out, Transaction, TransactionBuilder } from 'bitcoinjs-lib';
+import {
+  address,
+  Network,
+  networks,
+  Out,
+  Transaction,
+  TransactionBuilder
+} from 'bitcoinjs-lib';
 import { AccountID } from './primitives/identity';
 import { Either, left, right } from 'fp-ts/lib/Either';
 import { Outpoint } from 'bitcoin-core';
@@ -41,7 +48,7 @@ export class CoinID {
 export default class CoinManager {
   public readonly coins: Map<CoinID, MyWalletCoin>;
   public readonly logger: Logger;
-  public readonly feeProvider: (target?: number) => number;
+  public readonly feeProvider: (target?: number) => Promise<number>;
 
   constructor(
     log: Logger,
@@ -51,11 +58,15 @@ export default class CoinManager {
     this.logger = log.child({ subModule: 'CoinManager' });
     this.coins = new Map<CoinID, MyWalletCoin>();
     this.logger.trace('coinmanager initialized');
-    this.feeProvider = this.bchProxy.estimateSmartFee.bind(
-      this,
-      6,
-      'ECONOMICAL'
-    );
+    this.feeProvider = async (target = 6) => {
+      const feeRate = await this.bchProxy.client
+        .estimateSmartFee(target)
+        .then(r => r.feerate);
+      if (!feeRate) {
+        throw Error(`failed to provide fee!`);
+      }
+      return feeRate;
+    };
   }
 
   public sign<K extends Keystore>(key: K): boolean {
@@ -86,15 +97,19 @@ export default class CoinManager {
     return result;
   }
 
-  public async crateTx(
+  public async createTx(
     id: AccountID,
     coins: MyWalletCoin[],
     addressAndAmount: ReadonlyArray<{ address: string; amount: number }>,
-    generatedAddressNumSofar: number
+    generatedAddressNumSofar: number,
+    chainParam: Network = networks.testnet
   ): Promise<Either<Error, Transaction>> {
     const builder = new TransactionBuilder();
+    this.logger.debug(`going to add tx from ${coins.map(c => c.txid)}`);
     coins.map((c, i) => builder.addInput(c.txid, i));
-    addressAndAmount.map(a => builder.addOutput(a.address, a.amount));
+    addressAndAmount.map(a =>
+      builder.addOutput(address.toOutputScript(a.address, chainParam), a.amount)
+    );
 
     // prepare change.
     const totalOut = addressAndAmount
@@ -102,7 +117,7 @@ export default class CoinManager {
       .reduce((a, b) => a + b, 0);
     const totalIn = coins.map(c => c.amount).reduce((a, b) => a + b.amount, 0);
     const delta = totalOut - totalIn;
-    const feeRate = this.feeProvider();
+    const feeRate = await this.feeProvider();
     const fee = feeRate * builder.buildIncomplete().byteLength();
     const changeAmount = delta - fee;
     const changeAddress = await this.keyRepo.getAddress(
