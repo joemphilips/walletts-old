@@ -123,10 +123,23 @@ test('chooseCoinsFromAmount', async (t: ExecutionContext<
   t.is(coins[0].amount.amount, 50);
 });
 
+test('coin selection will throw Error if not enough funds available', async (t: ExecutionContext<
+  CoinManagerTestContext
+>) => {
+  const coinsToInsert = await prepareCoins(t.context.bch, 1);
+  t.context.man.coins.set(new CoinID(uuid.v4()), coinsToInsert[0]);
+  await t.throws(() => t.context.man.chooseCoinsFromAmount(51), Error);
+  await t.notThrows(() => t.context.man.chooseCoinsFromAmount(50));
+});
+
 test('creating transaction', async (t: ExecutionContext<
   CoinManagerTestContext
 >) => {
-  t.pass();
+  const man = t.context.man;
+  const coinsToInsert = await prepareCoins(t.context.bch, 1);
+  man.coins.set(new CoinID(uuid.v4()), coinsToInsert[0]);
+  const coins = await man.chooseCoinsFromAmount(40);
+  t.is(coins[0].amount.amount, 50);
 });
 
 test('broadCasting Transaction', async (t: ExecutionContext<
