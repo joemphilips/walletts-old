@@ -57,17 +57,20 @@ async function prepareCoins(
   );
   util.debug(`first block in blocks is ${JSON.stringify(blocks[0])}`);
   const coinBaseHash = blocks.map((a: any) => a.tx[0]);
-  return Array(num).map(
-    i =>
-      new MyWalletCoin(
-        scriptPubkeys[i],
-        'pubkeyhash',
-        null,
-        some('Coin for Test'),
-        coinBaseHash[i],
-        new Balance(50)
-      )
-  );
+
+  return Array(num)
+    .fill('This can be anything...')
+    .map(
+      i =>
+        new MyWalletCoin(
+          scriptPubkeys[i],
+          'pubkeyhash',
+          null,
+          some('Coin for Test'),
+          coinBaseHash[i],
+          new Balance(50)
+        )
+    );
 }
 
 /* tslint:disable interface-over-type-literal */
@@ -99,11 +102,13 @@ test.beforeEach(
 test('get total amount', async (t: ExecutionContext<
   CoinManagerTestContext
 >) => {
-  await prepareCoins(t.context.bch, 6).then(coins =>
-    coins.map(c => t.context.man.coins.set(new CoinID(uuid.v4()), c))
-  );
+  const coins = await prepareCoins(t.context.bch, 6);
+  for (const c of coins) {
+    t.context.man.coins.set(new CoinID(uuid.v4()), c);
+  }
+
   t.context.logger.info(
-    `Prepared coins are ${JSON.stringify(t.context.man.coins.entries())}`
+    `Prepared coins are ${JSON.stringify([...t.context.man.coins])}`
   );
   t.is(t.context.man.total, new Balance(300));
 });
