@@ -9,7 +9,10 @@ import {
   testBitcoindUsername,
   testZmqPubUrl
 } from '../test/helpers';
-import { InMemoryKeyRepository } from './key-repository';
+import {
+  InMemoryKeyRepository,
+  default as KeyRepository
+} from './key-repository';
 import {
   BlockchainProxy,
   getObservableBlockchain,
@@ -83,6 +86,7 @@ type CoinManagerTestContext = {
   man: CoinManager;
   bch: BlockchainProxy;
   logger: Logger;
+  keyRepo: KeyRepository;
 };
 const test = anyTest as TestInterface<CoinManagerTestContext>;
 
@@ -99,7 +103,9 @@ test.beforeEach(
       logger
     );
     t.context.bch = bch;
-    t.context.man = new CoinManager(logger, new InMemoryKeyRepository(), bch);
+    const keyRepo = new InMemoryKeyRepository();
+    t.context.keyRepo = keyRepo;
+    t.context.man = new CoinManager(logger, keyRepo, bch);
     t.context.logger = logger;
   }
 );
@@ -142,10 +148,7 @@ test('creating transaction', async (t: ExecutionContext<
 >) => {
   // 1. prepare account
   const man = t.context.man;
-  const as = new NormalAccountService(
-    t.context.logger,
-    new InMemoryKeyRepository()
-  );
+  const as = new NormalAccountService(t.context.logger, t.context.keyRepo);
   const masterHD = HDNode.fromSeedHex(
     'ffffffffffffffffffffffffffffffff',
     networks.testnet
@@ -170,7 +173,7 @@ test('creating transaction', async (t: ExecutionContext<
 
   const tx = await man.createTx(account.id, coins, addressToPay, 0);
   t.context.logger.info(`successfully created tx ${tx}!`);
-  t.truthy(tx);
+  t.true(tx.isRight());
 });
 
 test('broadCasting Transaction', async (t: ExecutionContext<

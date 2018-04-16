@@ -151,9 +151,8 @@ export default class CoinManager {
   /**
    * Contextify Transaction output as a WalletCoin and put it into CoinMaps
    * @param {AccountID} id
-   * @param {OutpointWithScript[]} outpoints
-   * @param {string} txid
-   * @returns {WalletCoin[]}
+   * @param {OutpointWithScriptAndAmount[]} outpoints
+   * @returns {null}
    */
   public async importOurOutPoints(
     id: AccountID,
