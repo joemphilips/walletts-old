@@ -11,11 +11,6 @@ first `yarn install` and
 **
 ref https://github.com/ReactiveX/rxjs/issues/3031
 
-next, run bitcoind in regtest with
-```
-docker compose up -d
-```
-
 and run
 ```
 yarn test-without-nsp
