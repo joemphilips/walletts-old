@@ -67,11 +67,9 @@ export default class NormalAccountService
       addressAndAmounts,
       changeAddress
     );
-    txResult.map((tx: Transaction) =>
-      updatedAccount.coinManager
-        .broadCast(tx)
-        .catch(e => `Failed to broadcast TX! the error was ${e.toString()}`)
-    );
+    updatedAccount.coinManager
+      .broadCast(txResult)
+      .catch(e => `Failed to broadcast TX! the error was ${e.toString()}`);
     return new NormalAccount(
       updatedAccount.id,
       updatedAccount.hdIndex,

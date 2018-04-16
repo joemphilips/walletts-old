@@ -116,7 +116,7 @@ export default class CoinManager {
     }>,
     changeAddress: string,
     chainParam: Network = networks.testnet
-  ): Promise<Either<Error, Transaction>> {
+  ): Promise<Transaction> {
     const builder = new TransactionBuilder(chainParam);
     this.logger.debug(`going to add tx from ${coins.map(c => c.txid)}`);
     coins.map((c, i) => builder.addInput(c.txid, i));
@@ -158,7 +158,7 @@ export default class CoinManager {
     coins.forEach((no, i) => builder.sign(i, HDNode.keyPair));
 
     this.logger.debug(`going to build ${builder}`);
-    return right(builder.build());
+    return builder.build();
   }
 
   public async broadCast(tx: Transaction): Promise<void> {

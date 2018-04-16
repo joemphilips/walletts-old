@@ -249,9 +249,9 @@ test.only('create transaction and broadcast, then check the balance', async (t: 
     changeAddress
   );
   logger.debug('tx created');
-  t.true(txResult.isRight(), ` failed to create tx ${txResult}`);
+  t.truthy(txResult, ` failed to create tx ${txResult}`);
 
-  await txResult.map(async tx => t.notThrows(async () => man.broadCast(tx)));
+  await t.notThrows(async () => man.broadCast(txResult));
 });
 
 test('import outpoint as its own coin.', async (t: ExecutionContext<
