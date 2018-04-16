@@ -157,6 +157,7 @@ test('creating transaction', async (t: ExecutionContext<
     .deriveHardened(0); // coin_type
   const obs = getObservableBlockchain(testZmqPubUrl);
   const account = await as.createFromHD(masterHD, 0, obs, t.context.bch);
+  const [account2, _, changeAddress] = await as.getAddressForAccount(account);
 
   // 2. set coins
   const coins = await prepareCoins(t.context.bch, 1);
@@ -171,7 +172,12 @@ test('creating transaction', async (t: ExecutionContext<
     }
   ];
 
-  const tx = await man.createTx(account.id, coins, addressToPay, 0);
+  const tx = await man.createTx(
+    account2.id,
+    coins,
+    addressToPay,
+    changeAddress
+  );
   t.context.logger.info(`successfully created tx ${tx}!`);
   t.true(tx.isRight());
 });

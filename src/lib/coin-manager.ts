@@ -101,7 +101,7 @@ export default class CoinManager {
     id: AccountID,
     coins: MyWalletCoin[],
     addressAndAmount: ReadonlyArray<{ address: string; amount: number }>,
-    generatedAddressNumSofar: number,
+    changeAddress: string,
     chainParam: Network = networks.testnet
   ): Promise<Either<Error, Transaction>> {
     const builder = new TransactionBuilder(chainParam);
@@ -120,17 +120,6 @@ export default class CoinManager {
     const feeRate = await this.feeProvider();
     const fee = feeRate * builder.buildIncomplete().byteLength();
     const changeAmount = delta - fee;
-    const changeAddress = await this.keyRepo.getAddress(
-      id,
-      `1/${generatedAddressNumSofar}`
-    );
-    if (!changeAddress) {
-      return left(
-        Error(
-          `failed to get change address from KeyRepository for ${id}! something must be wrong.`
-        )
-      );
-    }
     builder.addOutput(changeAddress as string, changeAmount);
 
     // sign every input

@@ -26,7 +26,7 @@ export interface AbstractAccountService<A extends Account> {
     bchProxy: BlockchainProxy
   ) => Promise<A>;
   pay: (
-    from: Account,
+    from: A,
     amount: number,
     destinations: ReadonlyArray<OuterEntity>
   ) => Promise<A>;
@@ -40,7 +40,7 @@ export default class NormalAccountService
   }
 
   public async pay(
-    from: Account,
+    from: NormalAccount,
     amount: number,
     destinations: ReadonlyArray<OuterEntity>
   ): Promise<NormalAccount> {
@@ -63,35 +63,48 @@ export default class NormalAccountService
       address: d.nextAddressToPay,
       amount
     }));
+
+    const [updatedAccount, _, changeAddress] = await this.getAddressForAccount(
+      from
+    );
     const txResult = await from.coinManager.createTx(
       from.id,
       coins,
       addressAndAmounts,
-      from.watchingAddresses.getOrElse([]).length
+      changeAddress
     );
     txResult.map((tx: Transaction) =>
-      from.coinManager
+      updatedAccount.coinManager
         .broadCast(tx)
         .catch(e => `Failed to broadcast TX! the error was ${e.toString()}`)
     );
     return new NormalAccount(
-      from.id,
-      from.hdIndex,
-      from.coinManager,
-      from.observableBlockchain,
-      from.type,
+      updatedAccount.id,
+      updatedAccount.hdIndex,
+      updatedAccount.coinManager,
+      updatedAccount.observableBlockchain,
+      updatedAccount.type,
       newBalance,
-      from.watchingAddresses
+      updatedAccount.watchingAddresses
     );
   }
 
   public async getAddressForAccount(
     a: NormalAccount,
-    index: number
+    index?: number
   ): Promise<[NormalAccount, string, string]> {
+    const nextAddreessindex = index
+      ? index
+      : a.watchingAddresses.getOrElse([]).length;
     this.logger.trace(`going to get address for Account ${a.id}`);
-    const address = await this.keyRepo.getAddress(a.id, `0/${index}`);
-    const changeAddress = await this.keyRepo.getAddress(a.id, `1/${index}`);
+    const address = await this.keyRepo.getAddress(
+      a.id,
+      `0/${nextAddreessindex}`
+    );
+    const changeAddress = await this.keyRepo.getAddress(
+      a.id,
+      `1/${nextAddreessindex}`
+    );
     if (!address || !changeAddress) {
       this.logger.error(
         `getAddressForAccount failed! repo was ${JSON.stringify(this.keyRepo)}`
