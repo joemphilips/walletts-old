@@ -18,6 +18,6 @@ docker compose up -d
 
 and run
 ```
-yarn test-withoug-nsp
+yarn test-without-nsp
 ```
 for testing
