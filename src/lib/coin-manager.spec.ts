@@ -28,21 +28,85 @@ import { BatchOption, Block } from 'bitcoin-core';
 import * as Logger from 'bunyan';
 import NormalAccountService from './account-service';
 import { right } from 'fp-ts/lib/Either';
+import { EventEmitter } from 'events';
 
-function flatten(arr: any[]): any[] {
-  return arr.reduce((flat, toFlatten): any => {
-    return flat.concat(
-      Array.isArray(toFlatten) ? flatten(toFlatten) : toFlatten
-    );
-  }, []);
+// 1. define global variables
+/* tslint:disable interface-over-type-literal */
+let bch: BlockchainProxy;
+let logger: Logger;
+let datadir: string;
+
+type CoinManagerTestContext = {
+  man: CoinManager;
+  bch: BlockchainProxy;
+  logger: Logger;
+  keyRepo: KeyRepository;
+};
+const test = anyTest as TestInterface<CoinManagerTestContext>;
+
+test.before('prepare test for CoinManager', async t => {
+  [logger, datadir] = prePareTest();
+  bch = new TrustedBitcoindRPC(
+    '',
+    testBitcoindUsername,
+    testBitcoindPassword,
+    testBitcoindIp,
+    testBitcoindPort,
+    logger
+  );
+});
+
+// 2. create global event emitter which counts for the coin preparation.
+/**
+ * number of test which requires to run prepareCoins
+ * @type {number}
+ */
+const PREPERATION_CONTEXT_NUM = 1;
+class Prepare extends EventEmitter {
+  public soFarPreparedContext: number;
+  constructor() {
+    super();
+    this.soFarPreparedContext = 0;
+  }
+
+  public incrementPrepare(): void {
+    this.soFarPreparedContext++;
+    if (this.soFarPreparedContext === PREPERATION_CONTEXT_NUM) {
+      this.emit('prepared');
+    }
+  }
 }
 
+const prepare = new Prepare();
+prepare.once('prepared', () => {
+  bch.client
+    .generate(100)
+    .then(() => {
+      logger.info('generated 100 blocks');
+      prepare.emit('generated');
+    })
+    .catch((e: Error) => {
+      util.debug('not generated');
+      throw e;
+    });
+});
+
+async function promise100block(): Promise<{}> {
+  return new Promise((resolve, reject) => {
+    prepare.once('generated', resolve);
+    prepare.on('error', reject);
+  });
+}
+
+// 3. define utility function used from testContext
 /**
  * calling this function at the same time in asyncronous mannter might cause
  * work queue in the bitcoind to exceed its limit. so use carefully.
  * @param {TrustedBitcoindRPC} bchProxy
  * @param {number} num
  * @returns {Promise<MyWalletCoin[]>}
+ * TODO: only `createTx` and `broadcast` requires to interact with the blockchain.
+ * TODO: So separate block generation logic to different function.
  */
 async function prepareCoins(
   bchProxy: TrustedBitcoindRPC,
@@ -57,7 +121,16 @@ async function prepareCoins(
   const blockhashes: string[][] = await bchProxy.client.command(
     args2 as BatchOption[]
   );
-  await bchProxy.client.generate(100);
+
+  // increment counter and wait other contexts to finish calling this function
+  prepare.incrementPrepare();
+  try {
+    await promise100block();
+  } catch (e) {
+    logger.debug(`error during generating block`);
+    throw e;
+  }
+
   const scriptPubkeys: ReadonlyArray<Buffer> = addrs.map(a =>
     address.toOutputScript(a, networks.testnet)
   );
@@ -80,36 +153,25 @@ async function prepareCoins(
         )
     );
 }
-
-/* tslint:disable interface-over-type-literal */
-type CoinManagerTestContext = {
-  man: CoinManager;
-  bch: BlockchainProxy;
-  logger: Logger;
-  keyRepo: KeyRepository;
-};
-const test = anyTest as TestInterface<CoinManagerTestContext>;
+function flatten(arr: any[]): any[] {
+  return arr.reduce((flat, toFlatten): any => {
+    return flat.concat(
+      Array.isArray(toFlatten) ? flatten(toFlatten) : toFlatten
+    );
+  }, []);
+}
 
 test.beforeEach(
-  'prepare test for CoinManager',
+  'prepare beforeEach test for CoinManager',
   async (t: ExecutionContext<CoinManagerTestContext>) => {
-    const [logger, datadir] = prePareTest();
-    const bch = new TrustedBitcoindRPC(
-      '',
-      testBitcoindUsername,
-      testBitcoindPassword,
-      testBitcoindIp,
-      testBitcoindPort,
-      logger
-    );
     t.context.bch = bch;
     const keyRepo = new InMemoryKeyRepository();
     t.context.keyRepo = keyRepo;
     t.context.man = new CoinManager(logger, keyRepo, bch);
-    t.context.logger = logger;
   }
 );
 
+// 4. run actual tests
 test('get total amount', async (t: ExecutionContext<
   CoinManagerTestContext
 >) => {
@@ -118,7 +180,7 @@ test('get total amount', async (t: ExecutionContext<
     t.context.man.coins.set(new CoinID(uuid.v4()), c);
   }
 
-  t.context.logger.trace(
+  logger.trace(
     `Prepared coins are ${JSON.stringify([...t.context.man.coins])}`
   );
   t.deepEqual(t.context.man.total, new Balance(300));
@@ -143,13 +205,13 @@ test('coin selection will throw Error if not enough funds available', async (t: 
   await t.notThrows(() => t.context.man.chooseCoinsFromAmount(50));
 });
 
-test('create transaction and broadcast, then check the balance', async (t: ExecutionContext<
+test.only('create transaction and broadcast, then check the balance', async (t: ExecutionContext<
   CoinManagerTestContext
 >) => {
   t.plan(2);
   // 1. prepare account
   const man = t.context.man;
-  const as = new NormalAccountService(t.context.logger, t.context.keyRepo);
+  const as = new NormalAccountService(logger, t.context.keyRepo);
   const masterHD = HDNode.fromSeedHex(
     'ffffffffffffffffffffffffffffffff',
     networks.testnet
@@ -162,7 +224,7 @@ test('create transaction and broadcast, then check the balance', async (t: Execu
 
   // 2. set coins
   const coins = await prepareCoins(t.context.bch, 1);
-  t.context.logger.info(`going to set coins ${coins}`);
+  logger.info(`going to set coins ${JSON.stringify(coins)}`);
   t.context.man.coins.set(new CoinID(uuid.v4()), coins[0]);
 
   // 3. create Tx
@@ -179,8 +241,8 @@ test('create transaction and broadcast, then check the balance', async (t: Execu
     addressToPay,
     changeAddress
   );
-  t.context.logger.info(`successfully created tx ${txResult}!`);
-  t.true(txResult.isRight());
+  logger.debug('tx created');
+  t.true(txResult.isRight(), ` failed to create tx ${txResult}`);
 
   await txResult.map(async tx => t.notThrows(() => man.broadCast(tx)));
 });

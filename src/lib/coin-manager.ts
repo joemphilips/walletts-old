@@ -117,6 +117,7 @@ export default class CoinManager {
       .reduce((a, b) => a + b, 0);
     const totalIn = coins.map(c => c.amount).reduce((a, b) => a + b.amount, 0);
     const delta = totalOut - totalIn;
+    this.logger.debug(`fetching fee from feeProvider ...`);
     const feeRate = await this.feeProvider();
     const fee = feeRate * builder.buildIncomplete().byteLength();
     const changeAmount = delta - fee;
@@ -129,11 +130,13 @@ export default class CoinManager {
     }
     coins.forEach((no, i) => builder.sign(i, HDNode.keyPair));
 
+    this.logger.debug(`going to build ${builder}`);
     return right(builder.build());
   }
 
   public async broadCast(tx: Transaction): Promise<void> {
     const hexTx = tx.toHex();
+    this.logger.debug(`broadcasting tx ${hexTx}`);
     await this.bchProxy.send(hexTx);
   }
 
