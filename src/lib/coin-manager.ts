@@ -104,7 +104,7 @@ export default class CoinManager {
     generatedAddressNumSofar: number,
     chainParam: Network = networks.testnet
   ): Promise<Either<Error, Transaction>> {
-    const builder = new TransactionBuilder();
+    const builder = new TransactionBuilder(chainParam);
     this.logger.debug(`going to add tx from ${coins.map(c => c.txid)}`);
     coins.map((c, i) => builder.addInput(c.txid, i));
     addressAndAmount.map(a =>
