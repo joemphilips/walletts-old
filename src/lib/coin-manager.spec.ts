@@ -143,9 +143,10 @@ test('coin selection will throw Error if not enough funds available', async (t: 
   await t.notThrows(() => t.context.man.chooseCoinsFromAmount(50));
 });
 
-test('creating transaction', async (t: ExecutionContext<
+test('create transaction and broadcast, then check the balance', async (t: ExecutionContext<
   CoinManagerTestContext
 >) => {
+  t.plan(2);
   // 1. prepare account
   const man = t.context.man;
   const as = new NormalAccountService(t.context.logger, t.context.keyRepo);
@@ -172,20 +173,16 @@ test('creating transaction', async (t: ExecutionContext<
     }
   ];
 
-  const tx = await man.createTx(
+  const txResult = await man.createTx(
     account2.id,
     coins,
     addressToPay,
     changeAddress
   );
-  t.context.logger.info(`successfully created tx ${tx}!`);
-  t.true(tx.isRight());
-});
+  t.context.logger.info(`successfully created tx ${txResult}!`);
+  t.true(txResult.isRight());
 
-test('broadCasting Transaction', async (t: ExecutionContext<
-  CoinManagerTestContext
->) => {
-  t.pass();
+  await txResult.map(async tx => t.notThrows(() => man.broadCast(tx)));
 });
 
 test('import outpoint as its own coin.', async (t: ExecutionContext<
