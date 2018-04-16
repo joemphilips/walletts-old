@@ -16,7 +16,7 @@ services:
       - ./test-volume/bitcoind/:/home/bitcoin/.bitcoin
     command:
       -printtoconsole
-      -datadir=/Users/miyamotojou/test-volume/bitcoind/
+      -datadir=/home/bitcoin/.bitcoin
       -regtest=1
       -rest
       -rpcallowip=10.211.0.0/16
