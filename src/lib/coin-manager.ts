@@ -1,16 +1,27 @@
-import { BlockchainEvent, BlockchainProxy } from './blockchain-proxy';
+import {
+  BlockchainEvent,
+  BlockchainProxy,
+  TrustedBitcoindRPC
+} from './blockchain-proxy';
 import Keystore, { default as KeyRepository } from './key-repository';
 import logger from './logger';
 import { MyWalletCoin } from './primitives/wallet-coin';
 import WalletDB from './wallet-service';
 import * as Logger from 'bunyan';
 /* tslint:disable-next-line:no-submodule-imports */
-import { address, Out, Transaction, TransactionBuilder } from 'bitcoinjs-lib';
+import {
+  address,
+  Network,
+  networks,
+  Out,
+  Transaction,
+  TransactionBuilder
+} from 'bitcoinjs-lib';
 import { AccountID } from './primitives/identity';
 import { Either, left, right } from 'fp-ts/lib/Either';
 import { Outpoint } from 'bitcoin-core';
 import * as _ from 'lodash';
-import {Balance} from "./primitives/balance";
+import { Balance } from './primitives/balance';
 
 export interface OutpointWithScriptAndAmount {
   id: string;
@@ -37,17 +48,25 @@ export class CoinID {
 export default class CoinManager {
   public readonly coins: Map<CoinID, MyWalletCoin>;
   public readonly logger: Logger;
-  public readonly feeProvider: (target?: number) => number;
+  public readonly feeProvider: (target?: number) => Promise<number>;
 
   constructor(
     log: Logger,
     public keyRepo: KeyRepository,
-    public bchProxy: BlockchainProxy
+    public bchProxy: TrustedBitcoindRPC
   ) {
     this.logger = log.child({ subModule: 'CoinManager' });
     this.coins = new Map<CoinID, MyWalletCoin>();
     this.logger.trace('coinmanager initialized');
-    this.feeProvider = this.bchProxy.estimateSmartFee;
+    this.feeProvider = async (target = 6) => {
+      const feeRate = await this.bchProxy.client
+        .estimateSmartFee(target)
+        .then(r => r.feerate);
+      if (!feeRate) {
+        throw Error(`failed to provide fee!`);
+      }
+      return feeRate;
+    };
   }
 
   public sign<K extends Keystore>(key: K): boolean {
@@ -55,41 +74,60 @@ export default class CoinManager {
   }
 
   public get total(): Balance {
-    return new Balance(Array.from(this.coins.entries()).map((k, v) => v).reduce((a, b) => a + b, 0))
+    return new Balance(
+      Array.from(this.coins.entries())
+        .map(([k, v]) => v)
+        .reduce((a, b) => a + b.amount.amount, 0)
+    );
   }
 
   // TODO: Implement Murch's algorithm.  refs: https://github.com/bitcoin/bitcoin/pull/10637
   public async chooseCoinsFromAmount(amount: number): Promise<MyWalletCoin[]> {
     if (this.total.amount < amount) {
-      throw Error(`not enough funds!`)
+      throw Error(`not enough funds!`);
     }
     const result: MyWalletCoin[] = [];
     for (const [id, coin] of this.coins.entries()) {
-      if (result.map(c => c.amount).reduce((a, b) => a + b.amount, 0) < amount) {
-        result.push(coin)
+      if (
+        result.map(c => c.amount).reduce((a, b) => a + b.amount, 0) < amount
+      ) {
+        result.push(coin);
       }
     }
     return result;
   }
 
-  public crateTx(
+  public async createTx(
     id: AccountID,
     coins: MyWalletCoin[],
     addressAndAmount: ReadonlyArray<{ address: string; amount: number }>,
-  ): Either<Error, Transaction> {
-    const builder = new TransactionBuilder();
+    changeAddress: string,
+    chainParam: Network = networks.testnet
+  ): Promise<Either<Error, Transaction>> {
+    const builder = new TransactionBuilder(chainParam);
+    this.logger.debug(`going to add tx from ${coins.map(c => c.txid)}`);
     coins.map((c, i) => builder.addInput(c.txid, i));
-    addressAndAmount.map(a => builder.addOutput(a.address, a.amount));
+    addressAndAmount.map(a =>
+      builder.addOutput(address.toOutputScript(a.address, chainParam), a.amount)
+    );
 
     // prepare change.
-    const totalOut = addressAndAmount.map(e => e.amount).reduce((a, b) => a + b, 0);
+    const totalOut = addressAndAmount
+      .map(e => e.amount)
+      .reduce((a, b) => a + b, 0);
     const totalIn = coins.map(c => c.amount).reduce((a, b) => a + b.amount, 0);
     const delta = totalOut - totalIn;
-    const feeRate = this.feeProvider();
+    const feeRate = await this.feeProvider();
     const fee = feeRate * builder.buildIncomplete().byteLength();
     const changeAmount = delta - fee;
-    const changeAddress = this.keyRepo.getAddress(id);
-    builder.addOutput(changeAddress, changeAmount);
+    builder.addOutput(changeAddress as string, changeAmount);
+
+    // sign every input
+    const HDNode = await this.keyRepo.getHDNode(id);
+    if (!HDNode) {
+      throw new Error(`could not retrieve HDNode!`);
+    }
+    coins.forEach((no, i) => builder.sign(i, HDNode.keyPair));
 
     return right(builder.build());
   }
@@ -102,9 +140,8 @@ export default class CoinManager {
   /**
    * Contextify Transaction output as a WalletCoin and put it into CoinMaps
    * @param {AccountID} id
-   * @param {OutpointWithScript[]} outpoints
-   * @param {string} txid
-   * @returns {WalletCoin[]}
+   * @param {OutpointWithScriptAndAmount[]} outpoints
+   * @returns {null}
    */
   public async importOurOutPoints(
     id: AccountID,
@@ -139,7 +176,9 @@ export default class CoinManager {
       );
     });
     this.logger.info(`successfully imported our Coin from Blockchain`);
-    this.logger.info(`So coins inside coinmanager are ${this.coins}`);
+    this.logger.info(
+      `coins inside coinmanager are ${JSON.stringify(this.coins)}`
+    );
     return null;
   }
 }

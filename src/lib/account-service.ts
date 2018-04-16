@@ -1,6 +1,6 @@
 import { Account, NormalAccount } from './account';
 import KeyRepository, { InMemoryKeyRepository } from './key-repository';
-import { crypto, HDNode } from 'bitcoinjs-lib';
+import { crypto, HDNode, Transaction } from 'bitcoinjs-lib';
 import hash160 = crypto.hash160;
 /* tslint:disable-next-line:no-submodule-imports */
 import { none, some } from 'fp-ts/lib/Option';
@@ -9,9 +9,12 @@ import { AccountID } from './primitives/identity';
 import {
   BlockchainProxy,
   getObservableBlockchain,
-  ObservableBlockchain
+  ObservableBlockchain,
+  TrustedBitcoindRPC
 } from './blockchain-proxy';
 import CoinManager from './coin-manager';
+import { isOtherUser, OuterEntity } from './primitives/entities';
+import { Balance } from './primitives/balance';
 
 export interface AbstractAccountService<A extends Account> {
   readonly keyRepo: KeyRepository;
@@ -22,6 +25,11 @@ export interface AbstractAccountService<A extends Account> {
     observableBlockchain: ObservableBlockchain,
     bchProxy: BlockchainProxy
   ) => Promise<A>;
+  pay: (
+    from: A,
+    amount: number,
+    destinations: ReadonlyArray<OuterEntity>
+  ) => Promise<A>;
 }
 
 export default class NormalAccountService
@@ -31,13 +39,72 @@ export default class NormalAccountService
     this.logger = parentLogger.child({ subModule: 'NormalAccountService' });
   }
 
+  public async pay(
+    from: NormalAccount,
+    amount: number,
+    destinations: ReadonlyArray<OuterEntity>
+  ): Promise<NormalAccount> {
+    const balanceAfterPay = from.balance.amount - amount;
+    if (balanceAfterPay < 0) {
+      throw new Error(
+        `amount to pay ${amount} exceeds balance in the account ${
+          from.balance.amount
+        } !`
+      );
+    }
+
+    if (destinations.some(d => !isOtherUser(d))) {
+      throw new Error(`Right now, only paying to other Users is supported`);
+    }
+
+    const newBalance = new Balance(balanceAfterPay);
+    const coins = await from.coinManager.chooseCoinsFromAmount(amount);
+    const addressAndAmounts = destinations.map((d: OuterEntity, i) => ({
+      address: d.nextAddressToPay,
+      amount
+    }));
+
+    const [updatedAccount, _, changeAddress] = await this.getAddressForAccount(
+      from
+    );
+    const txResult = await from.coinManager.createTx(
+      from.id,
+      coins,
+      addressAndAmounts,
+      changeAddress
+    );
+    txResult.map((tx: Transaction) =>
+      updatedAccount.coinManager
+        .broadCast(tx)
+        .catch(e => `Failed to broadcast TX! the error was ${e.toString()}`)
+    );
+    return new NormalAccount(
+      updatedAccount.id,
+      updatedAccount.hdIndex,
+      updatedAccount.coinManager,
+      updatedAccount.observableBlockchain,
+      updatedAccount.type,
+      newBalance,
+      updatedAccount.watchingAddresses
+    );
+  }
+
   public async getAddressForAccount(
     a: NormalAccount,
-    index: number
+    index?: number
   ): Promise<[NormalAccount, string, string]> {
+    const nextAddreessindex = index
+      ? index
+      : a.watchingAddresses.getOrElse([]).length;
     this.logger.trace(`going to get address for Account ${a.id}`);
-    const address = await this.keyRepo.getAddress(a.id, `0/${index}`);
-    const changeAddress = await this.keyRepo.getAddress(a.id, `1/${index}`);
+    const address = await this.keyRepo.getAddress(
+      a.id,
+      `0/${nextAddreessindex}`
+    );
+    const changeAddress = await this.keyRepo.getAddress(
+      a.id,
+      `1/${nextAddreessindex}`
+    );
     if (!address || !changeAddress) {
       this.logger.error(
         `getAddressForAccount failed! repo was ${JSON.stringify(this.keyRepo)}`

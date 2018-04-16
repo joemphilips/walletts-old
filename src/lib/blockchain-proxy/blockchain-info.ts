@@ -4,6 +4,7 @@ import logger from '../logger';
 import { BlockchainProxy, SyncInfo } from './index';
 import * as Logger from 'bunyan';
 
+/*
 export class BlockchainInfo implements BlockchainProxy {
   public readonly baseUrl = 'http://blockchain.info/';
   public readonly api: blockexplorer;
@@ -32,3 +33,4 @@ export class BlockchainInfo implements BlockchainProxy {
     throw new Error(`Not implemented!`);
   }
 }
+*/

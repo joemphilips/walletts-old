@@ -1,4 +1,4 @@
-import Client, {ClientConstructorOption, FeeEstimateMode} from 'bitcoin-core';
+import Client, { ClientConstructorOption, FeeEstimateMode } from 'bitcoin-core';
 import { Transaction } from 'bitcoinjs-lib';
 import * as fs from 'fs';
 import * as ini from 'ini';
@@ -92,8 +92,13 @@ export class TrustedBitcoindRPC implements BlockchainProxy {
     }
   }
 
-  public async estimateSmartFee(target: number, mode: FeeEstimateMode): Promise<number> {
-    return this.client.estimateSmartFee(target, mode).then(r => r.feerate ? r.feerate : -1)
+  public async estimateSmartFee(
+    target: number,
+    mode: FeeEstimateMode
+  ): Promise<number> {
+    return this.client
+      .estimateSmartFee(target, mode)
+      .then(r => (r.feerate ? r.feerate : -1));
   }
 
   public async getAddressesWithBalance(
@@ -118,9 +123,10 @@ export class TrustedBitcoindRPC implements BlockchainProxy {
   }
 
   public async getPrevHash(tx: Transaction): Promise<ReadonlyArray<string>> {
-    this.logger.debug(`tx is ${JSON.stringify(tx.toHex())}`);
+    this.logger.debug(
+      `going to get previous tx for ${JSON.stringify(tx.toHex())}`
+    );
     this.logger.debug(`client is ${JSON.stringify(this.client)}`);
-    this.logger.debug(`tx id is ${tx.getId()}`);
     const RawTx: string = (await this.client.getRawTransaction(
       tx.getId()
     )) as string;
@@ -139,10 +145,5 @@ export class TrustedBitcoindRPC implements BlockchainProxy {
     return prevTxRaw
       .map((rtx: string) => Transaction.fromHex(rtx))
       .map((t: Transaction) => t.getId());
-  }
-  public async isConnected(): Promise<void> {
-    if (this.client.ping) {
-      this.logger.error('not implemented !');
-    }
   }
 }

@@ -215,7 +215,6 @@ export default class WalletService extends rx.Subject<any>
           accountNumber,
           manager,
           bch,
-          none,
           AccountType.Normal,
           new Balance(balanceSoFar)
         );
