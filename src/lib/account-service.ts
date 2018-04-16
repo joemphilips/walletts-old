@@ -14,7 +14,7 @@ import {
 } from './blockchain-proxy';
 import CoinManager from './coin-manager';
 import { isOtherUser, OuterEntity } from './primitives/entities';
-import { Balance } from './primitives/balance';
+import { Satoshi } from './primitives/balance';
 
 export interface AbstractAccountService<A extends Account> {
   readonly keyRepo: KeyRepository;
@@ -27,7 +27,7 @@ export interface AbstractAccountService<A extends Account> {
   ) => Promise<A>;
   pay: (
     from: A,
-    amount: number,
+    amount: Satoshi,
     destinations: ReadonlyArray<OuterEntity>
   ) => Promise<A>;
 }
@@ -41,27 +41,21 @@ export default class NormalAccountService
 
   public async pay(
     from: NormalAccount,
-    amount: number,
+    amount: Satoshi,
     destinations: ReadonlyArray<OuterEntity>
   ): Promise<NormalAccount> {
-    const balanceAfterPay = from.balance.amount - amount;
-    if (balanceAfterPay < 0) {
-      throw new Error(
-        `amount to pay ${amount} exceeds balance in the account ${
-          from.balance.amount
-        } !`
-      );
-    }
+    const balanceAfterPay = from.balance.debit(amount).fold(e => {
+      throw e;
+    }, b => b);
 
     if (destinations.some(d => !isOtherUser(d))) {
       throw new Error(`Right now, only paying to other Users is supported`);
     }
 
-    const newBalance = new Balance(balanceAfterPay);
     const coins = await from.coinManager.chooseCoinsFromAmount(amount);
     const addressAndAmounts = destinations.map((d: OuterEntity, i) => ({
       address: d.nextAddressToPay,
-      amount
+      amountInSatoshi: amount
     }));
 
     const [updatedAccount, _, changeAddress] = await this.getAddressForAccount(
@@ -84,7 +78,7 @@ export default class NormalAccountService
       updatedAccount.coinManager,
       updatedAccount.observableBlockchain,
       updatedAccount.type,
-      newBalance,
+      balanceAfterPay,
       updatedAccount.watchingAddresses
     );
   }

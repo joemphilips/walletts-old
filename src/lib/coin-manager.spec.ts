@@ -22,7 +22,7 @@ import { MyWalletCoin } from './primitives/wallet-coin';
 import fixtures from '../test/fixtures/transaction.json';
 import { address, HDNode, networks, script, Transaction } from 'bitcoinjs-lib';
 import { some } from 'fp-ts/lib/Option';
-import { Balance } from './primitives/balance';
+import { Satoshi } from './primitives/balance';
 import * as util from 'util';
 import { BatchOption, Block } from 'bitcoin-core';
 import * as Logger from 'bunyan';
@@ -149,7 +149,7 @@ async function prepareCoins(
           null,
           some('Coin for Test'),
           coinBaseHash[i],
-          new Balance(50)
+          Satoshi.fromNumber(50).value as Satoshi
         )
     );
 }
@@ -183,7 +183,7 @@ test('get total amount', async (t: ExecutionContext<
   logger.trace(
     `Prepared coins are ${JSON.stringify([...t.context.man.coins])}`
   );
-  t.deepEqual(t.context.man.total, new Balance(300));
+  t.deepEqual(t.context.man.total, Satoshi.fromNumber(300).value as Satoshi);
 });
 
 test('chooseCoinsFromAmount', async (t: ExecutionContext<
@@ -191,7 +191,8 @@ test('chooseCoinsFromAmount', async (t: ExecutionContext<
 >) => {
   const coinsToInsert = await prepareCoins(t.context.bch, 1);
   t.context.man.coins.set(new CoinID(uuid.v4()), coinsToInsert[0]);
-  const coins = await t.context.man.chooseCoinsFromAmount(3);
+  const coins = await t.context.man.chooseCoinsFromAmount(Satoshi.fromBTC(3)
+    .value as Satoshi);
   t.is(coins.length, 1);
   t.is(coins[0].amount.amount, 50);
 });
@@ -201,8 +202,14 @@ test('coin selection will throw Error if not enough funds available', async (t: 
 >) => {
   const coinsToInsert = await prepareCoins(t.context.bch, 1);
   t.context.man.coins.set(new CoinID(uuid.v4()), coinsToInsert[0]);
-  await t.throws(() => t.context.man.chooseCoinsFromAmount(51), Error);
-  await t.notThrows(() => t.context.man.chooseCoinsFromAmount(50));
+  await t.throws(
+    () =>
+      t.context.man.chooseCoinsFromAmount(Satoshi.fromBTC(51).value as Satoshi),
+    Error
+  );
+  await t.notThrows(() =>
+    t.context.man.chooseCoinsFromAmount(Satoshi.fromBTC(50).value as Satoshi)
+  );
 });
 
 test.only('create transaction and broadcast, then check the balance', async (t: ExecutionContext<
@@ -231,7 +238,7 @@ test.only('create transaction and broadcast, then check the balance', async (t: 
   const addressToPay = [
     {
       address: 'mhwVU9YLs5PSGqVjPK2RewGNeKBLV4eEXo', // random address.
-      amount: 10
+      amountInSatoshi: Satoshi.fromBTC(10).value as Satoshi
     }
   ];
 
@@ -244,7 +251,7 @@ test.only('create transaction and broadcast, then check the balance', async (t: 
   logger.debug('tx created');
   t.true(txResult.isRight(), ` failed to create tx ${txResult}`);
 
-  await txResult.map(async tx => t.notThrows(() => man.broadCast(tx)));
+  await txResult.map(async tx => t.notThrows(async () => man.broadCast(tx)));
 });
 
 test('import outpoint as its own coin.', async (t: ExecutionContext<

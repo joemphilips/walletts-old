@@ -21,7 +21,7 @@ import { AccountID } from './primitives/identity';
 import { Either, left, right } from 'fp-ts/lib/Either';
 import { Outpoint } from 'bitcoin-core';
 import * as _ from 'lodash';
-import { Balance } from './primitives/balance';
+import { MAX_SATOSHI, Satoshi } from './primitives/balance';
 
 export interface OutpointWithScriptAndAmount {
   id: string;
@@ -48,7 +48,10 @@ export class CoinID {
 export default class CoinManager {
   public readonly coins: Map<CoinID, MyWalletCoin>;
   public readonly logger: Logger;
-  public readonly feeProvider: (target?: number) => Promise<number>;
+  public readonly feeProvider: (
+    txWeightInKB: number,
+    target?: number
+  ) => Promise<Satoshi>;
 
   constructor(
     log: Logger,
@@ -58,14 +61,15 @@ export default class CoinManager {
     this.logger = log.child({ subModule: 'CoinManager' });
     this.coins = new Map<CoinID, MyWalletCoin>();
     this.logger.trace('coinmanager initialized');
-    this.feeProvider = async (target = 6) => {
-      const feeRate = await this.bchProxy.client
-        .estimateSmartFee(target)
-        .then(r => r.feerate);
-      if (!feeRate) {
-        throw Error(`failed to provide fee!`);
-      }
-      return feeRate;
+    this.feeProvider = async (txWeightInKB: number, target = 6) => {
+      return this.bchProxy.client.estimateSmartFee(target).then(r => {
+        if (r.feerate) {
+          return Satoshi.fromNumber(r.feerate * txWeightInKB).fold(e => {
+            throw e;
+          }, satoshi => satoshi);
+        }
+        throw new Error(`failed to retrieve feeRate`);
+      });
     };
   }
 
@@ -73,24 +77,30 @@ export default class CoinManager {
     return false;
   }
 
-  public get total(): Balance {
-    return new Balance(
+  public get total(): Satoshi {
+    return Satoshi.fromNumber(
       Array.from(this.coins.entries())
         .map(([k, v]) => v)
         .reduce((a, b) => a + b.amount.amount, 0)
-    );
+    ).value as Satoshi;
   }
 
   // TODO: Implement Murch's algorithm.  refs: https://github.com/bitcoin/bitcoin/pull/10637
-  public async chooseCoinsFromAmount(amount: number): Promise<MyWalletCoin[]> {
-    if (this.total.amount < amount) {
+  public async chooseCoinsFromAmount(
+    targetSatoshi: Satoshi
+  ): Promise<MyWalletCoin[]> {
+    if (this.total.amount < targetSatoshi.amount) {
       throw Error(`not enough funds!`);
     }
     const result: MyWalletCoin[] = [];
     for (const [id, coin] of this.coins.entries()) {
-      if (
-        result.map(c => c.amount).reduce((a, b) => a + b.amount, 0) < amount
-      ) {
+      const amountSoFar = result
+        .map(c => c.amount)
+        .reduce((a, b) => a.chain(s => s.credit(b)), Satoshi.fromNumber(0))
+        .fold(e => {
+          throw e;
+        }, a => a);
+      if (amountSoFar.amount < targetSatoshi.amount) {
         result.push(coin);
       }
     }
@@ -100,7 +110,10 @@ export default class CoinManager {
   public async createTx(
     id: AccountID,
     coins: MyWalletCoin[],
-    addressAndAmount: ReadonlyArray<{ address: string; amount: number }>,
+    addressAndAmount: ReadonlyArray<{
+      address: string;
+      amountInSatoshi: Satoshi;
+    }>,
     changeAddress: string,
     chainParam: Network = networks.testnet
   ): Promise<Either<Error, Transaction>> {
@@ -108,20 +121,34 @@ export default class CoinManager {
     this.logger.debug(`going to add tx from ${coins.map(c => c.txid)}`);
     coins.map((c, i) => builder.addInput(c.txid, i));
     addressAndAmount.map(a =>
-      builder.addOutput(address.toOutputScript(a.address, chainParam), a.amount)
+      builder.addOutput(
+        address.toOutputScript(a.address, chainParam),
+        a.amountInSatoshi.amount
+      )
     );
 
     // prepare change.
     const totalOut = addressAndAmount
-      .map(e => e.amount)
-      .reduce((a, b) => a + b, 0);
-    const totalIn = coins.map(c => c.amount).reduce((a, b) => a + b.amount, 0);
-    const delta = totalOut - totalIn;
+      .map(e => e.amountInSatoshi)
+      .reduce((a, b) => a.chain(s => s.credit(b)), Satoshi.fromNumber(0))
+      .fold(e => {
+        throw e;
+      }, a => a);
+    const totalIn = coins
+      .reduce((a, b) => a.chain(s => s.credit(b.amount)), Satoshi.fromNumber(0))
+      .fold(e => {
+        throw e;
+      }, a => a);
+
+    const delta = totalOut.debit(totalIn).fold(e => {
+      throw e;
+    }, a => a);
     this.logger.debug(`fetching fee from feeProvider ...`);
-    const feeRate = await this.feeProvider();
-    const fee = feeRate * builder.buildIncomplete().byteLength();
-    const changeAmount = delta - fee;
-    builder.addOutput(changeAddress as string, changeAmount);
+    const fee = await this.feeProvider(builder.buildIncomplete().weight());
+    const changeAmount = delta.debit(fee).fold(e => {
+      throw e;
+    }, a => a);
+    builder.addOutput(changeAddress as string, changeAmount.amount);
 
     // sign every input
     const HDNode = await this.keyRepo.getHDNode(id);

@@ -25,7 +25,7 @@ import NormalAccountService, {
   AbstractAccountService
 } from './account-service';
 import * as util from 'util';
-import { Balance } from './primitives/balance';
+import { Satoshi } from './primitives/balance';
 import { NormalAccount } from './account';
 import * as Logger from 'bunyan';
 
@@ -197,8 +197,8 @@ test('accounts in a wallet will be recovered when it is re-created from the seed
 
   t.is(
     wallet3.accounts[0].balance,
-    new Balance(500),
-    'BTC transferred to the address derived from an account should be reflected to its Balance'
+    Satoshi.fromBTC(500).value as Satoshi,
+    'BTC transferred to the address derived from an account should be reflected to its Satoshi'
   );
 
   const wallet32 = await t.context.ws.createFromSeed(`Test Wallet 2`, seed);
