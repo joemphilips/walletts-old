@@ -52,6 +52,6 @@ export class Satoshi {
   }
 
   public toBTC(): number {
-    return parseFloat((this.amount / 10000000.0).toFixed(9));
+    return parseFloat((this.amount / 100000000.0).toFixed(9));
   }
 }

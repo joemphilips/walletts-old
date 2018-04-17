@@ -61,7 +61,7 @@ test.before('prepare test for CoinManager', async t => {
  * number of test which requires to run prepareCoins
  * @type {number}
  */
-const PREPERATION_CONTEXT_NUM = 1;
+const PREPERATION_CONTEXT_NUM = 4;
 class Prepare extends EventEmitter {
   public soFarPreparedContext: number;
   constructor() {
@@ -183,7 +183,7 @@ test('get total amount', async (t: ExecutionContext<
   logger.trace(
     `Prepared coins are ${JSON.stringify([...t.context.man.coins])}`
   );
-  t.deepEqual(t.context.man.total, Satoshi.fromNumber(300).value as Satoshi);
+  t.deepEqual(t.context.man.total, Satoshi.fromBTC(300).value as Satoshi);
 });
 
 test('chooseCoinsFromAmount', async (t: ExecutionContext<
@@ -194,7 +194,7 @@ test('chooseCoinsFromAmount', async (t: ExecutionContext<
   const coins = await t.context.man.chooseCoinsFromAmount(Satoshi.fromBTC(3)
     .value as Satoshi);
   t.is(coins.length, 1);
-  t.is(coins[0].amount.amount, 50);
+  t.is(coins[0].amount.toBTC(), 50);
 });
 
 test('coin selection will throw Error if not enough funds available', async (t: ExecutionContext<
@@ -212,7 +212,7 @@ test('coin selection will throw Error if not enough funds available', async (t: 
   );
 });
 
-test.only('create transaction and broadcast, then check the balance', async (t: ExecutionContext<
+test('create transaction and broadcast, then check the balance', async (t: ExecutionContext<
   CoinManagerTestContext
 >) => {
   t.plan(2);
