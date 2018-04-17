@@ -44,7 +44,6 @@ export default class NormalAccountService
     amount: Satoshi,
     destinations: ReadonlyArray<OuterEntity>
   ): Promise<NormalAccount> {
-
     if (destinations.some(d => !isOtherUser(d))) {
       throw new Error(`Right now, only paying to other Users is supported`);
     }

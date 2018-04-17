@@ -61,8 +61,8 @@ export class NormalAccount extends Observable<AccountEvent> implements Account {
     return;
   }
 
-  public get balance (): Satoshi {
-    return this.coinManager.total
+  public get balance(): Satoshi {
+    return this.coinManager.total;
   }
 
   private _handleUpdate(payload: BlockchainEvent): void {

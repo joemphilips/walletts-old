@@ -119,5 +119,5 @@ test.only(`handles incoming events from blockchain correctly`, async t => {
 
   await sleep(10);
 
-  t.is(account2.balance, Satoshi.fromBTC(2).value as Satoshi);
+  t.deepEqual(account2.balance, Satoshi.fromBTC(2).value as Satoshi);
 });

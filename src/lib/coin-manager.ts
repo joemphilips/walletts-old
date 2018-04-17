@@ -1,6 +1,10 @@
 import { TrustedBitcoindRPC } from './blockchain-proxy';
 import Keystore, { default as KeyRepository } from './key-repository';
-import { MyWalletCoin } from './primitives/wallet-coin';
+import {
+  CoinID,
+  confirmMyWalletCoin,
+  MyWalletCoin
+} from './primitives/wallet-coin';
 import * as Logger from 'bunyan';
 /* tslint:disable-next-line:no-submodule-imports */
 import {
@@ -17,23 +21,13 @@ import { Satoshi } from './primitives/satoshi';
 import { FALLBACK_FEE } from './primitives/constants';
 import { OutpointWithScriptAndAmount } from './primitives/utils';
 
-/**
- * internal key for referencing to WalletCoins
- */
-export class CoinID {
-  public static fromOutpoint(outpoint: Outpoint): CoinID {
-    const id = outpoint.id + outpoint.index.toString(16);
-    return new CoinID(id);
-  }
-  constructor(public id: string) {}
-}
-
+type CoinMap = Map<string, MyWalletCoin>;
 /**
  * handle `Physical` tasks for accounts.
  * e.g. coin selection, holding redeemScript etc.
  */
 export default class CoinManager {
-  public readonly coins: Map<CoinID, MyWalletCoin>;
+  public readonly coins: CoinMap;
   public readonly logger: Logger;
   public readonly feeProvider: (
     txWeightInKB: number,
@@ -46,7 +40,7 @@ export default class CoinManager {
     public bchProxy: TrustedBitcoindRPC
   ) {
     this.logger = log.child({ subModule: 'CoinManager' });
-    this.coins = new Map<CoinID, MyWalletCoin>();
+    this.coins = new Map<string, MyWalletCoin>();
     this.logger.trace('coinmanager initialized');
     this.feeProvider = async (txWeightInKB: number, target = 6) => {
       return this.bchProxy.client.estimateSmartFee(target).then(r => {
@@ -179,6 +173,9 @@ export default class CoinManager {
     id: AccountID,
     outpoints: OutpointWithScriptAndAmount[]
   ): Promise<null> {
+    this.logger.debug(
+      `try to import outpoints ${JSON.stringify(outpoints)} into ${id}`
+    );
     // check key for AccountID exists
     const pubkey = await this.keyRepo.getPubKey(id);
     if (!pubkey) {
@@ -187,8 +184,7 @@ export default class CoinManager {
       );
     }
 
-    // convert to WalletCoin
-    const coins = outpoints.map((o: OutpointWithScriptAndAmount) =>
+    const convertToWalletCoin = (o: OutpointWithScriptAndAmount) =>
       MyWalletCoin.fromOutpointAndPubKey(
         o,
         o.scriptPubKey,
@@ -196,8 +192,13 @@ export default class CoinManager {
         o.amount,
         false,
         0
-      )
-    );
+      );
+    const processOutPoints = (o: OutpointWithScriptAndAmount): MyWalletCoin =>
+      isAlreadyHave(this.coins)(o)
+        ? getAndIncrement(this.coins)(CoinID.fromOutpoint(o).id)
+        : convertToWalletCoin(o);
+    // convert to WalletCoin
+    const coins = outpoints.map(processOutPoints);
 
     // append to this.coins
     _.zip(outpoints, coins).forEach(pair => {
@@ -205,12 +206,30 @@ export default class CoinManager {
         return;
       }
       this.coins.set(
-        CoinID.fromOutpoint(pair[0] as Outpoint),
+        CoinID.fromOutpoint(pair[0] as Outpoint).id,
         pair[1] as MyWalletCoin
       );
     });
     this.logger.info(`successfully imported our Coin from Blockchain`);
-    this.logger.info(`coins inside coinmanager are ${JSON.stringify([...this.coins])}`);
+    this.logger.info(
+      `coins inside coinmanager are ${JSON.stringify([...this.coins])}`
+    );
     return null;
   }
 }
+
+export const isAlreadyHave = (coinmap: CoinMap) => (
+  o: OutpointWithScriptAndAmount
+): boolean =>
+  Array.from(coinmap.keys()).some(c => c === CoinID.fromOutpoint(o).id);
+
+export const getAndIncrement = (coinmap: CoinMap) => (
+  coinid: string
+): MyWalletCoin => {
+  const coin = coinmap.get(coinid);
+  if (coin) {
+    return confirmMyWalletCoin(coin);
+  } else {
+    throw new Error(`tried to confirm non-existent coin! ${coinid}`);
+  }
+};

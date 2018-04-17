@@ -1,6 +1,6 @@
 import anyTest, { ExecutionContext, TestInterface } from 'ava';
 import * as uuid from 'uuid';
-import CoinManager, { CoinID } from './coin-manager';
+import CoinManager, { getAndIncrement, isAlreadyHave } from './coin-manager';
 import {
   prePareTest,
   testBitcoindIp,
@@ -18,7 +18,7 @@ import {
   getObservableBlockchain,
   TrustedBitcoindRPC
 } from './blockchain-proxy';
-import { MyWalletCoin } from './primitives/wallet-coin';
+import { CoinID, MyWalletCoin } from './primitives/wallet-coin';
 import fixtures from '../test/fixtures/transaction.json';
 import { address, HDNode, networks, script, Transaction } from 'bitcoinjs-lib';
 import { some } from 'fp-ts/lib/Option';
@@ -29,6 +29,7 @@ import * as Logger from 'bunyan';
 import NormalAccountService from './account-service';
 import { right } from 'fp-ts/lib/Either';
 import { EventEmitter } from 'events';
+import { OutpointWithScriptAndAmount } from './primitives/utils';
 
 // 1. define global variables
 /* tslint:disable interface-over-type-literal */
@@ -177,7 +178,7 @@ test('get total amount', async (t: ExecutionContext<
 >) => {
   const coins = await prepareCoins(t.context.bch, 6);
   for (const c of coins) {
-    t.context.man.coins.set(new CoinID(uuid.v4()), c);
+    t.context.man.coins.set(new CoinID(uuid.v4()).id, c);
   }
 
   logger.trace(
@@ -190,7 +191,7 @@ test('pickCoinsForAmount', async (t: ExecutionContext<
   CoinManagerTestContext
 >) => {
   const coinsToInsert = await prepareCoins(t.context.bch, 1);
-  t.context.man.coins.set(new CoinID(uuid.v4()), coinsToInsert[0]);
+  t.context.man.coins.set(new CoinID(uuid.v4()).id, coinsToInsert[0]);
   const coins = await t.context.man.pickCoinsForAmount(Satoshi.fromBTC(3)
     .value as Satoshi);
   t.is(coins.length, 1);
@@ -201,7 +202,7 @@ test('coin selection will throw Error if not enough funds available', async (t: 
   CoinManagerTestContext
 >) => {
   const coinsToInsert = await prepareCoins(t.context.bch, 1);
-  t.context.man.coins.set(new CoinID(uuid.v4()), coinsToInsert[0]);
+  t.context.man.coins.set(new CoinID(uuid.v4()).id, coinsToInsert[0]);
   await t.throws(
     () =>
       t.context.man.pickCoinsForAmount(Satoshi.fromBTC(51).value as Satoshi),
@@ -232,7 +233,7 @@ test('create transaction and broadcast, then check the balance', async (t: Execu
   // 2. set coins
   const coins = await prepareCoins(t.context.bch, 1);
   logger.info(`going to set coins ${JSON.stringify(coins)}`);
-  t.context.man.coins.set(new CoinID(uuid.v4()), coins[0]);
+  t.context.man.coins.set(new CoinID(uuid.v4()).id, coins[0]);
 
   // 3. create Tx
   const addressToPay = [
@@ -284,6 +285,52 @@ test('import outpoint as its own coin.', async (t: ExecutionContext<
       amount: Satoshi.fromBTC(2).value as Satoshi
     }
   ];
+
+  t.deepEqual(
+    outpoints.map(isAlreadyHave(man.coins)),
+    [false, false],
+    'isAlreadyHave must return false when importing for the first time'
+  );
+
   await man.importOurOutPoints(a2.id, outpoints);
-  t.deepEqual(man.total, Satoshi.fromBTC(3).value as Satoshi);
+
+  t.deepEqual(
+    man.total,
+    Satoshi.fromBTC(3).value as Satoshi,
+    'failed to import outpoint as a WalletCoin'
+  );
+  t.deepEqual(
+    outpoints.map(isAlreadyHave(man.coins)),
+    [true, true],
+    'isAlreadyHave must return true when importing the same outpoint'
+  );
+  logger.info(`lets increment`);
+  t.deepEqual(
+    outpoints.map(
+      o => getAndIncrement(man.coins)(CoinID.fromOutpoint(o).id).confirmation
+    ),
+    [1, 1],
+    `getAndIncrement must increment coins confirmation`
+  );
+  logger.info(`increment finished`);
+  await man.importOurOutPoints(a2.id, outpoints);
+  logger.info(`importing finished`);
+  t.deepEqual(
+    man.total,
+    Satoshi.fromBTC(3).value as Satoshi,
+    'Importing same coins should not change the total balance'
+  );
+  const getCoins = (out: OutpointWithScriptAndAmount): MyWalletCoin => {
+    const coin = man.coins.get(CoinID.fromOutpoint(out).id);
+    if (coin) {
+      return coin;
+    } else {
+      throw new Error();
+    }
+  };
+  t.deepEqual(
+    outpoints.map(getCoins).map(c => c.confirmation),
+    [1, 1],
+    'importing same coin twice must result to increment confirmation of the coin'
+  );
 });

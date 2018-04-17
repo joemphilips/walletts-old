@@ -1,7 +1,7 @@
 import { Outpoint } from 'bitcoin-core';
-import { HDNode, Out, script, TransactionBuilder } from 'bitcoinjs-lib';
+import { script } from 'bitcoinjs-lib';
 /* tslint:disable no-submodule-imports */
-import { none, None, Option } from 'fp-ts/lib/Option';
+import { none, Option } from 'fp-ts/lib/Option';
 import { Satoshi } from './satoshi';
 
 /**
@@ -31,6 +31,7 @@ export type ScriptType =
   | 'witnesscommitment'
   | 'nulldata'
   | 'nonstandard';
+
 // Transaction Output with Metadata including script for spending
 export class MyWalletCoin implements AbstractCoin {
   public static fromOutpointAndPubKey(
@@ -39,7 +40,7 @@ export class MyWalletCoin implements AbstractCoin {
     pubKey: Buffer,
     amount: Satoshi,
     isUsed: boolean,
-    confirmation: number,
+    confirmation: number
   ): MyWalletCoin {
     return new MyWalletCoin(
       scriptPubKey,
@@ -49,7 +50,7 @@ export class MyWalletCoin implements AbstractCoin {
       out.id,
       amount,
       isUsed,
-      confirmation,
+      confirmation
     );
   }
   constructor(
@@ -61,6 +62,32 @@ export class MyWalletCoin implements AbstractCoin {
     public readonly amount: Satoshi = Satoshi.fromNumber(0).value as Satoshi,
     public isUsed: boolean = false,
     public readonly confirmation: number = 0,
-    public readonly isChange?: boolean,
+    public readonly isChange?: boolean
   ) {}
+}
+
+type confirmCoin = <C extends AbstractCoin>(c: C) => C;
+export const confirmMyWalletCoin = (c: MyWalletCoin) =>
+  new MyWalletCoin(
+    c.scriptPubKey,
+    c.scriptType,
+    c.redeemScript,
+    c.label,
+    c.txid,
+    c.amount,
+    c.isUsed,
+    c.confirmation + 1,
+    c.isChange
+  );
+
+/**
+ * internal key for referencing to WalletCoins
+ */
+export class CoinID {
+  public static fromOutpoint(outpoint: Outpoint): CoinID {
+    const id = outpoint.id + outpoint.index.toString(16);
+    return new CoinID(id);
+  }
+
+  constructor(public id: string) {}
 }

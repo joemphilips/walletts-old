@@ -215,8 +215,7 @@ export default class WalletService extends rx.Subject<any>
           accountNumber,
           manager,
           bch,
-          AccountType.Normal,
-          Satoshi.fromNumber(balanceSoFar).value as Satoshi
+          AccountType.Normal
         );
       }
       i += res.i;
