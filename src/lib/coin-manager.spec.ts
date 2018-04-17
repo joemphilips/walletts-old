@@ -22,27 +22,91 @@ import { MyWalletCoin } from './primitives/wallet-coin';
 import fixtures from '../test/fixtures/transaction.json';
 import { address, HDNode, networks, script, Transaction } from 'bitcoinjs-lib';
 import { some } from 'fp-ts/lib/Option';
-import { Balance } from './primitives/balance';
+import { Satoshi } from './primitives/satoshi';
 import * as util from 'util';
 import { BatchOption, Block } from 'bitcoin-core';
 import * as Logger from 'bunyan';
 import NormalAccountService from './account-service';
 import { right } from 'fp-ts/lib/Either';
+import { EventEmitter } from 'events';
 
-function flatten(arr: any[]): any[] {
-  return arr.reduce((flat, toFlatten): any => {
-    return flat.concat(
-      Array.isArray(toFlatten) ? flatten(toFlatten) : toFlatten
-    );
-  }, []);
+// 1. define global variables
+/* tslint:disable interface-over-type-literal */
+let bch: BlockchainProxy;
+let logger: Logger;
+let datadir: string;
+
+type CoinManagerTestContext = {
+  man: CoinManager;
+  bch: BlockchainProxy;
+  logger: Logger;
+  keyRepo: KeyRepository;
+};
+const test = anyTest as TestInterface<CoinManagerTestContext>;
+
+test.before('prepare test for CoinManager', async t => {
+  [logger, datadir] = prePareTest();
+  bch = new TrustedBitcoindRPC(
+    '',
+    testBitcoindUsername,
+    testBitcoindPassword,
+    testBitcoindIp,
+    testBitcoindPort,
+    logger
+  );
+});
+
+// 2. create global event emitter which counts for the coin preparation.
+/**
+ * number of test which requires to run prepareCoins
+ * @type {number}
+ */
+const PREPERATION_CONTEXT_NUM = 4;
+class Prepare extends EventEmitter {
+  public soFarPreparedContext: number;
+  constructor() {
+    super();
+    this.soFarPreparedContext = 0;
+  }
+
+  public incrementPrepare(): void {
+    this.soFarPreparedContext++;
+    if (this.soFarPreparedContext === PREPERATION_CONTEXT_NUM) {
+      this.emit('prepared');
+    }
+  }
 }
 
+const prepare = new Prepare();
+prepare.once('prepared', () => {
+  bch.client
+    .generate(100)
+    .then(() => {
+      logger.info('generated 100 blocks');
+      prepare.emit('generated');
+    })
+    .catch((e: Error) => {
+      util.debug('not generated');
+      throw e;
+    });
+});
+
+async function promise100block(): Promise<{}> {
+  return new Promise((resolve, reject) => {
+    prepare.once('generated', resolve);
+    prepare.on('error', reject);
+  });
+}
+
+// 3. define utility function used from testContext
 /**
  * calling this function at the same time in asyncronous mannter might cause
  * work queue in the bitcoind to exceed its limit. so use carefully.
  * @param {TrustedBitcoindRPC} bchProxy
  * @param {number} num
  * @returns {Promise<MyWalletCoin[]>}
+ * TODO: only `createTx` and `broadcast` requires to interact with the blockchain.
+ * TODO: So separate block generation logic to different function.
  */
 async function prepareCoins(
   bchProxy: TrustedBitcoindRPC,
@@ -57,7 +121,16 @@ async function prepareCoins(
   const blockhashes: string[][] = await bchProxy.client.command(
     args2 as BatchOption[]
   );
-  await bchProxy.client.generate(100);
+
+  // increment counter and wait other contexts to finish calling this function
+  prepare.incrementPrepare();
+  try {
+    await promise100block();
+  } catch (e) {
+    logger.debug(`error during generating block`);
+    throw e;
+  }
+
   const scriptPubkeys: ReadonlyArray<Buffer> = addrs.map(a =>
     address.toOutputScript(a, networks.testnet)
   );
@@ -76,40 +149,29 @@ async function prepareCoins(
           null,
           some('Coin for Test'),
           coinBaseHash[i],
-          new Balance(50)
+          Satoshi.fromBTC(50).value as Satoshi
         )
     );
 }
-
-/* tslint:disable interface-over-type-literal */
-type CoinManagerTestContext = {
-  man: CoinManager;
-  bch: BlockchainProxy;
-  logger: Logger;
-  keyRepo: KeyRepository;
-};
-const test = anyTest as TestInterface<CoinManagerTestContext>;
+function flatten(arr: any[]): any[] {
+  return arr.reduce((flat, toFlatten): any => {
+    return flat.concat(
+      Array.isArray(toFlatten) ? flatten(toFlatten) : toFlatten
+    );
+  }, []);
+}
 
 test.beforeEach(
-  'prepare test for CoinManager',
+  'prepare beforeEach test for CoinManager',
   async (t: ExecutionContext<CoinManagerTestContext>) => {
-    const [logger, datadir] = prePareTest();
-    const bch = new TrustedBitcoindRPC(
-      '',
-      testBitcoindUsername,
-      testBitcoindPassword,
-      testBitcoindIp,
-      testBitcoindPort,
-      logger
-    );
     t.context.bch = bch;
     const keyRepo = new InMemoryKeyRepository();
     t.context.keyRepo = keyRepo;
     t.context.man = new CoinManager(logger, keyRepo, bch);
-    t.context.logger = logger;
   }
 );
 
+// 4. run actual tests
 test('get total amount', async (t: ExecutionContext<
   CoinManagerTestContext
 >) => {
@@ -118,10 +180,10 @@ test('get total amount', async (t: ExecutionContext<
     t.context.man.coins.set(new CoinID(uuid.v4()), c);
   }
 
-  t.context.logger.trace(
+  logger.trace(
     `Prepared coins are ${JSON.stringify([...t.context.man.coins])}`
   );
-  t.deepEqual(t.context.man.total, new Balance(300));
+  t.deepEqual(t.context.man.total, Satoshi.fromBTC(300).value as Satoshi);
 });
 
 test('chooseCoinsFromAmount', async (t: ExecutionContext<
@@ -129,9 +191,10 @@ test('chooseCoinsFromAmount', async (t: ExecutionContext<
 >) => {
   const coinsToInsert = await prepareCoins(t.context.bch, 1);
   t.context.man.coins.set(new CoinID(uuid.v4()), coinsToInsert[0]);
-  const coins = await t.context.man.chooseCoinsFromAmount(3);
+  const coins = await t.context.man.chooseCoinsFromAmount(Satoshi.fromBTC(3)
+    .value as Satoshi);
   t.is(coins.length, 1);
-  t.is(coins[0].amount.amount, 50);
+  t.is(coins[0].amount.toBTC(), 50);
 });
 
 test('coin selection will throw Error if not enough funds available', async (t: ExecutionContext<
@@ -139,8 +202,14 @@ test('coin selection will throw Error if not enough funds available', async (t: 
 >) => {
   const coinsToInsert = await prepareCoins(t.context.bch, 1);
   t.context.man.coins.set(new CoinID(uuid.v4()), coinsToInsert[0]);
-  await t.throws(() => t.context.man.chooseCoinsFromAmount(51), Error);
-  await t.notThrows(() => t.context.man.chooseCoinsFromAmount(50));
+  await t.throws(
+    () =>
+      t.context.man.chooseCoinsFromAmount(Satoshi.fromBTC(51).value as Satoshi),
+    Error
+  );
+  await t.notThrows(() =>
+    t.context.man.chooseCoinsFromAmount(Satoshi.fromBTC(50).value as Satoshi)
+  );
 });
 
 test('create transaction and broadcast, then check the balance', async (t: ExecutionContext<
@@ -149,7 +218,7 @@ test('create transaction and broadcast, then check the balance', async (t: Execu
   t.plan(2);
   // 1. prepare account
   const man = t.context.man;
-  const as = new NormalAccountService(t.context.logger, t.context.keyRepo);
+  const as = new NormalAccountService(logger, t.context.keyRepo);
   const masterHD = HDNode.fromSeedHex(
     'ffffffffffffffffffffffffffffffff',
     networks.testnet
@@ -162,14 +231,14 @@ test('create transaction and broadcast, then check the balance', async (t: Execu
 
   // 2. set coins
   const coins = await prepareCoins(t.context.bch, 1);
-  t.context.logger.info(`going to set coins ${coins}`);
+  logger.info(`going to set coins ${JSON.stringify(coins)}`);
   t.context.man.coins.set(new CoinID(uuid.v4()), coins[0]);
 
   // 3. create Tx
   const addressToPay = [
     {
       address: 'mhwVU9YLs5PSGqVjPK2RewGNeKBLV4eEXo', // random address.
-      amount: 10
+      amountInSatoshi: Satoshi.fromBTC(10).value as Satoshi
     }
   ];
 
@@ -179,10 +248,10 @@ test('create transaction and broadcast, then check the balance', async (t: Execu
     addressToPay,
     changeAddress
   );
-  t.context.logger.info(`successfully created tx ${txResult}!`);
-  t.true(txResult.isRight());
+  logger.debug('tx created');
+  t.truthy(txResult, ` failed to create tx ${txResult}`);
 
-  await txResult.map(async tx => t.notThrows(() => man.broadCast(tx)));
+  await t.notThrows(async () => man.broadCast(txResult));
 });
 
 test('import outpoint as its own coin.', async (t: ExecutionContext<

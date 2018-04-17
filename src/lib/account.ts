@@ -1,5 +1,5 @@
 import { AccountID } from './primitives/identity';
-import { Balance } from './primitives/balance';
+import { Satoshi } from './primitives/satoshi';
 import { MyWalletCoin } from './primitives/wallet-coin';
 /* tslint:disable:no-submodule-imports */
 import { none, Option, some } from 'fp-ts/lib/Option';
@@ -29,7 +29,7 @@ export interface Account extends Observable<any> {
   readonly type: AccountType;
   readonly coinManager: CoinManager;
   readonly observableBlockchain: ObservableBlockchain;
-  readonly balance: Balance;
+  readonly balance: Satoshi;
   readonly watchingAddresses: Option<ReadonlyArray<string>>;
   readonly beg: (begTo: OuterEntity) => Promise<any>;
 }
@@ -47,7 +47,7 @@ export class NormalAccount extends Observable<AccountEvent> implements Account {
     public coinManager: CoinManager,
     public observableBlockchain: ObservableBlockchain,
     public type = AccountType.Normal,
-    public balance = new Balance(0),
+    public balance = Satoshi.fromNumber(0).value as Satoshi,
     public watchingAddresses: Option<ReadonlyArray<string>> = none
   ) {
     super();

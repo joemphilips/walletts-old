@@ -28,6 +28,7 @@ import {
 import { Observable, Subject } from '@joemphilips/rxjs';
 import * as Logger from 'bunyan';
 import { some } from 'fp-ts/lib/Option';
+import {Satoshi} from "lib/primitives/satoshi";
 
 let service: NormalAccountService;
 let masterHD: HDNode;
@@ -118,5 +119,5 @@ test(`handles incoming events from blockchain correctly`, async t => {
 
   await sleep(10);
 
-  t.is(account2.balance.amount, 2);
+  t.is(account2.balance, Satoshi.fromBTC(2).value as Satoshi);
 });

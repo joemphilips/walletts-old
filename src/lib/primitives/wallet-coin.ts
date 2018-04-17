@@ -2,7 +2,7 @@ import { Outpoint } from 'bitcoin-core';
 import { HDNode, Out, script, TransactionBuilder } from 'bitcoinjs-lib';
 /* tslint:disable no-submodule-imports */
 import { none, None, Option } from 'fp-ts/lib/Option';
-import { Balance } from '../primitives/balance';
+import { Satoshi } from './satoshi';
 
 /**
  * script necessary for signing Transaction.
@@ -13,7 +13,7 @@ export type Script = Buffer | null;
 /* tslint:disable no-mixed-interface */
 export interface AbstractCoin {
   readonly txid: string;
-  readonly amount: Balance;
+  readonly amount: Satoshi;
   readonly confirmation: number;
   readonly scriptPubKey: Buffer;
   readonly label: Option<string>;
@@ -44,7 +44,7 @@ export class MyWalletCoin implements AbstractCoin {
       pubKey,
       none,
       out.id,
-      new Balance(amount)
+      Satoshi.fromNumber(amount).value as Satoshi
     );
   }
   constructor(
@@ -53,7 +53,7 @@ export class MyWalletCoin implements AbstractCoin {
     public readonly redeemScript: Script,
     public readonly label: Option<string>,
     public readonly txid: string,
-    public readonly amount: Balance = new Balance(0),
+    public readonly amount: Satoshi = Satoshi.fromNumber(0).value as Satoshi,
     public readonly confirmation: number = 0,
     public readonly isChange?: boolean
   ) {}

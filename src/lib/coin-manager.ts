@@ -21,7 +21,8 @@ import { AccountID } from './primitives/identity';
 import { Either, left, right } from 'fp-ts/lib/Either';
 import { Outpoint } from 'bitcoin-core';
 import * as _ from 'lodash';
-import { Balance } from './primitives/balance';
+import { MAX_SATOSHI, Satoshi } from './primitives/satoshi';
+import { FALLBACK_FEE } from './primitives/constants';
 
 export interface OutpointWithScriptAndAmount {
   id: string;
@@ -48,7 +49,10 @@ export class CoinID {
 export default class CoinManager {
   public readonly coins: Map<CoinID, MyWalletCoin>;
   public readonly logger: Logger;
-  public readonly feeProvider: (target?: number) => Promise<number>;
+  public readonly feeProvider: (
+    txWeightInKB: number,
+    target?: number
+  ) => Promise<Satoshi>;
 
   constructor(
     log: Logger,
@@ -58,14 +62,20 @@ export default class CoinManager {
     this.logger = log.child({ subModule: 'CoinManager' });
     this.coins = new Map<CoinID, MyWalletCoin>();
     this.logger.trace('coinmanager initialized');
-    this.feeProvider = async (target = 6) => {
-      const feeRate = await this.bchProxy.client
-        .estimateSmartFee(target)
-        .then(r => r.feerate);
-      if (!feeRate) {
-        throw Error(`failed to provide fee!`);
-      }
-      return feeRate;
+    this.feeProvider = async (txWeightInKB: number, target = 6) => {
+      return this.bchProxy.client.estimateSmartFee(target).then(r => {
+        if (r.feerate && r.feerate !== -1) {
+          this.logger.trace(
+            `feeEstimation result is ${r.feerate} and weight is ${txWeightInKB}`
+          );
+          return Satoshi.fromNumber(r.feerate * txWeightInKB).fold(e => {
+            throw e;
+          }, satoshi => satoshi);
+        }
+        throw new Error(
+          `failed to retrieve feeRate, result was ${JSON.stringify(r)}`
+        );
+      });
     };
   }
 
@@ -73,24 +83,30 @@ export default class CoinManager {
     return false;
   }
 
-  public get total(): Balance {
-    return new Balance(
+  public get total(): Satoshi {
+    return Satoshi.fromNumber(
       Array.from(this.coins.entries())
         .map(([k, v]) => v)
         .reduce((a, b) => a + b.amount.amount, 0)
-    );
+    ).value as Satoshi;
   }
 
   // TODO: Implement Murch's algorithm.  refs: https://github.com/bitcoin/bitcoin/pull/10637
-  public async chooseCoinsFromAmount(amount: number): Promise<MyWalletCoin[]> {
-    if (this.total.amount < amount) {
+  public async chooseCoinsFromAmount(
+    targetSatoshi: Satoshi
+  ): Promise<MyWalletCoin[]> {
+    if (this.total.amount < targetSatoshi.amount) {
       throw Error(`not enough funds!`);
     }
     const result: MyWalletCoin[] = [];
     for (const [id, coin] of this.coins.entries()) {
-      if (
-        result.map(c => c.amount).reduce((a, b) => a + b.amount, 0) < amount
-      ) {
+      const amountSoFar = result
+        .map(c => c.amount)
+        .reduce((a, b) => a.chain(s => s.credit(b)), Satoshi.fromNumber(0))
+        .fold(e => {
+          throw e;
+        }, a => a);
+      if (amountSoFar.amount < targetSatoshi.amount) {
         result.push(coin);
       }
     }
@@ -100,27 +116,55 @@ export default class CoinManager {
   public async createTx(
     id: AccountID,
     coins: MyWalletCoin[],
-    addressAndAmount: ReadonlyArray<{ address: string; amount: number }>,
+    addressAndAmount: ReadonlyArray<{
+      address: string;
+      amountInSatoshi: Satoshi;
+    }>,
     changeAddress: string,
     chainParam: Network = networks.testnet
-  ): Promise<Either<Error, Transaction>> {
+  ): Promise<Transaction> {
     const builder = new TransactionBuilder(chainParam);
     this.logger.debug(`going to add tx from ${coins.map(c => c.txid)}`);
     coins.map((c, i) => builder.addInput(c.txid, i));
     addressAndAmount.map(a =>
-      builder.addOutput(address.toOutputScript(a.address, chainParam), a.amount)
+      builder.addOutput(
+        address.toOutputScript(a.address, chainParam),
+        a.amountInSatoshi.amount
+      )
     );
 
     // prepare change.
     const totalOut = addressAndAmount
-      .map(e => e.amount)
-      .reduce((a, b) => a + b, 0);
-    const totalIn = coins.map(c => c.amount).reduce((a, b) => a + b.amount, 0);
-    const delta = totalOut - totalIn;
-    const feeRate = await this.feeProvider();
-    const fee = feeRate * builder.buildIncomplete().byteLength();
-    const changeAmount = delta - fee;
-    builder.addOutput(changeAddress as string, changeAmount);
+      .map(e => e.amountInSatoshi)
+      .reduce((a, b) => a.chain(s => s.credit(b)), Satoshi.fromNumber(0))
+      .fold(e => {
+        throw new Error(`failed to get total output value`);
+      }, a => a);
+    const totalIn = coins
+      .reduce((a, b) => a.chain(s => s.credit(b.amount)), Satoshi.fromNumber(0))
+      .fold(e => {
+        throw new Error(`failed to get total input value`);
+      }, a => a);
+
+    const delta = totalIn.debit(totalOut).fold(e => {
+      throw new Error(
+        `total Input ${totalIn.amount} must be greater than total Output ${
+          totalOut.amount
+        }!`
+      );
+    }, a => a);
+    this.logger.debug(`fetching fee from feeProvider ...`);
+    const fee: Satoshi = await this.feeProvider(
+      builder.buildIncomplete().weight()
+    ).catch(() => FALLBACK_FEE);
+    const changeAmount = delta.debit(fee).fold(e => {
+      throw new Error(
+        `${e.toString()} ! delta of output and input was ${
+          delta.amount
+        } and fee estimated was ${fee.amount}`
+      );
+    }, a => a);
+    builder.addOutput(changeAddress as string, changeAmount.amount);
 
     // sign every input
     const HDNode = await this.keyRepo.getHDNode(id);
@@ -129,11 +173,13 @@ export default class CoinManager {
     }
     coins.forEach((no, i) => builder.sign(i, HDNode.keyPair));
 
-    return right(builder.build());
+    this.logger.debug(`going to build ${builder}`);
+    return builder.build();
   }
 
   public async broadCast(tx: Transaction): Promise<void> {
     const hexTx = tx.toHex();
+    this.logger.debug(`broadcasting tx ${hexTx}`);
     await this.bchProxy.send(hexTx);
   }
 
