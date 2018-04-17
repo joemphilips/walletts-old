@@ -48,7 +48,6 @@ export class NormalAccount extends Observable<AccountEvent> implements Account {
     public coinManager: CoinManager,
     public observableBlockchain: ObservableBlockchain,
     public type = AccountType.Normal,
-    public balance = Satoshi.fromNumber(0).value as Satoshi,
     public watchingAddresses: Option<ReadonlyArray<string>> = none
   ) {
     super();
@@ -60,6 +59,10 @@ export class NormalAccount extends Observable<AccountEvent> implements Account {
       throw new Error('Normal Account can only beg to other user!');
     }
     return;
+  }
+
+  public get balance (): Satoshi {
+    return this.coinManager.total
   }
 
   private _handleUpdate(payload: BlockchainEvent): void {

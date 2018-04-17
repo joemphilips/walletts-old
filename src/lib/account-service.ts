@@ -44,9 +44,6 @@ export default class NormalAccountService
     amount: Satoshi,
     destinations: ReadonlyArray<OuterEntity>
   ): Promise<NormalAccount> {
-    const balanceAfterPay = from.balance.debit(amount).fold(e => {
-      throw e;
-    }, b => b);
 
     if (destinations.some(d => !isOtherUser(d))) {
       throw new Error(`Right now, only paying to other Users is supported`);
@@ -76,7 +73,6 @@ export default class NormalAccountService
       updatedAccount.coinManager,
       updatedAccount.observableBlockchain,
       updatedAccount.type,
-      balanceAfterPay,
       updatedAccount.watchingAddresses
     );
   }
@@ -111,7 +107,6 @@ export default class NormalAccountService
       a.coinManager,
       a.observableBlockchain,
       a.type,
-      a.balance,
       some([...a.watchingAddresses.getOrElse([]), address, changeAddress])
     );
     return [newAccount, address, changeAddress];

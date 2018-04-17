@@ -77,6 +77,7 @@ export const getObservableBlockchain = (url: string): ObservableBlockchain => {
   );
 };
 
+// TODO: return Either<Error, OutpointWithScriptAndAmount>
 export const prepareOutpointForImport = (tx: Transaction) => (
   o: Out
 ): OutpointWithScriptAndAmount => {
