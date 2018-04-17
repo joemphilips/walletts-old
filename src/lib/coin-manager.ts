@@ -78,7 +78,7 @@ export default class CoinManager {
   }
 
   // TODO: Implement Murch's algorithm.  refs: https://github.com/bitcoin/bitcoin/pull/10637
-  public async chooseCoinsFromAmount(
+  public async pickCoinsForAmount(
     targetSatoshi: Satoshi
   ): Promise<MyWalletCoin[]> {
     if (this.total.amount < targetSatoshi.amount) {
@@ -193,7 +193,9 @@ export default class CoinManager {
         o,
         o.scriptPubKey,
         Buffer.from(pubkey, 'hex'),
-        o.amount
+        o.amount,
+        false,
+        0
       )
     );
 

@@ -49,7 +49,7 @@ export default class NormalAccountService
       throw new Error(`Right now, only paying to other Users is supported`);
     }
 
-    const coins = await from.coinManager.chooseCoinsFromAmount(amount);
+    const coins = await from.coinManager.pickCoinsForAmount(amount);
     const addressAndAmounts = destinations.map((d: OuterEntity, i) => ({
       address: d.nextAddressToPay,
       amountInSatoshi: amount

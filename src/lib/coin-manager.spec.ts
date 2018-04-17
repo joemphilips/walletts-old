@@ -186,12 +186,12 @@ test('get total amount', async (t: ExecutionContext<
   t.deepEqual(t.context.man.total, Satoshi.fromBTC(300).value as Satoshi);
 });
 
-test('chooseCoinsFromAmount', async (t: ExecutionContext<
+test('pickCoinsForAmount', async (t: ExecutionContext<
   CoinManagerTestContext
 >) => {
   const coinsToInsert = await prepareCoins(t.context.bch, 1);
   t.context.man.coins.set(new CoinID(uuid.v4()), coinsToInsert[0]);
-  const coins = await t.context.man.chooseCoinsFromAmount(Satoshi.fromBTC(3)
+  const coins = await t.context.man.pickCoinsForAmount(Satoshi.fromBTC(3)
     .value as Satoshi);
   t.is(coins.length, 1);
   t.is(coins[0].amount.toBTC(), 50);
@@ -204,11 +204,11 @@ test('coin selection will throw Error if not enough funds available', async (t: 
   t.context.man.coins.set(new CoinID(uuid.v4()), coinsToInsert[0]);
   await t.throws(
     () =>
-      t.context.man.chooseCoinsFromAmount(Satoshi.fromBTC(51).value as Satoshi),
+      t.context.man.pickCoinsForAmount(Satoshi.fromBTC(51).value as Satoshi),
     Error
   );
   await t.notThrows(() =>
-    t.context.man.chooseCoinsFromAmount(Satoshi.fromBTC(50).value as Satoshi)
+    t.context.man.pickCoinsForAmount(Satoshi.fromBTC(50).value as Satoshi)
   );
 });
 

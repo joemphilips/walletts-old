@@ -17,7 +17,8 @@ export interface AbstractCoin {
   readonly confirmation: number;
   readonly scriptPubKey: Buffer;
   readonly label: Option<string>;
-  // readonly fromOutandHDNode: (out: Out, txid: string, node: HDNode) => AbstractCoin,
+  /* tslint:disable-next-line readonly-keyword */
+  isUsed: boolean;
   readonly [key: string]: any;
 }
 export type ScriptType =
@@ -36,7 +37,9 @@ export class MyWalletCoin implements AbstractCoin {
     out: Outpoint,
     scriptPubKey: Buffer,
     pubKey: Buffer,
-    amount: Satoshi
+    amount: Satoshi,
+    isUsed: boolean,
+    confirmation: number,
   ): MyWalletCoin {
     return new MyWalletCoin(
       scriptPubKey,
@@ -44,7 +47,9 @@ export class MyWalletCoin implements AbstractCoin {
       pubKey,
       none,
       out.id,
-      amount
+      amount,
+      isUsed,
+      confirmation,
     );
   }
   constructor(
@@ -54,7 +59,8 @@ export class MyWalletCoin implements AbstractCoin {
     public readonly label: Option<string>,
     public readonly txid: string,
     public readonly amount: Satoshi = Satoshi.fromNumber(0).value as Satoshi,
+    public isUsed: boolean = false,
     public readonly confirmation: number = 0,
-    public readonly isChange?: boolean
+    public readonly isChange?: boolean,
   ) {}
 }
