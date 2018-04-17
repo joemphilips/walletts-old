@@ -107,21 +107,6 @@ export class TrustedBitcoindRPC implements BlockchainProxy {
     throw Error(`Not implemented !`);
   }
 
-  /**
-   * utility function for regtesting
-   * @param {string} address
-   * @returns {Promise<void>}
-   */
-  public async prepare500BTC(address: string): Promise<boolean> {
-    const info = await this.client.getBlockchainInfo();
-    if (info.blocks > 1000) {
-      return false;
-    }
-    await this.client.generateToAddress(10, address);
-    await this.client.generate(100);
-    return true;
-  }
-
   public async getPrevHash(tx: Transaction): Promise<ReadonlyArray<string>> {
     this.logger.debug(
       `going to get previous tx for ${JSON.stringify(tx.toHex())}`

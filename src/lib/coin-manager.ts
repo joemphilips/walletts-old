@@ -64,11 +64,12 @@ export default class CoinManager {
   }
 
   public get total(): Satoshi {
-    return Satoshi.fromNumber(
-      Array.from(this.coins.entries())
-        .map(([k, v]) => v)
-        .reduce((a, b) => a + b.amount.amount, 0)
-    ).value as Satoshi;
+    return Array.from(this.coins.entries())
+      .map(([k, v]) => v)
+      .reduce((a, b) => a.chain(s => s.credit(b.amount)), Satoshi.fromNumber(0))
+      .fold(e => {
+        throw e;
+      }, s => s);
   }
 
   // TODO: Implement Murch's algorithm.  refs: https://github.com/bitcoin/bitcoin/pull/10637

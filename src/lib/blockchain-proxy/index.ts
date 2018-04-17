@@ -26,7 +26,6 @@ export interface BlockchainProxy {
     target: number,
     mode: FeeEstimateMode
   ) => Promise<number>;
-  readonly prepare500BTC: (address: string) => Promise<boolean>;
 }
 
 export interface SyncInfo {
