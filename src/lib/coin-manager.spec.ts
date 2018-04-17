@@ -3,7 +3,6 @@ import * as uuid from 'uuid';
 import CoinManager, { getAndIncrement, isAlreadyHave } from './coin-manager';
 import {
   prePareTest,
-  sleep,
   testBitcoindIp,
   testBitcoindPassword,
   testBitcoindPort,
@@ -20,16 +19,11 @@ import {
   TrustedBitcoindRPC
 } from './blockchain-proxy';
 import { CoinID, MyWalletCoin } from './primitives/wallet-coin';
-import fixtures from '../test/fixtures/transaction.json';
 import { address, HDNode, networks, script, Transaction } from 'bitcoinjs-lib';
 import { some } from 'fp-ts/lib/Option';
 import { Satoshi } from './primitives/satoshi';
-import * as util from 'util';
-import { BatchOption, Block } from 'bitcoin-core';
 import * as Logger from 'bunyan';
 import NormalAccountService from './account-service';
-import { right } from 'fp-ts/lib/Either';
-import { EventEmitter } from 'events';
 import { OutpointWithScriptAndAmount } from './primitives/utils';
 
 // 1. define global variables
@@ -124,10 +118,6 @@ test('get total amount', async (t: ExecutionContext<
     .fill(0)
     .map((_, i) => t.context.masterHD.derive(i).getAddress());
   const coins = await prepareCoinsWith1BTC(t.context.bch, num, addrs);
-  if (!coins) {
-    throw new Error(`failed to prepare coins!`);
-  }
-  logger.info(`coins are ${JSON.stringify(coins)}`);
   for (const c of coins) {
     t.context.man.coins.set(new CoinID(uuid.v4()).id, c);
   }
