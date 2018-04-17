@@ -8,7 +8,8 @@ import { Subject, Observable } from '@joemphilips/rxjs';
 import {
   BlockchainEvent,
   getObservableBlockchain,
-  ObservableBlockchain
+  ObservableBlockchain,
+  prepareOutpointForImport
 } from './blockchain-proxy';
 import { address, Block, Out, Transaction } from 'bitcoinjs-lib';
 import CoinManager from './coin-manager';
@@ -81,15 +82,9 @@ export class NormalAccount extends Observable<AccountEvent> implements Account {
         return;
       }
 
-      const outpointWithScriptandAmount = matchedOuts.map(o => {
-        const index = payload.outs.indexOf(o);
-        return {
-          id: payload.getId(),
-          index,
-          scriptPubKey: payload.outs[index].script,
-          amount: payload.outs[index].value
-        };
-      });
+      const outpointWithScriptandAmount = matchedOuts.map(
+        prepareOutpointForImport(payload)
+      );
       this.coinManager
         .importOurOutPoints(this.id, outpointWithScriptandAmount)
         .then(() => this.publish())

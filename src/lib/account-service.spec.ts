@@ -95,7 +95,7 @@ test('get address for account', async t => {
   );
 });
 
-test(`handles incoming events from blockchain correctly`, async t => {
+test.only(`handles incoming events from blockchain correctly`, async t => {
   const mockObservable = new Subject<TransactionArrived>();
   const account = await service.createFromHD(
     masterHD,

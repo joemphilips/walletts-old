@@ -1,35 +1,21 @@
-import {
-  BlockchainEvent,
-  BlockchainProxy,
-  TrustedBitcoindRPC
-} from './blockchain-proxy';
+import { TrustedBitcoindRPC } from './blockchain-proxy';
 import Keystore, { default as KeyRepository } from './key-repository';
-import logger from './logger';
 import { MyWalletCoin } from './primitives/wallet-coin';
-import WalletDB from './wallet-service';
 import * as Logger from 'bunyan';
 /* tslint:disable-next-line:no-submodule-imports */
 import {
   address,
   Network,
   networks,
-  Out,
   Transaction,
   TransactionBuilder
 } from 'bitcoinjs-lib';
 import { AccountID } from './primitives/identity';
-import { Either, left, right } from 'fp-ts/lib/Either';
 import { Outpoint } from 'bitcoin-core';
 import * as _ from 'lodash';
-import { MAX_SATOSHI, Satoshi } from './primitives/satoshi';
+import { Satoshi } from './primitives/satoshi';
 import { FALLBACK_FEE } from './primitives/constants';
-
-export interface OutpointWithScriptAndAmount {
-  id: string;
-  index: number;
-  scriptPubKey: Buffer;
-  amount: number;
-}
+import { OutpointWithScriptAndAmount } from './primitives/utils';
 
 /**
  * internal key for referencing to WalletCoins
@@ -223,7 +209,7 @@ export default class CoinManager {
     });
     this.logger.info(`successfully imported our Coin from Blockchain`);
     this.logger.info(
-      `coins inside coinmanager are ${JSON.stringify(this.coins)}`
+      `coins inside coinmanager are ${JSON.stringify([...this.coins])}`
     );
     return null;
   }

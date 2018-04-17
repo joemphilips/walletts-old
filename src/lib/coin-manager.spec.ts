@@ -257,5 +257,33 @@ test('create transaction and broadcast, then check the balance', async (t: Execu
 test('import outpoint as its own coin.', async (t: ExecutionContext<
   CoinManagerTestContext
 >) => {
-  t.pass();
+  const man = t.context.man;
+  // 1. prepare account.
+  const as = new NormalAccountService(logger, t.context.keyRepo);
+  const masterHD = HDNode.fromSeedHex(
+    'ffffffffffffffffffffffffffffffff',
+    networks.testnet
+  )
+    .deriveHardened(44)
+    .deriveHardened(0); // coin_type
+  const obs = getObservableBlockchain(testZmqPubUrl);
+  const a1 = await as.createFromHD(masterHD, 0, obs, t.context.bch);
+  const [a2, addr, change] = await as.getAddressForAccount(a1);
+
+  const outpoints = [
+    {
+      id: 'deadbeef0000',
+      index: 0,
+      scriptPubKey: address.toOutputScript(addr, networks.testnet),
+      amount: Satoshi.fromBTC(1).value as Satoshi
+    },
+    {
+      id: 'deadbeef0001',
+      index: 0,
+      scriptPubKey: address.toOutputScript(addr, networks.testnet),
+      amount: Satoshi.fromBTC(2).value as Satoshi
+    }
+  ];
+  await man.importOurOutPoints(a2.id, outpoints);
+  t.deepEqual(man.total, Satoshi.fromBTC(3).value as Satoshi);
 });

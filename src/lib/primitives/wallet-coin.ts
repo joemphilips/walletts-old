@@ -36,7 +36,7 @@ export class MyWalletCoin implements AbstractCoin {
     out: Outpoint,
     scriptPubKey: Buffer,
     pubKey: Buffer,
-    amount: number
+    amount: Satoshi
   ): MyWalletCoin {
     return new MyWalletCoin(
       scriptPubKey,
@@ -44,7 +44,7 @@ export class MyWalletCoin implements AbstractCoin {
       pubKey,
       none,
       out.id,
-      Satoshi.fromNumber(amount).value as Satoshi
+      amount
     );
   }
   constructor(

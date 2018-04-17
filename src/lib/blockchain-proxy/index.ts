@@ -1,10 +1,12 @@
-import { Block, Network, Transaction } from 'bitcoinjs-lib';
+import { Block, Network, Out, Transaction } from 'bitcoinjs-lib';
 import * as Logger from 'bunyan';
 /* tslint:disable no-submodule-imports */
 import { Observable } from '@joemphilips/rxjs';
 import { socket } from 'zeromq';
 import { EventEmitter } from 'events';
 import { FeeEstimateMode, ValidateAddressResult } from 'bitcoin-core';
+import { Satoshi } from '../primitives/satoshi';
+import { OutpointWithScriptAndAmount } from '../primitives/utils';
 
 export interface BlockchainProxy {
   readonly getPrevHash: (tx: Transaction) => Promise<any>;
@@ -73,6 +75,20 @@ export const getObservableBlockchain = (url: string): ObservableBlockchain => {
       .filter(([topic, _]: [ObservationType, string]) => topic === 'rawtx')
       .map(([_, msg]: [ObservationType, string]) => Transaction.fromHex(msg))
   );
+};
+
+export const prepareOutpointForImport = (tx: Transaction) => (
+  o: Out
+): OutpointWithScriptAndAmount => {
+  const index = tx.outs.indexOf(o);
+  return {
+    id: tx.getId(),
+    index,
+    scriptPubKey: tx.outs[index].script,
+    amount: Satoshi.fromNumber(tx.outs[index].value).fold(e => {
+      throw e;
+    }, s => s)
+  };
 };
 
 export * from './blockchain-info';
