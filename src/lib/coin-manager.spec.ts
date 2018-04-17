@@ -149,7 +149,7 @@ async function prepareCoins(
           null,
           some('Coin for Test'),
           coinBaseHash[i],
-          Satoshi.fromNumber(50).value as Satoshi
+          Satoshi.fromBTC(50).value as Satoshi
         )
     );
 }

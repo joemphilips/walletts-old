@@ -22,6 +22,7 @@ import { Either, left, right } from 'fp-ts/lib/Either';
 import { Outpoint } from 'bitcoin-core';
 import * as _ from 'lodash';
 import { MAX_SATOSHI, Satoshi } from './primitives/balance';
+import { FALLBACK_FEE } from './primitives/constants';
 
 export interface OutpointWithScriptAndAmount {
   id: string;
@@ -63,12 +64,17 @@ export default class CoinManager {
     this.logger.trace('coinmanager initialized');
     this.feeProvider = async (txWeightInKB: number, target = 6) => {
       return this.bchProxy.client.estimateSmartFee(target).then(r => {
-        if (r.feerate) {
+        if (r.feerate && r.feerate !== -1) {
+          this.logger.trace(
+            `feeEstimation result is ${r.feerate} and weight is ${txWeightInKB}`
+          );
           return Satoshi.fromNumber(r.feerate * txWeightInKB).fold(e => {
             throw e;
           }, satoshi => satoshi);
         }
-        throw new Error(`failed to retrieve feeRate`);
+        throw new Error(
+          `failed to retrieve feeRate, result was ${JSON.stringify(r)}`
+        );
       });
     };
   }
@@ -132,21 +138,31 @@ export default class CoinManager {
       .map(e => e.amountInSatoshi)
       .reduce((a, b) => a.chain(s => s.credit(b)), Satoshi.fromNumber(0))
       .fold(e => {
-        throw e;
+        throw new Error(`failed to get total output value`);
       }, a => a);
     const totalIn = coins
       .reduce((a, b) => a.chain(s => s.credit(b.amount)), Satoshi.fromNumber(0))
       .fold(e => {
-        throw e;
+        throw new Error(`failed to get total input value`);
       }, a => a);
 
-    const delta = totalOut.debit(totalIn).fold(e => {
-      throw e;
+    const delta = totalIn.debit(totalOut).fold(e => {
+      throw new Error(
+        `total Input ${totalIn.amount} must be greater than total Output ${
+          totalOut.amount
+        }!`
+      );
     }, a => a);
     this.logger.debug(`fetching fee from feeProvider ...`);
-    const fee = await this.feeProvider(builder.buildIncomplete().weight());
+    const fee: Satoshi = await this.feeProvider(
+      builder.buildIncomplete().weight()
+    ).catch(() => FALLBACK_FEE);
     const changeAmount = delta.debit(fee).fold(e => {
-      throw e;
+      throw new Error(
+        `${e.toString()} ! delta of output and input was ${
+          delta.amount
+        } and fee estimated was ${fee.amount}`
+      );
     }, a => a);
     builder.addOutput(changeAddress as string, changeAmount.amount);
 

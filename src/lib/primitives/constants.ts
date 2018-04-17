@@ -3,6 +3,8 @@
  * ref: https://github.com/chainside/BIP-proposal/blob/master/BIP.mediawiki
  * @type {number}
  */
+import { Satoshi } from './balance';
+
 export const PurposeField = 100; // TODO: specify proper index
 
 /**
@@ -13,3 +15,5 @@ export enum SupportedCoinType {
   BTC = 0,
   ETH = 60
 }
+
+export const FALLBACK_FEE = Satoshi.fromNumber(1000).value as Satoshi;
