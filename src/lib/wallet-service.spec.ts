@@ -191,8 +191,6 @@ test('accounts in a wallet will be recovered when it is re-created from the seed
     1
   );
 
-  bchProxy.prepare500BTC(address);
-
   await sleep(500);
 
   t.is(

@@ -42,6 +42,7 @@ type CoinManagerTestContext = {
   bch: BlockchainProxy;
   logger: Logger;
   keyRepo: KeyRepository;
+  masterHD: HDNode;
 };
 const test = anyTest as TestInterface<CoinManagerTestContext>;
 
@@ -57,49 +58,7 @@ test.before('prepare test for CoinManager', async t => {
   );
 });
 
-// 2. create global event emitter which counts for the coin preparation.
-/**
- * number of test which requires to run prepareCoins
- * @type {number}
- */
-const PREPERATION_CONTEXT_NUM = 4;
-class Prepare extends EventEmitter {
-  public soFarPreparedContext: number;
-  constructor() {
-    super();
-    this.soFarPreparedContext = 0;
-  }
-
-  public incrementPrepare(): void {
-    this.soFarPreparedContext++;
-    if (this.soFarPreparedContext === PREPERATION_CONTEXT_NUM) {
-      this.emit('prepared');
-    }
-  }
-}
-
-const prepare = new Prepare();
-prepare.once('prepared', () => {
-  bch.client
-    .generate(100)
-    .then(() => {
-      logger.info('generated 100 blocks');
-      prepare.emit('generated');
-    })
-    .catch((e: Error) => {
-      util.debug('not generated');
-      throw e;
-    });
-});
-
-async function promise100block(): Promise<{}> {
-  return new Promise((resolve, reject) => {
-    prepare.once('generated', resolve);
-    prepare.on('error', reject);
-  });
-}
-
-// 3. define utility function used from testContext
+// 2. define utility function used from testContext
 /**
  * calling this function at the same time in asyncronous mannter might cause
  * work queue in the bitcoind to exceed its limit. so use carefully.
@@ -109,39 +68,22 @@ async function promise100block(): Promise<{}> {
  * TODO: only `createTx` and `broadcast` requires to interact with the blockchain.
  * TODO: So separate block generation logic to different function.
  */
-async function prepareCoins(
+async function prepareCoinsWith1BTC(
   bchProxy: TrustedBitcoindRPC,
-  num: number = 6
+  num: number = 6,
+  addrs: ReadonlyArray<string>
 ): Promise<MyWalletCoin[]> {
-  const args = Array(num).fill({ method: 'getnewaddress', parameters: [] });
-  const addrs: string[] = await bchProxy.client.command(args);
-  const args2 = addrs.map(a => ({
-    method: 'generatetoaddress',
-    parameters: [1, a]
-  }));
-  const blockhashes: string[][] = await bchProxy.client.command(
-    args2 as BatchOption[]
-  );
-
   // increment counter and wait other contexts to finish calling this function
-  prepare.incrementPrepare();
-  try {
-    await promise100block();
-  } catch (e) {
-    logger.debug(`error during generating block`);
-    throw e;
-  }
+  const txHashes = await Promise.all(
+    addrs.map(a => bchProxy.client.sendToAddress(a, 1))
+  );
+  await bchProxy.client.generate(1);
 
   const scriptPubkeys: ReadonlyArray<Buffer> = addrs.map(a =>
     address.toOutputScript(a, networks.testnet)
   );
-  const blocks = (await Promise.all(
-    flatten(blockhashes).map(b => bchProxy.client.getBlock(b, true))
-  )) as Block[];
-  const coinBaseHash = blocks.map(a => a.tx[0]) as string[];
 
-  return Array(num)
-    .fill('foo') // to avoid null value error.
+  return new Array(num)
     .map(
       (_, i) =>
         new MyWalletCoin(
@@ -149,17 +91,10 @@ async function prepareCoins(
           'pubkeyhash',
           null,
           some('Coin for Test'),
-          coinBaseHash[i],
-          Satoshi.fromBTC(50).value as Satoshi
+          txHashes[i],
+          Satoshi.fromBTC(1).value as Satoshi
         )
     );
-}
-function flatten(arr: any[]): any[] {
-  return arr.reduce((flat, toFlatten): any => {
-    return flat.concat(
-      Array.isArray(toFlatten) ? flatten(toFlatten) : toFlatten
-    );
-  }, []);
 }
 
 test.beforeEach(
@@ -169,6 +104,12 @@ test.beforeEach(
     const keyRepo = new InMemoryKeyRepository();
     t.context.keyRepo = keyRepo;
     t.context.man = new CoinManager(logger, keyRepo, bch);
+    t.context.masterHD = HDNode.fromSeedHex(
+      'ffffffffffffffffffffffffffffffff',
+      networks.testnet
+    )
+      .deriveHardened(44)
+      .deriveHardened(0); // coin_type
   }
 );
 
@@ -176,7 +117,11 @@ test.beforeEach(
 test('get total amount', async (t: ExecutionContext<
   CoinManagerTestContext
 >) => {
-  const coins = await prepareCoins(t.context.bch, 6);
+  const num = 6;
+  const addrs = new Array(num).map((_, i) =>
+    t.context.masterHD.derive(i).getAddress()
+  );
+  const coins = await prepareCoinsWith1BTC(t.context.bch, num, addrs);
   for (const c of coins) {
     t.context.man.coins.set(new CoinID(uuid.v4()).id, c);
   }
@@ -184,32 +129,39 @@ test('get total amount', async (t: ExecutionContext<
   logger.trace(
     `Prepared coins are ${JSON.stringify([...t.context.man.coins])}`
   );
-  t.deepEqual(t.context.man.total, Satoshi.fromBTC(300).value as Satoshi);
+  t.deepEqual(t.context.man.total, Satoshi.fromBTC(6).value as Satoshi);
 });
 
 test('pickCoinsForAmount', async (t: ExecutionContext<
   CoinManagerTestContext
 >) => {
-  const coinsToInsert = await prepareCoins(t.context.bch, 1);
+  const num = 1;
+  const addrs = new Array(num).map((_, i) =>
+    t.context.masterHD.derive(i).getAddress()
+  );
+  const coinsToInsert = await prepareCoinsWith1BTC(t.context.bch, num, addrs);
   t.context.man.coins.set(new CoinID(uuid.v4()).id, coinsToInsert[0]);
-  const coins = await t.context.man.pickCoinsForAmount(Satoshi.fromBTC(3)
+  const coins = await t.context.man.pickCoinsForAmount(Satoshi.fromBTC(0.9)
     .value as Satoshi);
   t.is(coins.length, 1);
-  t.is(coins[0].amount.toBTC(), 50);
+  t.is(coins[0].amount.toBTC(), 1);
 });
 
 test('coin selection will throw Error if not enough funds available', async (t: ExecutionContext<
   CoinManagerTestContext
 >) => {
-  const coinsToInsert = await prepareCoins(t.context.bch, 1);
+  const num = 1;
+  const addrs = new Array(num).map((_, i) =>
+    t.context.masterHD.derive(i).getAddress()
+  );
+  const coinsToInsert = await prepareCoinsWith1BTC(t.context.bch, num, addrs);
   t.context.man.coins.set(new CoinID(uuid.v4()).id, coinsToInsert[0]);
   await t.throws(
-    () =>
-      t.context.man.pickCoinsForAmount(Satoshi.fromBTC(51).value as Satoshi),
+    () => t.context.man.pickCoinsForAmount(Satoshi.fromBTC(2).value as Satoshi),
     Error
   );
   await t.notThrows(() =>
-    t.context.man.pickCoinsForAmount(Satoshi.fromBTC(50).value as Satoshi)
+    t.context.man.pickCoinsForAmount(Satoshi.fromBTC(1).value as Satoshi)
   );
 });
 
@@ -220,18 +172,21 @@ test('create transaction and broadcast, then check the balance', async (t: Execu
   // 1. prepare account
   const man = t.context.man;
   const as = new NormalAccountService(logger, t.context.keyRepo);
-  const masterHD = HDNode.fromSeedHex(
-    'ffffffffffffffffffffffffffffffff',
-    networks.testnet
-  )
-    .deriveHardened(44)
-    .deriveHardened(0); // coin_type
   const obs = getObservableBlockchain(testZmqPubUrl);
-  const account = await as.createFromHD(masterHD, 0, obs, t.context.bch);
+  const account = await as.createFromHD(
+    t.context.masterHD,
+    0,
+    obs,
+    t.context.bch
+  );
   const [account2, _, changeAddress] = await as.getAddressForAccount(account);
 
   // 2. set coins
-  const coins = await prepareCoins(t.context.bch, 1);
+  const num = 1;
+  const addrs = new Array(num).map((no, i) =>
+    t.context.masterHD.derive(i).getAddress()
+  );
+  const coins = await prepareCoinsWith1BTC(t.context.bch, num, addrs);
   logger.info(`going to set coins ${JSON.stringify(coins)}`);
   t.context.man.coins.set(new CoinID(uuid.v4()).id, coins[0]);
 
@@ -239,7 +194,7 @@ test('create transaction and broadcast, then check the balance', async (t: Execu
   const addressToPay = [
     {
       address: 'mhwVU9YLs5PSGqVjPK2RewGNeKBLV4eEXo', // random address.
-      amountInSatoshi: Satoshi.fromBTC(10).value as Satoshi
+      amountInSatoshi: Satoshi.fromBTC(0.1).value as Satoshi
     }
   ];
 
@@ -261,14 +216,8 @@ test('import outpoint as its own coin.', async (t: ExecutionContext<
   const man = t.context.man;
   // 1. prepare account.
   const as = new NormalAccountService(logger, t.context.keyRepo);
-  const masterHD = HDNode.fromSeedHex(
-    'ffffffffffffffffffffffffffffffff',
-    networks.testnet
-  )
-    .deriveHardened(44)
-    .deriveHardened(0); // coin_type
   const obs = getObservableBlockchain(testZmqPubUrl);
-  const a1 = await as.createFromHD(masterHD, 0, obs, t.context.bch);
+  const a1 = await as.createFromHD(t.context.masterHD, 0, obs, t.context.bch);
   const [a2, addr, change] = await as.getAddressForAccount(a1);
 
   const outpoints = [
