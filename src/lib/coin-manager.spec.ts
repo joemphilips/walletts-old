@@ -3,6 +3,7 @@ import * as uuid from 'uuid';
 import CoinManager, { getAndIncrement, isAlreadyHave } from './coin-manager';
 import {
   prePareTest,
+  sleep,
   testBitcoindIp,
   testBitcoindPassword,
   testBitcoindPort,
@@ -83,18 +84,19 @@ async function prepareCoinsWith1BTC(
     address.toOutputScript(a, networks.testnet)
   );
 
-  return new Array(num)
-    .map(
-      (_, i) =>
-        new MyWalletCoin(
-          scriptPubkeys[i],
-          'pubkeyhash',
-          null,
-          some('Coin for Test'),
-          txHashes[i],
-          Satoshi.fromBTC(1).value as Satoshi
-        )
-    );
+  return new Array(num).fill('').map(
+    (_, i) =>
+      new MyWalletCoin(
+        scriptPubkeys[i],
+        'pubkeyhash',
+        null,
+        some('Coin for Test'),
+        txHashes[i],
+        Satoshi.fromBTC(1).fold(e => {
+          throw e;
+        }, s => s)
+      )
+  );
 }
 
 test.beforeEach(
@@ -118,10 +120,14 @@ test('get total amount', async (t: ExecutionContext<
   CoinManagerTestContext
 >) => {
   const num = 6;
-  const addrs = new Array(num).map((_, i) =>
-    t.context.masterHD.derive(i).getAddress()
-  );
+  const addrs = new Array(num)
+    .fill(0)
+    .map((_, i) => t.context.masterHD.derive(i).getAddress());
   const coins = await prepareCoinsWith1BTC(t.context.bch, num, addrs);
+  if (!coins) {
+    throw new Error(`failed to prepare coins!`);
+  }
+  logger.info(`coins are ${JSON.stringify(coins)}`);
   for (const c of coins) {
     t.context.man.coins.set(new CoinID(uuid.v4()).id, c);
   }
@@ -136,9 +142,9 @@ test('pickCoinsForAmount', async (t: ExecutionContext<
   CoinManagerTestContext
 >) => {
   const num = 1;
-  const addrs = new Array(num).map((_, i) =>
-    t.context.masterHD.derive(i).getAddress()
-  );
+  const addrs = new Array(num)
+    .fill(0)
+    .map((_, i) => t.context.masterHD.derive(i).getAddress());
   const coinsToInsert = await prepareCoinsWith1BTC(t.context.bch, num, addrs);
   t.context.man.coins.set(new CoinID(uuid.v4()).id, coinsToInsert[0]);
   const coins = await t.context.man.pickCoinsForAmount(Satoshi.fromBTC(0.9)
@@ -151,9 +157,9 @@ test('coin selection will throw Error if not enough funds available', async (t: 
   CoinManagerTestContext
 >) => {
   const num = 1;
-  const addrs = new Array(num).map((_, i) =>
-    t.context.masterHD.derive(i).getAddress()
-  );
+  const addrs = new Array(num)
+    .fill(0)
+    .map((_, i) => t.context.masterHD.derive(i).getAddress());
   const coinsToInsert = await prepareCoinsWith1BTC(t.context.bch, num, addrs);
   t.context.man.coins.set(new CoinID(uuid.v4()).id, coinsToInsert[0]);
   await t.throws(
@@ -183,9 +189,9 @@ test('create transaction and broadcast, then check the balance', async (t: Execu
 
   // 2. set coins
   const num = 1;
-  const addrs = new Array(num).map((no, i) =>
-    t.context.masterHD.derive(i).getAddress()
-  );
+  const addrs = new Array(num)
+    .fill(0)
+    .map((no, i) => t.context.masterHD.derive(i).getAddress());
   const coins = await prepareCoinsWith1BTC(t.context.bch, num, addrs);
   logger.info(`going to set coins ${JSON.stringify(coins)}`);
   t.context.man.coins.set(new CoinID(uuid.v4()).id, coins[0]);
