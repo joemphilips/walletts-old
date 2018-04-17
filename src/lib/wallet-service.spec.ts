@@ -25,7 +25,7 @@ import NormalAccountService, {
   AbstractAccountService
 } from './account-service';
 import * as util from 'util';
-import { Satoshi } from './primitives/balance';
+import { Satoshi } from './primitives/satoshi';
 import { NormalAccount } from './account';
 import * as Logger from 'bunyan';
 

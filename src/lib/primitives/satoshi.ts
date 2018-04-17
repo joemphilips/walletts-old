@@ -56,6 +56,6 @@ export class Satoshi {
   }
 
   private toString(): string {
-    return this.amount.toString() + " satoshi"
+    return this.amount.toString() + ' satoshi';
   }
 }

@@ -22,7 +22,7 @@ import { MyWalletCoin } from './primitives/wallet-coin';
 import fixtures from '../test/fixtures/transaction.json';
 import { address, HDNode, networks, script, Transaction } from 'bitcoinjs-lib';
 import { some } from 'fp-ts/lib/Option';
-import { Satoshi } from './primitives/balance';
+import { Satoshi } from './primitives/satoshi';
 import * as util from 'util';
 import { BatchOption, Block } from 'bitcoin-core';
 import * as Logger from 'bunyan';

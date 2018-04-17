@@ -12,7 +12,7 @@ import hash160 = bitcoin.crypto.hash160;
 import { PurposeField, SupportedCoinType } from './primitives/constants';
 import * as util from 'util';
 import { BlockchainProxy, ObservableBlockchain } from './blockchain-proxy';
-import { Satoshi } from './primitives/balance';
+import { Satoshi } from './primitives/satoshi';
 /* tslint:disable no-submodule-imports */
 import { none } from 'fp-ts/lib/Option';
 import NormalAccountService, {

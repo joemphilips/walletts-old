@@ -1,5 +1,5 @@
 import { AccountID } from './primitives/identity';
-import { Satoshi } from './primitives/balance';
+import { Satoshi } from './primitives/satoshi';
 import { MyWalletCoin } from './primitives/wallet-coin';
 /* tslint:disable:no-submodule-imports */
 import { none, Option, some } from 'fp-ts/lib/Option';

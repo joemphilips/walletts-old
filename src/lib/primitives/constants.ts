@@ -3,7 +3,7 @@
  * ref: https://github.com/chainside/BIP-proposal/blob/master/BIP.mediawiki
  * @type {number}
  */
-import { Satoshi } from './balance';
+import { Satoshi } from './satoshi';
 
 export const PurposeField = 100; // TODO: specify proper index
 

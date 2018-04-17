@@ -2,7 +2,7 @@ import { Outpoint } from 'bitcoin-core';
 import { HDNode, Out, script, TransactionBuilder } from 'bitcoinjs-lib';
 /* tslint:disable no-submodule-imports */
 import { none, None, Option } from 'fp-ts/lib/Option';
-import { Satoshi } from '../primitives/balance';
+import { Satoshi } from './satoshi';
 
 /**
  * script necessary for signing Transaction.

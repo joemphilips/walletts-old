@@ -14,7 +14,7 @@ import {
 } from './blockchain-proxy';
 import CoinManager from './coin-manager';
 import { isOtherUser, OuterEntity } from './primitives/entities';
-import { Satoshi } from './primitives/balance';
+import { Satoshi } from './primitives/satoshi';
 
 export interface AbstractAccountService<A extends Account> {
   readonly keyRepo: KeyRepository;

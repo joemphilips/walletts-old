@@ -21,7 +21,7 @@ import { AccountID } from './primitives/identity';
 import { Either, left, right } from 'fp-ts/lib/Either';
 import { Outpoint } from 'bitcoin-core';
 import * as _ from 'lodash';
-import { MAX_SATOSHI, Satoshi } from './primitives/balance';
+import { MAX_SATOSHI, Satoshi } from './primitives/satoshi';
 import { FALLBACK_FEE } from './primitives/constants';
 
 export interface OutpointWithScriptAndAmount {
