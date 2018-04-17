@@ -16,3 +16,7 @@ and run
 yarn test-without-nsp
 ```
 for testing
+
+NOTE: `yarn test` command will run `docker-compose` for running bitcoind in regtest mode
+and generate some BTCs used in tests. So if you run to run each test mannually, you must run 
+`docker-compose` beforehand by `yarn test:docker`
