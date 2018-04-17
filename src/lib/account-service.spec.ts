@@ -28,7 +28,7 @@ import {
 import { Observable, Subject } from '@joemphilips/rxjs';
 import * as Logger from 'bunyan';
 import { some } from 'fp-ts/lib/Option';
-import {Satoshi} from "lib/primitives/satoshi";
+import { Satoshi } from './primitives/satoshi';
 
 let service: NormalAccountService;
 let masterHD: HDNode;
@@ -110,8 +110,8 @@ test(`handles incoming events from blockchain correctly`, async t => {
 
   // TODO: pipe event into mockObservable and check wallet balance has been updated.
   const builder = new TransactionBuilder(networks.testnet);
-  builder.addOutput(addr, 50000000); // 0.5 btc
-  builder.addOutput(change, 150000000); // 1.5 btc
+  builder.addOutput(addr, (Satoshi.fromBTC(0.5).value as Satoshi).amount);
+  builder.addOutput(change, (Satoshi.fromBTC(1.5).value as Satoshi).amount); // 1.5 btc
   const tx = builder.buildIncomplete();
 
   logger.debug(`piping Transaction for test ... ${tx}`);

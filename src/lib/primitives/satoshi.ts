@@ -55,7 +55,7 @@ export class Satoshi {
     return parseFloat((this.amount / 100000000.0).toFixed(9));
   }
 
-  private toString(): string {
+  public toString(): string {
     return this.amount.toString() + ' satoshi';
   }
 }
