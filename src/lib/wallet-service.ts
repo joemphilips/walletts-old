@@ -6,7 +6,7 @@ import { AbstractWallet, BasicWallet } from '../lib/wallet';
 import WalletRepository from '../lib/wallet-repository';
 import secureRandom from 'secure-random';
 import * as bip39 from 'bip39';
-import { Account, AccountType, NormalAccount } from './account';
+import { Account, accountCreated, AccountType, NormalAccount } from './account';
 import KeyRepository from './key-repository';
 import hash160 = bitcoin.crypto.hash160;
 import { PurposeField, SupportedCoinType } from './primitives/constants';
@@ -55,7 +55,7 @@ interface AbstractWalletService<
   ) => Promise<W | null>;
 }
 
-export default class WalletService extends rx.Subject<any>
+export default class WalletService
   implements
     AbstractWalletService<BasicWallet, NormalAccount, NormalAccountService> {
   private readonly logger: Logger;
@@ -69,7 +69,6 @@ export default class WalletService extends rx.Subject<any>
       keyRepo
     )
   ) {
-    super();
     this.logger = log.child({ subModule: 'WalletService' });
   }
 
@@ -210,13 +209,16 @@ export default class WalletService extends rx.Subject<any>
       if (!res) {
         const id = hash160(node.getPublicKeyBuffer()).toString('hex');
         const manager = new CoinManager(this.logger, this.keyRepo, proxy);
-        return new NormalAccount(
+        const a = new NormalAccount(
           id,
           accountNumber,
           manager,
           bch,
+          this.logger,
           AccountType.Normal
         );
+        a.next(accountCreated(a));
+        return a;
       }
       i += res.i;
       balanceSoFar += Object.values(res.addresses).reduce(

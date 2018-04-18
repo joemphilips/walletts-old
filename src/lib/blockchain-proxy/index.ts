@@ -62,6 +62,12 @@ export type Reorg = {
   height: number;
 };
 export type BlockchainEvent = TransactionArrived | BlockArrived | Reorg;
+/**
+ * Hot observable which publishes the event occurred in the blockchain.
+ * This is likely to update to handle more various kinds of events as
+ * the blockchain supports more features, e.g. colored coins, withdrawal
+ * from the drivechain, and layer 2 channel closing.
+ */
 export type ObservableBlockchain = Observable<BlockchainEvent>;
 
 export const getObservableBlockchain = (url: string): ObservableBlockchain => {

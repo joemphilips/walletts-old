@@ -186,17 +186,18 @@ test('accounts in a wallet will be recovered when it is re-created from the seed
     bchProxy
   )) as BasicWallet;
 
-  const [_, address, change] = await t.context.as.getAddressForAccount(
+  const [account2, address, change] = await t.context.as.getAddressForAccount(
     wallet3.accounts[0] as NormalAccount,
     1
   );
 
-  await sleep(500);
+  await bchProxy.client.sendToAddress(address, 0.5);
+  await bchProxy.client.generate(1);
 
   t.is(
     wallet3.accounts[0].balance,
-    Satoshi.fromBTC(500).value as Satoshi,
-    'BTC transferred to the address derived from an account should be reflected to its Satoshi'
+    Satoshi.fromBTC(0.5).value as Satoshi,
+    'BTC transferred to the address derived from an account should be reflected to its Balance'
   );
 
   const wallet32 = await t.context.ws.createFromSeed(`Test Wallet 2`, seed);

@@ -8,7 +8,6 @@ import {
   testBitcoindUsername,
   testZmqPubUrl
 } from '../test/helpers';
-import loadConfig from './config';
 import NormalAccountService from './account-service';
 import { InMemoryKeyRepository } from './key-repository';
 import {
@@ -95,7 +94,8 @@ test('get address for account', async t => {
   );
 });
 
-test(`handles incoming events from blockchain correctly`, async t => {
+test(`handles incoming events from the blockchain correctly`, async t => {
+  // prepare an account
   const mockObservable = new Subject<TransactionArrived>();
   const account = await service.createFromHD(
     masterHD,
@@ -103,21 +103,52 @@ test(`handles incoming events from blockchain correctly`, async t => {
     mockObservable,
     bchProxy
   );
+
+  // listen to the account event
+  account.subscribe(
+    x => {
+      logger.info(`received Event ${x}`);
+    },
+    e => {
+      throw e;
+    },
+    () => logger.info('account completed')
+  );
+
+  // get an address and pay to it.
   const [account2, addr, change] = await service.getAddressForAccount(
     account,
     0
   );
-
-  // TODO: pipe event into mockObservable and check wallet balance has been updated.
   const builder = new TransactionBuilder(networks.testnet);
   builder.addOutput(addr, (Satoshi.fromBTC(0.5).value as Satoshi).amount);
-  builder.addOutput(change, (Satoshi.fromBTC(1.5).value as Satoshi).amount); // 1.5 btc
+  builder.addOutput(change, (Satoshi.fromBTC(1.5).value as Satoshi).amount);
   const tx = builder.buildIncomplete();
 
   logger.debug(`piping Transaction for test ... ${tx}`);
   mockObservable.next(tx);
-
   await sleep(10);
+  t.deepEqual(
+    account2.balance,
+    Satoshi.fromBTC(2).value as Satoshi,
+    'an account has to understand a transaction paid to itself'
+  );
 
-  t.deepEqual(account2.balance, Satoshi.fromBTC(2).value as Satoshi);
+  // do the same thing again
+  const [account3, addr2, change2] = await service.getAddressForAccount(
+    account,
+    0
+  );
+  const builder2 = new TransactionBuilder(networks.testnet);
+  builder2.addOutput(addr2, (Satoshi.fromBTC(0.01).value as Satoshi).amount);
+  builder2.addOutput(change2, (Satoshi.fromBTC(5).value as Satoshi).amount);
+  const tx2 = builder.buildIncomplete();
+  mockObservable.next(tx2);
+  mockObservable.complete();
+  await sleep(10);
+  t.deepEqual(
+    account3.balance,
+    Satoshi.fromBTC(7.01).value as Satoshi,
+    'an account can react to incoming transaction continually'
+  );
 });

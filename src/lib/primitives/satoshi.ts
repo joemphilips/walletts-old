@@ -10,7 +10,7 @@ export const MAX_SATOSHI = 21 * 1e14;
 
 // TODO: Use range type definition(https://github.com/Microsoft/TypeScript/issues/15480). right now This is not implemented for TS
 /**
- * Immutable class to hold the amount a money in satoshi.
+ * Immutable class to hold the amount as money (in satoshi).
  */
 export class Satoshi {
   public static fromBTC(btc: number): Either<BalanceError, Satoshi> {
@@ -29,11 +29,7 @@ export class Satoshi {
     return right(new Satoshi(satoshi));
   }
 
-  public readonly amount: number;
-  private constructor(satoshi: number) {
-    /* tslint:disable-next-line */
-    this.amount = satoshi;
-  }
+  private constructor(public readonly amount: number) {}
 
   public debit(delta: Satoshi): Either<BalanceError, Satoshi> {
     if (this.amount < delta.amount) {

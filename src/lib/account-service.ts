@@ -1,4 +1,11 @@
-import { Account, NormalAccount } from './account';
+import {
+  Account,
+  accountCreated,
+  AccountType,
+  debit,
+  NormalAccount,
+  watchingAdddressUpdated
+} from './account';
 import KeyRepository, { InMemoryKeyRepository } from './key-repository';
 import { crypto, HDNode, Transaction } from 'bitcoinjs-lib';
 import hash160 = crypto.hash160;
@@ -6,12 +13,7 @@ import hash160 = crypto.hash160;
 import { none, some } from 'fp-ts/lib/Option';
 import * as Logger from 'bunyan';
 import { AccountID } from './primitives/identity';
-import {
-  BlockchainProxy,
-  getObservableBlockchain,
-  ObservableBlockchain,
-  TrustedBitcoindRPC
-} from './blockchain-proxy';
+import { BlockchainProxy, ObservableBlockchain } from './blockchain-proxy';
 import CoinManager from './coin-manager';
 import { isOtherUser, OuterEntity } from './primitives/entities';
 import { Satoshi } from './primitives/satoshi';
@@ -65,12 +67,14 @@ export default class NormalAccountService
     );
     updatedAccount.coinManager
       .broadCast(txResult)
+      .then(() => updatedAccount.next(debit(amount)))
       .catch(e => `Failed to broadcast TX! the error was ${e.toString()}`);
     return new NormalAccount(
       updatedAccount.id,
       updatedAccount.hdIndex,
       updatedAccount.coinManager,
       updatedAccount.observableBlockchain,
+      this.logger,
       updatedAccount.type,
       updatedAccount.watchingAddresses
     );
@@ -105,9 +109,12 @@ export default class NormalAccountService
       a.hdIndex,
       a.coinManager,
       a.observableBlockchain,
-      a.type,
+      this.logger,
+      AccountType.Normal,
       some([...a.watchingAddresses.getOrElse([]), address, changeAddress])
     );
+    newAccount.next(watchingAdddressUpdated(address));
+    newAccount.next(watchingAdddressUpdated(changeAddress));
     return [newAccount, address, changeAddress];
   }
 
@@ -122,7 +129,13 @@ export default class NormalAccountService
     const coinManager = new CoinManager(this.logger, this.keyRepo, bchProxy);
     this.logger.debug(`Account ${id} has been created from HD`);
     await this._save(id, masterHD);
-    return new NormalAccount(id, index, coinManager, observableBlockchain);
+    return new NormalAccount(
+      id,
+      index,
+      coinManager,
+      observableBlockchain,
+      this.logger
+    );
   }
 
   private async _save(id: AccountID, key: HDNode): Promise<void> {
