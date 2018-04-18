@@ -129,13 +129,15 @@ export default class NormalAccountService
     const coinManager = new CoinManager(this.logger, this.keyRepo, bchProxy);
     this.logger.debug(`Account ${id} has been created from HD`);
     await this._save(id, masterHD);
-    return new NormalAccount(
+    const a = new NormalAccount(
       id,
       index,
       coinManager,
       observableBlockchain,
       this.logger
     );
+    a.next(accountCreated(a))
+    return a
   }
 
   private async _save(id: AccountID, key: HDNode): Promise<void> {
