@@ -21,6 +21,13 @@ export enum AccountType {
 
 /**
  * The most important domain entity for managing users funds.
+ * It is responsible for
+ * 1. Holding balance in a user-interested way.
+ *  * Intuitively, a accounts balance can be represented as a total amount of the WalletCoins in CoinManager.
+ *  * But this may not the case sometime (e.g. When received a payment, balance should be immediately increase even
+ *   it ends up as a double spend.). So instead it returns a balance in business-logic-compatible way
+ * 2. It works as an subscribable which translates blockchain event to domain event.
+ *
  * Modeled as Immutable structure since those Accounts used by several people might verify
  * others signature in different process.
  */
@@ -134,10 +141,8 @@ export class NormalAccount extends Subject<NormalAccountEvent>
       return;
     }
     if (payload instanceof Transaction) {
-      // check if incoming transaction is concerned to this account.
-      /* tslint:disable-next-line */
-      console.log(`lets see txs address is in ${this.watchingAddresses} ...`);
 
+      // check if incoming transaction is concerned to this account.
       const matchedOuts: Out[] = payload.outs.filter(o =>
         this.watchingAddresses.map(ourAddresses =>
           ourAddresses.some(a => a === address.fromOutputScript(o.script))

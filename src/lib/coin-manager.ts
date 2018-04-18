@@ -212,8 +212,8 @@ export default class CoinManager {
       );
     });
     this.logger.info(`successfully imported our Coin from Blockchain`);
-    this.logger.info(
-      `coins inside coinmanager are ${JSON.stringify([...this.coins])}`
+    this.logger.trace(
+      `So now coins inside a coinmanager are ${JSON.stringify([...this.coins])}`
     );
     return null;
   }

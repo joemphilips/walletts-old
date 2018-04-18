@@ -29,6 +29,19 @@ import * as Logger from 'bunyan';
 import { some } from 'fp-ts/lib/Option';
 import { Satoshi } from './primitives/satoshi';
 
+// 1. helper functions
+const createMockTx = (...out: Array<{ address: string; amount: number }>) => {
+  const builder = new TransactionBuilder(networks.testnet);
+  out.map(o =>
+    builder.addOutput(
+      o.address,
+      (Satoshi.fromBTC(o.amount).value as Satoshi).amount
+    )
+  );
+  return builder.buildIncomplete();
+};
+
+// 2. setup
 let service: NormalAccountService;
 let masterHD: HDNode;
 let infoSource: ObservableBlockchain;
@@ -55,6 +68,7 @@ test.before('set up AccountService test', () => {
   );
 });
 
+// 3. actual tests
 test('create from hd', async t => {
   const account = await service.createFromHD(masterHD, 0, infoSource, bchProxy);
   const account2 = await service.createFromHD(
@@ -107,7 +121,7 @@ test(`handles incoming events from the blockchain correctly`, async t => {
   // listen to the account event
   account.subscribe(
     x => {
-      logger.info(`received Event ${x}`);
+      logger.info(`received Event ${JSON.stringify(x)}`);
     },
     e => {
       throw e;
@@ -120,11 +134,10 @@ test(`handles incoming events from the blockchain correctly`, async t => {
     account,
     0
   );
-  const builder = new TransactionBuilder(networks.testnet);
-  builder.addOutput(addr, (Satoshi.fromBTC(0.5).value as Satoshi).amount);
-  builder.addOutput(change, (Satoshi.fromBTC(1.5).value as Satoshi).amount);
-  const tx = builder.buildIncomplete();
-
+  const tx = createMockTx(
+    { address: addr, amount: 0.5 },
+    { address: change, amount: 1.5 }
+  );
   logger.debug(`piping Transaction for test ... ${tx}`);
   mockObservable.next(tx);
   await sleep(10);
@@ -136,15 +149,17 @@ test(`handles incoming events from the blockchain correctly`, async t => {
 
   // do the same thing again
   const [account3, addr2, change2] = await service.getAddressForAccount(
-    account,
-    0
+    account2,
+    1
   );
-  const builder2 = new TransactionBuilder(networks.testnet);
-  builder2.addOutput(addr2, (Satoshi.fromBTC(0.01).value as Satoshi).amount);
-  builder2.addOutput(change2, (Satoshi.fromBTC(5).value as Satoshi).amount);
-  const tx2 = builder.buildIncomplete();
+  logger.info(
+    `account3 is watching ${JSON.stringify(account3.watchingAddresses)}`
+  );
+  const tx2 = createMockTx(
+    { address: addr2, amount: 0.01 },
+    { address: change2, amount: 5 }
+  );
   mockObservable.next(tx2);
-  mockObservable.complete();
   await sleep(10);
   t.deepEqual(
     account3.balance,
