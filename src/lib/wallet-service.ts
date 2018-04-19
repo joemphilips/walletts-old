@@ -19,6 +19,7 @@ import NormalAccountService, {
   AbstractAccountService
 } from './account-service';
 import CoinManager from './coin-manager';
+import {AccountID} from "lib/primitives/identity";
 
 interface AbstractWalletService<
   W extends AbstractWallet,
@@ -53,6 +54,10 @@ interface AbstractWalletService<
     startHeight: number,
     stopHeight: number
   ) => Promise<W | null>;
+  getAddressForWalletAccount: (
+    wallet: W,
+    accountId: AccountID,
+  ) => Promise<[W, string, string]>
 }
 
 export default class WalletService
@@ -178,6 +183,19 @@ export default class WalletService
     } else {
       throw new Error(`Account type for ${type} is not supported yet!`);
     }
+  }
+
+  public async getAddressForWalletAccount(w: BasicWallet, id: AccountID): Promise<[BasicWallet, string, string]> {
+    const accounts = w.accounts.filter((acc) => acc.id === id);
+    if (accounts.length === 0) {
+      throw new Error(`no accounts found for ${id}`)
+    } else if (1 < accounts.length) {
+      throw new Error(`2 same accounts in wallet!`)
+    }
+    const accountsComplement = w.accounts.filter((acc) => acc.id !== id);
+    const [a, addr, change] = await this.as.getAddressForAccount(accounts[0] as NormalAccount);
+    const newWallet = new BasicWallet(w.id, [...accountsComplement, a], this.logger);
+    return [newWallet, addr, change]
   }
 
   // TODO: decouple this function as separate object.
