@@ -1,20 +1,17 @@
 import { AccountID } from './primitives/identity';
 import { Satoshi } from './primitives/satoshi';
-import { MyWalletCoin } from './primitives/wallet-coin';
 /* tslint:disable:no-submodule-imports */
-import { none, Option, some } from 'fp-ts/lib/Option';
-import { Either, left, right } from 'fp-ts/lib/Either';
-import { Subject, Observable } from '@joemphilips/rxjs';
+import { none, Option } from 'fp-ts/lib/Option';
+import { Observable, Subject } from '@joemphilips/rxjs';
 import {
   BlockchainEvent,
   ObservableBlockchain,
   prepareOutpointForImport
 } from './blockchain-proxy';
-import { address, Block, Out, Transaction } from 'bitcoinjs-lib';
+import { address, Out, Transaction } from 'bitcoinjs-lib';
 import CoinManager from './coin-manager';
-import { isOtherUser, OtherUser, OuterEntity } from './primitives/entities';
+import { credit, NormalAccountEvent } from './actions/account-event';
 import Logger = require('bunyan');
-import { DomainEvent } from './primitives/event';
 
 export enum AccountType {
   Normal
@@ -65,48 +62,6 @@ export interface Account extends Observable<any> {
   readonly watchingAddresses: Option<ReadonlyArray<string>>;
   readonly logger: Logger;
 }
-
-// Action creators
-export const watchingAdddressUpdated = (
-  addr: string
-): WatchingAddressUpdatedEvent => ({
-  type: 'watchingAddressUpdated',
-  payload: { address: addr }
-});
-export const accountCreated = (a: Account): AccountCreatedEvent => ({
-  type: 'accountCreated',
-  payload: { id: a.id }
-});
-export const credit = (amount: Satoshi): CreditEvent => ({
-  type: 'credit',
-  payload: { amount }
-});
-export const debit = (amount: Satoshi): DebitEvent => ({
-  type: 'debit',
-  payload: { amount }
-});
-
-interface WatchingAddressUpdatedEvent extends DomainEvent {
-  type: 'watchingAddressUpdated';
-  payload: { address: string };
-}
-interface AccountCreatedEvent extends DomainEvent {
-  type: 'accountCreated';
-  payload: { id: AccountID };
-}
-interface CreditEvent extends DomainEvent {
-  type: 'credit';
-  payload: { amount: Satoshi };
-}
-interface DebitEvent extends DomainEvent {
-  type: 'debit';
-  payload: { amount: Satoshi };
-}
-type NormalAccountEvent =
-  | WatchingAddressUpdatedEvent
-  | AccountCreatedEvent
-  | CreditEvent
-  | DebitEvent;
 
 const handleError = (l: Logger) => (e: any) => {
   l.error(`received error from Observabble ${e}`);

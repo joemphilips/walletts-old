@@ -9,7 +9,6 @@ import {
 } from '../lib/blockchain-proxy';
 import {
   prePareTest,
-  sleep,
   testBitcoindIp,
   testBitcoindPassword,
   testBitcoindPort,
@@ -24,16 +23,16 @@ import WalletRepository from '../lib/wallet-repository';
 import NormalAccountService, {
   AbstractAccountService
 } from './account-service';
-import * as util from 'util';
 import { Satoshi } from './primitives/satoshi';
 import { NormalAccount } from './account';
 import * as Logger from 'bunyan';
+import { AccountID } from './primitives/identity';
+import { some } from 'fp-ts/lib/Option';
 
 // define context.
 /* tslint:disable interface-over-type-literal */
 type WalletServiceTestContext = {
   keyRepo: InMemoryKeyRepository;
-  as: NormalAccountService;
   ws: WalletService;
 };
 const test = anyTest as TestInterface<WalletServiceTestContext>;
@@ -81,7 +80,6 @@ test.beforeEach(
   async (t: ExecutionContext<WalletServiceTestContext>) => {
     t.context.keyRepo = new InMemoryKeyRepository();
     const as = new NormalAccountService(logger, t.context.keyRepo);
-    t.context.as = as;
     t.context.ws = new WalletService(
       cfg,
       t.context.keyRepo,
@@ -101,7 +99,7 @@ test('wallet can be created, and can set accounts to it.', async (t: ExecutionCo
     networks.testnet
   );
   const pubKey = hdNode.getPublicKeyBuffer();
-  const w = new BasicWallet(hash160(pubKey).toString('hex'), []);
+  const w = new BasicWallet(hash160(pubKey).toString('hex'), logger);
   logger.debug(`seed created from entropy is ${seed}`);
   const wallet = await t.context.ws.createFromSeed(
     'Test Wallet',
@@ -111,9 +109,10 @@ test('wallet can be created, and can set accounts to it.', async (t: ExecutionCo
   t.is(
     wallet.id,
     w.id,
-    'wallets created from the same seed must have the same id'
+    'wallets created from the same seed must have the same id with the one created manually from pubKey'
   );
 
+  // set account to wallet
   const wallet2 = (await t.context.ws.setNewAccountToWallet(
     wallet,
     infoSource,
@@ -132,16 +131,10 @@ test('wallet can be created, and can set accounts to it.', async (t: ExecutionCo
     'id for a wallet does not change even after creating account'
   );
 
-  t.is(wallet3.accounts.length, 2);
-
-  t.not(
-    wallet3.accounts[0].id,
-    wallet3.accounts[1].id,
-    `each account must have different ID`
-  );
+  t.is(wallet3.accounts.size, 2);
 });
 
-test('It is possible to get address for accounts in wallet', async (t: ExecutionContext<
+test('It is possible to get an address for accounts in a wallet', async (t: ExecutionContext<
   WalletServiceTestContext
 >) => {
   // prepare wallet with one account.
@@ -155,16 +148,24 @@ test('It is possible to get address for accounts in wallet', async (t: Execution
     infoSource,
     bchProxy
   )) as BasicWallet;
-  const [_, address, change] = await t.context.as.getAddressForAccount(
-    wallet2.accounts[0] as NormalAccount,
-    1
-  );
+  const id = wallet2.accounts.keys().next().value;
+  const [
+    wallet3,
+    address,
+    change
+  ] = await t.context.ws.getAddressForWalletAccount(wallet2, id);
 
   // check address is valid
   const result = await bchProxy.validateAddress(address);
   const resultForChange = await bchProxy.validateAddress(change);
   t.true(result.isvalid);
   t.true(resultForChange.isvalid);
+
+  const accountMustBeUpdated = wallet2.accounts.get(id);
+  if (!accountMustBeUpdated) {
+    throw new Error(`failed to get account in wallet`);
+  }
+  t.deepEqual(accountMustBeUpdated.watchingAddresses, some([address, change]));
 });
 
 test('accounts in a wallet will be recovered when it is re-created from the seed.', async (t: ExecutionContext<
@@ -186,16 +187,24 @@ test('accounts in a wallet will be recovered when it is re-created from the seed
     bchProxy
   )) as BasicWallet;
 
-  const [account2, address, change] = await t.context.as.getAddressForAccount(
-    wallet3.accounts[0] as NormalAccount,
-    1
+  const accountIdToGetAddressFor = wallet3.accounts.keys().next().value;
+  const [
+    wallet4,
+    address,
+    change
+  ] = await t.context.ws.getAddressForWalletAccount(
+    wallet3,
+    accountIdToGetAddressFor
   );
 
   await bchProxy.client.sendToAddress(address, 0.5);
   await bchProxy.client.generate(1);
-
+  const accountReceived = wallet4.accounts.get(accountIdToGetAddressFor);
+  if (!accountReceived) {
+    throw new Error(`failed to get account!`);
+  }
   t.is(
-    wallet3.accounts[0].balance,
+    accountReceived.balance,
     Satoshi.fromBTC(0.5).value as Satoshi,
     'BTC transferred to the address derived from an account should be reflected to its Balance'
   );
@@ -204,6 +213,6 @@ test('accounts in a wallet will be recovered when it is re-created from the seed
   t.deepEqual(
     wallet3,
     wallet32,
-    `Wallet resurrected from seed should have same account with before`
+    `Wallet resurrected from a seed should have same account with the one before before`
   );
 });

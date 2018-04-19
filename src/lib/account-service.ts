@@ -1,11 +1,4 @@
-import {
-  Account,
-  accountCreated,
-  AccountType,
-  debit,
-  NormalAccount,
-  watchingAdddressUpdated
-} from './account';
+import { Account, AccountType, NormalAccount } from './account';
 import KeyRepository, { InMemoryKeyRepository } from './key-repository';
 import { crypto, HDNode, Transaction } from 'bitcoinjs-lib';
 import hash160 = crypto.hash160;
@@ -17,6 +10,11 @@ import { BlockchainProxy, ObservableBlockchain } from './blockchain-proxy';
 import CoinManager from './coin-manager';
 import { isOtherUser, OuterEntity } from './primitives/entities';
 import { Satoshi } from './primitives/satoshi';
+import {
+  accountCreated,
+  debit,
+  watchingAdddressUpdated
+} from './actions/account-event';
 
 export interface AbstractAccountService<A extends Account> {
   readonly keyRepo: KeyRepository;

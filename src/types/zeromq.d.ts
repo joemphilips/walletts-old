@@ -148,13 +148,13 @@ export class Socket extends EventEmitter {
   send(msg: string | Buffer | any[], flags?: number): Socket;
 
   /**
-   * Enable monitoring of a Socket. This enables the following additional events:
+   * Enable monitoring of a Socket. This enables the following additional actions:
    * 'connect', 'connect_delay', 'connect_retry', 'listen', 'bind_error',
    * 'accept', 'accept_error', 'close', 'close_error', 'disconnect'.
    * Each event receives the parameters: (eventValue, eventEndpointAddrress, error)
    *
    * @param timer interval in ms > 0 or Undefined for default
-   * @param numOfEvents The maximum number of events to read on each interval, default is 1, use 0 for reading all events
+   * @param numOfEvents The maximum number of actions to read on each interval, default is 1, use 0 for reading all actions
    * @return for chaining
    */
   monitor(interval?: number, numOfEvents?: number): Socket;

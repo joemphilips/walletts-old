@@ -2,11 +2,11 @@ import * as bitcoin from 'bitcoinjs-lib';
 import { Config } from './config';
 import * as Logger from 'bunyan';
 import * as rx from '@joemphilips/rxjs';
-import { AbstractWallet, BasicWallet } from '../lib/wallet';
+import { AbstractWallet, BasicWallet, NormalAccountMap } from '../lib/wallet';
 import WalletRepository from '../lib/wallet-repository';
 import secureRandom from 'secure-random';
 import * as bip39 from 'bip39';
-import { Account, accountCreated, AccountType, NormalAccount } from './account';
+import { Account, AccountType, NormalAccount } from './account';
 import KeyRepository from './key-repository';
 import hash160 = bitcoin.crypto.hash160;
 import { PurposeField, SupportedCoinType } from './primitives/constants';
@@ -20,6 +20,7 @@ import NormalAccountService, {
 } from './account-service';
 import CoinManager from './coin-manager';
 import { AccountID } from './primitives/identity';
+import { accountCreated } from './actions/account-event';
 
 interface AbstractWalletService<
   W extends AbstractWallet,
@@ -92,7 +93,6 @@ export default class WalletService
     const pubKey = node.getPublicKeyBuffer();
     const wallet = new BasicWallet(
       hash160(pubKey).toString('hex'),
-      [],
       this.logger
     );
     this._save(wallet, node);
@@ -111,7 +111,6 @@ export default class WalletService
     const pubkey = node.getPublicKeyBuffer();
     const wallet = new BasicWallet(
       hash160(pubkey).toString('hex'),
-      [],
       this.logger
     );
     this._save(wallet, node);
@@ -156,7 +155,7 @@ export default class WalletService
     cointype: SupportedCoinType = SupportedCoinType.BTC
   ): Promise<BasicWallet | void> {
     if (type === AccountType.Normal) {
-      const accountIndex = wallet.accounts ? wallet.accounts.length : 0;
+      const accountIndex = wallet.accounts ? wallet.accounts.size : 0;
       const rootNode = await this.keyRepo.getHDNode(wallet.id).catch(e => {
         this.logger.error(`Account can not be created if there are no wallet!`);
         this.logger.error(`${e.toString()}`);
@@ -170,14 +169,15 @@ export default class WalletService
       );
       const account = await this.as.createFromHD(
         accountMasterHD,
-        wallet.accounts.length,
+        wallet.accounts.size,
         informationSource,
         bchProxy
       );
-      const walletWithAccount = new BasicWallet(wallet.id, [
-        ...wallet.accounts,
-        account
-      ] as ReadonlyArray<Account>);
+      const walletWithAccount = new BasicWallet(
+        wallet.id,
+        this.logger,
+        wallet.accounts.set(account.id, account)
+      );
       this._save(wallet, rootNode);
       return walletWithAccount;
     } else {
@@ -189,20 +189,15 @@ export default class WalletService
     w: BasicWallet,
     id: AccountID
   ): Promise<[BasicWallet, string, string]> {
-    const accounts = w.accounts.filter(acc => acc.id === id);
-    if (accounts.length === 0) {
+    const account = w.accounts.get(id);
+    if (!account) {
       throw new Error(`no accounts found for ${id}`);
-    } else if (1 < accounts.length) {
-      throw new Error(`2 same accounts in wallet!`);
     }
-    const accountsComplement = w.accounts.filter(acc => acc.id !== id);
-    const [a, addr, change] = await this.as.getAddressForAccount(
-      accounts[0] as NormalAccount
-    );
+    const [a, addr, change] = await this.as.getAddressForAccount(account);
     const newWallet = new BasicWallet(
       w.id,
-      [...accountsComplement, a],
-      this.logger
+      this.logger,
+      w.accounts.set(a.id, a)
     );
     return [newWallet, addr, change];
   }
@@ -256,7 +251,7 @@ export default class WalletService
     };
 
     let accountIndex = 0;
-    const accounts: Account[] = [];
+    const accounts: NormalAccountMap = new Map();
     let endSync = false;
     while (!endSync) {
       recoverAddress(
@@ -266,14 +261,14 @@ export default class WalletService
       ).then(account => {
         if (account) {
           accountIndex++;
-          accounts.push(account);
+          accounts.set(account.id, account as NormalAccount);
         } else {
           endSync = true;
         }
       });
     }
     this.logger.info(`recovered ${accountIndex} accounts from seed`);
-    return new BasicWallet(wallet.id, accounts, wallet.parentLogger);
+    return new BasicWallet(wallet.id, wallet.parentLogger, accounts);
   }
 
   private async _save(

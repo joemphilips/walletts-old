@@ -9,3 +9,4 @@ export * from './bin/uiproxy';
 export * from './lib/wallet';
 export * from './lib/wallet-service';
 export { PROTO_PATH } from './bin/grpc-common';
+export * from './lib/actions';
