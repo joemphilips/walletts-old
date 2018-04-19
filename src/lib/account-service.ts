@@ -136,8 +136,8 @@ export default class NormalAccountService
       observableBlockchain,
       this.logger
     );
-    a.next(accountCreated(a))
-    return a
+    a.next(accountCreated(a));
+    return a;
   }
 
   private async _save(id: AccountID, key: HDNode): Promise<void> {

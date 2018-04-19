@@ -14,6 +14,7 @@ import { address, Block, Out, Transaction } from 'bitcoinjs-lib';
 import CoinManager from './coin-manager';
 import { isOtherUser, OtherUser, OuterEntity } from './primitives/entities';
 import Logger = require('bunyan');
+import { DomainEvent } from './primitives/event';
 
 export enum AccountType {
   Normal
@@ -28,8 +29,8 @@ export enum AccountType {
  *   it ends up as a double spend.). So instead it returns a balance in business-logic-compatible way
  * 2. It works as an subscribable which translates blockchain event to domain event.
  *
- * Modeled as Immutable structure since those Accounts used by several people might verify
- * others signature in different process.
+ * Make it as immutable as possible, and should have less method as possible.
+ * Ideally it should be an algebraic data type.
  */
 export interface Account extends Observable<any> {
   /**
@@ -68,39 +69,44 @@ export interface Account extends Observable<any> {
 // Action creators
 export const watchingAdddressUpdated = (
   addr: string
-): watchingAddressUpdatedEvent => ({
-  type: 'WatchingAddressUpdated',
+): WatchingAddressUpdatedEvent => ({
+  type: 'watchingAddressUpdated',
   payload: { address: addr }
 });
-export const accountCreated = (a: Account): accountCreatedEvent => ({
+export const accountCreated = (a: Account): AccountCreatedEvent => ({
   type: 'accountCreated',
   payload: { id: a.id }
 });
-export const credit = (amount: Satoshi): creditEvent => ({
+export const credit = (amount: Satoshi): CreditEvent => ({
   type: 'credit',
   payload: { amount }
 });
-export const debit = (amount: Satoshi): debitEvent => ({
+export const debit = (amount: Satoshi): DebitEvent => ({
   type: 'debit',
   payload: { amount }
 });
 
-/* tslint:disable interface-over-type-literal */
-type watchingAddressUpdatedEvent = {
-  type: 'WatchingAddressUpdated';
+interface WatchingAddressUpdatedEvent extends DomainEvent {
+  type: 'watchingAddressUpdated';
   payload: { address: string };
-};
-type accountCreatedEvent = {
+}
+interface AccountCreatedEvent extends DomainEvent {
   type: 'accountCreated';
   payload: { id: AccountID };
-};
-type creditEvent = { type: 'credit'; payload: { amount: Satoshi } };
-type debitEvent = { type: 'debit'; payload: { amount: Satoshi } };
+}
+interface CreditEvent extends DomainEvent {
+  type: 'credit';
+  payload: { amount: Satoshi };
+}
+interface DebitEvent extends DomainEvent {
+  type: 'debit';
+  payload: { amount: Satoshi };
+}
 type NormalAccountEvent =
-  | watchingAddressUpdatedEvent
-  | accountCreatedEvent
-  | creditEvent
-  | debitEvent;
+  | WatchingAddressUpdatedEvent
+  | AccountCreatedEvent
+  | CreditEvent
+  | DebitEvent;
 
 const handleError = (l: Logger) => (e: any) => {
   l.error(`received error from Observabble ${e}`);
@@ -108,18 +114,19 @@ const handleError = (l: Logger) => (e: any) => {
 /**
  * This class must communicate with the blockchain only in reactive manner using ObservableBlockchain, not proactively.
  * Query to the blockchain must be delegated to CoinManager.
+ * TODO: consider using specific kind of Subject (e.g. BehaviorSubject)
  */
 export class NormalAccount extends Subject<NormalAccountEvent>
   implements Account {
-  public logger: Logger;
+  public readonly logger: Logger;
   constructor(
-    public id: AccountID,
-    public hdIndex: number,
-    public coinManager: CoinManager,
-    public observableBlockchain: ObservableBlockchain,
+    public readonly id: AccountID,
+    public readonly hdIndex: number,
+    public readonly coinManager: CoinManager,
+    public readonly observableBlockchain: ObservableBlockchain,
     logger: Logger,
-    public type = AccountType.Normal,
-    public watchingAddresses: Option<ReadonlyArray<string>> = none
+    public readonly type = AccountType.Normal,
+    public readonly watchingAddresses: Option<ReadonlyArray<string>> = none
   ) {
     super();
     this.logger = logger.child({ account: this.id });
@@ -134,6 +141,7 @@ export class NormalAccount extends Subject<NormalAccountEvent>
     return this.coinManager.total;
   }
 
+  // TODO: this can be a pure function outside of this class.
   private _handleUpdate(payload: BlockchainEvent): void {
     if (!this || !this.watchingAddresses) {
       /* tslint:disable-next-line */
@@ -141,7 +149,6 @@ export class NormalAccount extends Subject<NormalAccountEvent>
       return;
     }
     if (payload instanceof Transaction) {
-
       // check if incoming transaction is concerned to this account.
       const matchedOuts: Out[] = payload.outs.filter(o =>
         this.watchingAddresses.map(ourAddresses =>
