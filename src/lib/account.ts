@@ -29,7 +29,7 @@ export enum AccountType {
  * Make it as immutable as possible, and should have less method as possible.
  * Ideally it should be an algebraic data type.
  */
-export interface Account extends Observable<any> {
+export interface Account extends Subject<any> {
   /**
    * Usually created from it's master public key.
    */
@@ -66,6 +66,39 @@ export interface Account extends Observable<any> {
 const handleError = (l: Logger) => (e: any) => {
   l.error(`received error from Observabble ${e}`);
 };
+
+const  handleUpdate = (log: Logger) =>
+  (id: AccountID) =>
+  (watchingAddresses: ReadonlyArray<string>) =>
+    (coinManager: CoinManager) =>
+      (nextSubject: Subject<NormalAccountEvent>) =>
+      (payload: BlockchainEvent): void =>  {
+// Equivalent to CWallet::SyncTransaction in the bitcoin core.
+if (payload instanceof Transaction) {
+  // check if incoming transaction is concerned to this account.
+  const matchedOuts: Out[] = payload.outs.filter(o =>
+      watchingAddresses.some(a => a === address.fromOutputScript(o.script))
+  );
+  if (!matchedOuts) {
+    return;
+  }
+
+  const outpointWithScriptandAmount = matchedOuts.map(
+    prepareOutpointForImport(payload)
+  );
+  const totalIn = outpointWithScriptandAmount
+    .map(o => o.amount)
+    .reduce((a, b) => a.chain(s => s.credit(b)), Satoshi.fromNumber(0))
+    .fold(e => {
+      throw e;
+    }, r => r);
+  coinManager
+    .importOurOutPoints(id, outpointWithScriptandAmount)
+    .then(() => log.info(`finished importing aomunts from the blockchain`))
+    .then(() => nextSubject.next(credit(totalIn)))
+    .catch(() => nextSubject.error(`error while importing to coinManager`))
+}
+}
 /**
  * This class must communicate with the blockchain only in reactive manner using ObservableBlockchain, not proactively.
  * Query to the blockchain must be delegated to CoinManager.
@@ -86,7 +119,7 @@ export class NormalAccount extends Subject<NormalAccountEvent>
     super();
     this.logger = logger.child({ account: this.id });
     this.observableBlockchain.subscribe(
-      this._handleUpdate.bind(this),
+      handleUpdate(this.logger)(id)(this.watchingAddresses.getOrElse([]))(this.coinManager)(this),
       handleError(this.logger)
     );
     this.publish();
@@ -96,37 +129,4 @@ export class NormalAccount extends Subject<NormalAccountEvent>
     return this.coinManager.total;
   }
 
-  // TODO: this can be a pure function outside of this class.
-  private _handleUpdate(payload: BlockchainEvent): void {
-    if (!this || !this.watchingAddresses) {
-      /* tslint:disable-next-line */
-      console.log(`could not find watching address in ${this.id}`);
-      return;
-    }
-    if (payload instanceof Transaction) {
-      // check if incoming transaction is concerned to this account.
-      const matchedOuts: Out[] = payload.outs.filter(o =>
-        this.watchingAddresses.map(ourAddresses =>
-          ourAddresses.some(a => a === address.fromOutputScript(o.script))
-        )
-      );
-      if (!matchedOuts) {
-        return;
-      }
-
-      const outpointWithScriptandAmount = matchedOuts.map(
-        prepareOutpointForImport(payload)
-      );
-      const totalIn = outpointWithScriptandAmount
-        .map(o => o.amount)
-        .reduce((a, b) => a.chain(s => s.credit(b)), Satoshi.fromNumber(0))
-        .fold(e => {
-          throw e;
-        }, r => r);
-      this.coinManager
-        .importOurOutPoints(this.id, outpointWithScriptandAmount)
-        .then(() => this.next(credit(totalIn)))
-        .catch(this.error);
-    }
-  }
 }
