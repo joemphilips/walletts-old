@@ -73,6 +73,7 @@ export default class CoinManager {
   }
 
   // TODO: Implement Murch's algorithm.  refs: https://github.com/bitcoin/bitcoin/pull/10637
+  // TODO: Or, use coinsayer https://www.coinsayer.com/api
   public async pickCoinsForAmount(
     targetSatoshi: Satoshi
   ): Promise<MyWalletCoin[]> {

@@ -17,3 +17,5 @@ export enum SupportedCoinType {
 }
 
 export const FALLBACK_FEE = Satoshi.fromNumber(1000).value as Satoshi;
+
+export const GAP_LIMIT = 20;

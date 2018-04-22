@@ -17,9 +17,7 @@ export interface BlockchainProxy {
   readonly logger: Logger;
   readonly ping: () => Promise<void>;
   readonly isPruned: () => Promise<boolean>;
-  readonly getAddressesWithBalance: (
-    addresses: ReadonlyArray<string>
-  ) => Promise<SyncInfo>;
+  readonly syncPubKey: (pubkey: string) => Promise<SyncInfo>;
   readonly send: (hexTx: string) => Promise<void>;
   readonly validateAddress: (address: string) => Promise<ValidateAddressResult>;
   readonly estimateSmartFee: (

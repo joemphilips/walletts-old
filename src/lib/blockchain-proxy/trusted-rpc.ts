@@ -101,9 +101,7 @@ export class TrustedBitcoindRPC implements BlockchainProxy {
       .then(r => (r.feerate ? r.feerate : -1));
   }
 
-  public async getAddressesWithBalance(
-    addresses: ReadonlyArray<string>
-  ): Promise<SyncInfo> {
+  public async syncPubKey(publicKey: string): Promise<SyncInfo> {
     throw Error(`Not implemented !`);
   }
 

@@ -8,7 +8,7 @@ import {
   testBitcoindUsername,
   testZmqPubUrl
 } from '../test/helpers';
-import NormalAccountService from './account-service';
+import NormalAccountService, { trySyncAccount } from './account-service';
 import { InMemoryKeyRepository } from './key-repository';
 import {
   address,
@@ -28,6 +28,7 @@ import { Observable, Subject } from '@joemphilips/rxjs';
 import * as Logger from 'bunyan';
 import { some } from 'fp-ts/lib/Option';
 import { Satoshi } from './primitives/satoshi';
+import { GAP_LIMIT } from './primitives/constants';
 
 // 1. helper functions
 const createMockTx = (...out: Array<{ address: string; amount: number }>) => {
@@ -49,7 +50,9 @@ let bchProxy: TrustedBitcoindRPC;
 let logger: Logger;
 let datadir: string;
 test.before('set up AccountService test', () => {
-  [logger, datadir] = prePareTest();
+  const [parentLogger, dir] = prePareTest();
+  datadir = dir;
+  logger = parentLogger.child({ subModule: 'accountSpec' });
   service = new NormalAccountService(logger, new InMemoryKeyRepository());
   masterHD = HDNode.fromSeedHex(
     'ffffffffffffffffffffffffffffffff',
@@ -108,7 +111,8 @@ test('get address for account', async t => {
   );
 });
 
-test(`handles incoming events from the blockchain correctly`, async t => {
+test(`handles incoming transaction event from the blockchain correctly`, async t => {
+  t.plan(4);
   // prepare an account
   const mockObservable = new Subject<TransactionArrived>();
   const account = await service.createFromHD(
@@ -165,5 +169,81 @@ test(`handles incoming events from the blockchain correctly`, async t => {
     account3.balance,
     Satoshi.fromBTC(7.01).value as Satoshi,
     'an account can react to incoming transaction continually'
+  );
+
+  const mockObservable2 = new Subject<TransactionArrived>();
+  const account3recov = await service.createFromHD(
+    masterHD,
+    0,
+    mockObservable2,
+    bchProxy
+  );
+  t.is(
+    account3recov.balance,
+    Satoshi.fromNumber(0).value as Satoshi,
+    're-created account initially has 0 balance'
+  );
+  account3recov.subscribe(
+    x => {
+      if (x.type === 'syncFinished') {
+        t.is(
+          account3recov.balance,
+          Satoshi.fromNumber(0).value as Satoshi,
+          'account should have the same balance with before when re-created'
+        );
+      }
+    },
+    e => logger.error(e)
+  );
+});
+
+test('recovering account', async t => {
+  const mockObservable = new Subject<TransactionArrived>();
+  const account = await service.createFromHD(
+    masterHD,
+    5,
+    mockObservable,
+    bchProxy
+  );
+
+  // these addresses should be synced
+  const [account2, addr, change] = await service.getAddressForAccount(
+    account,
+    GAP_LIMIT
+  );
+  // these should not
+  const [account3, addr2, change2] = await service.getAddressForAccount(
+    account2,
+    GAP_LIMIT * 2 + 1
+  );
+
+  mockObservable.next(
+    createMockTx({ address: addr, amount: 1 }, { address: change, amount: 2 })
+  );
+  mockObservable.next(
+    createMockTx({ address: addr2, amount: 3 }, { address: change2, amount: 4 })
+  );
+  await sleep(10);
+  t.is(account3.balance.amount, 10);
+
+  const accountToRecover = await service.createFromHD(
+    masterHD,
+    5,
+    mockObservable,
+    bchProxy
+  );
+
+  const accountRecovered = await trySyncAccount(accountToRecover).run();
+  accountRecovered.fold(
+    e => {
+      throw e;
+    },
+    r => {
+      t.is(
+        r.balance,
+        Satoshi.fromBTC(3).value as Satoshi,
+        `account recreated from HD should synced with the blockchain up to ${GAP_LIMIT}`
+      );
+    }
   );
 });

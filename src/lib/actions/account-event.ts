@@ -43,8 +43,14 @@ export interface DebitEvent extends DomainEvent {
   payload: { amount: Satoshi };
 }
 
+export interface SyncFinished extends DomainEvent {
+  type: 'syncFinished';
+  payload: {};
+}
+
 export type NormalAccountEvent =
   | WatchingAddressUpdatedEvent
   | AccountCreatedEvent
   | CreditEvent
-  | DebitEvent;
+  | DebitEvent
+  | SyncFinished;

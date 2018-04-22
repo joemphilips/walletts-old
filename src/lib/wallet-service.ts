@@ -2,7 +2,12 @@ import * as bitcoin from 'bitcoinjs-lib';
 import { Config } from './config';
 import * as Logger from 'bunyan';
 import * as rx from '@joemphilips/rxjs';
-import { AbstractWallet, BasicWallet, NormalAccountMap } from '../lib/wallet';
+import {
+  AbstractWallet,
+  AccountMap,
+  BasicWallet,
+  NormalAccountMap
+} from '../lib/wallet';
 import WalletRepository from '../lib/wallet-repository';
 import secureRandom from 'secure-random';
 import * as bip39 from 'bip39';
@@ -16,7 +21,8 @@ import { Satoshi } from './primitives/satoshi';
 /* tslint:disable no-submodule-imports */
 import { none } from 'fp-ts/lib/Option';
 import NormalAccountService, {
-  AbstractAccountService
+  AbstractAccountService,
+  trySyncAccount
 } from './account-service';
 import CoinManager from './coin-manager';
 import { AccountID } from './primitives/identity';
@@ -120,9 +126,10 @@ export default class WalletService
   public async discoverAccounts(
     wallet: BasicWallet,
     bch: BlockchainProxy,
-    accountsInformationSource: ObservableBlockchain, // not necessary for syncing process, but required in Account.
+    accountsInformationSource: ObservableBlockchain, // not necessary for syncing process, but required for creating accounts.
     startHeight = 0,
-    stopHeight = 0
+    stopHeight = 0,
+    cointype: SupportedCoinType = SupportedCoinType.BTC
   ): Promise<BasicWallet> {
     if (await bch.isPruned()) {
       this.logger.error(`cannot recover wallet if blockchain is pruned!`);
@@ -137,8 +144,8 @@ export default class WalletService
       return wallet;
     }
 
-    const recoveredWallet = this.syncHDNode(
-      master,
+    const recoveredWallet = await this.syncHDNode(
+      master.derivePath(`${PurposeField}'/${cointype}'`),
       bch,
       wallet,
       accountsInformationSource
@@ -202,73 +209,48 @@ export default class WalletService
     return [newWallet, addr, change];
   }
 
-  // TODO: decouple this function as separate object.
-  private syncHDNode(
+  // TODO: decouple this function as a separate object.
+  private async syncHDNode(
     masternode: bitcoin.HDNode,
     proxy: BlockchainProxy,
     wallet: BasicWallet,
     accountsInformationSource: ObservableBlockchain
-  ): BasicWallet {
+  ): Promise<BasicWallet> {
     let i: number = 0;
-    let balanceSoFar = 0;
-
-    /**
-     * returns the last index of address found in the blockchain.
-     * @returns {Account | null}
-     */
-    const recoverAddress = async (
-      node: bitcoin.HDNode,
-      accountNumber: number,
-      bch: ObservableBlockchain
-    ): Promise<Account | null> => {
-      const addresses = [];
-      for (const j of Array(20)) {
-        i
-          ? addresses.push(node.derive(i + j).getAddress())
-          : addresses.push(node.derive(j).getAddress());
-      }
-      const res = await proxy.getAddressesWithBalance(addresses);
-      if (!res) {
-        const id = hash160(node.getPublicKeyBuffer()).toString('hex');
-        const manager = new CoinManager(this.logger, this.keyRepo, proxy);
-        const a = new NormalAccount(
-          id,
-          accountNumber,
-          manager,
-          bch,
-          this.logger,
-          AccountType.Normal
-        );
-        a.next(accountCreated(a));
-        return a;
-      }
-      i += res.i;
-      balanceSoFar += Object.values(res.addresses).reduce(
-        (prev, value) => prev + value,
-        0
-      );
-      return recoverAddress(node, accountNumber, bch);
-    };
-
-    let accountIndex = 0;
     const accounts: NormalAccountMap = new Map();
-    let endSync = false;
-    while (!endSync) {
-      recoverAddress(
-        masternode.derive(accountIndex),
-        accountIndex,
-        accountsInformationSource
-      ).then(account => {
-        if (account) {
-          accountIndex++;
-          accounts.set(account.id, account as NormalAccount);
-        } else {
-          endSync = true;
-        }
-      });
+
+    while (true) {
+      const accountMasterHD = masternode.derive(i);
+      const a = await this.as.createFromHD(
+        accountMasterHD,
+        i,
+        accountsInformationSource,
+        proxy
+      );
+      trySyncAccount(a)
+        .run()
+        .then(r =>
+          r.map((acc: NormalAccount) =>
+            acc.next({ type: 'syncFinished', payload: {} })
+          )
+        )
+        .catch(r =>
+          r.mapLeft((e: Error) =>
+            this.logger.error(
+              `Something went wrong while syncing the account with the blockchain. ${e}`
+            )
+          )
+        );
+      if (!a) {
+        break;
+      }
+      accounts.set(a.id, a);
+      i++;
     }
-    this.logger.info(`recovered ${accountIndex} accounts from seed`);
-    return new BasicWallet(wallet.id, wallet.parentLogger, accounts);
+
+    const w = new BasicWallet(wallet.id, wallet.parentLogger, accounts);
+    this._save(w, masternode);
+    return w;
   }
 
   private async _save(

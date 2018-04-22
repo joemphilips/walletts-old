@@ -14,7 +14,7 @@ export const MAX_SATOSHI = 21 * 1e14;
  */
 export class Satoshi {
   public static fromBTC(btc: number): Either<BalanceError, Satoshi> {
-    const satoshiNum = parseFloat((btc * 100000000.0).toFixed(9));
+    const satoshiNum = parseFloat((btc * 10 ** 8).toFixed(8));
     return Satoshi.fromNumber(satoshiNum);
   }
 
@@ -48,7 +48,7 @@ export class Satoshi {
   }
 
   public toBTC(): number {
-    return parseFloat((this.amount / 100000000.0).toFixed(9));
+    return parseFloat((this.amount / 10 ** 8).toFixed(8));
   }
 
   public toString(): string {

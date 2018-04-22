@@ -67,38 +67,39 @@ const handleError = (l: Logger) => (e: any) => {
   l.error(`received error from Observabble ${e}`);
 };
 
-const  handleUpdate = (log: Logger) =>
-  (id: AccountID) =>
-  (watchingAddresses: ReadonlyArray<string>) =>
-    (coinManager: CoinManager) =>
-      (nextSubject: Subject<NormalAccountEvent>) =>
-      (payload: BlockchainEvent): void =>  {
-// Equivalent to CWallet::SyncTransaction in the bitcoin core.
-if (payload instanceof Transaction) {
-  // check if incoming transaction is concerned to this account.
-  const matchedOuts: Out[] = payload.outs.filter(o =>
+const handleUpdate = (log: Logger) => (id: AccountID) => (
+  watchingAddresses: ReadonlyArray<string>
+) => (coinManager: CoinManager) => (
+  nextSubject: Subject<NormalAccountEvent>
+) => (payload: BlockchainEvent): void => {
+  // Equivalent to CWallet::SyncTransaction in the bitcoin core.
+  if (payload instanceof Transaction) {
+    // check if incoming transaction is concerned to this account.
+    const matchedOuts: Out[] = payload.outs.filter(o =>
       watchingAddresses.some(a => a === address.fromOutputScript(o.script))
-  );
-  if (!matchedOuts) {
-    return;
-  }
+    );
+    if (!matchedOuts) {
+      return;
+    }
 
-  const outpointWithScriptandAmount = matchedOuts.map(
-    prepareOutpointForImport(payload)
-  );
-  const totalIn = outpointWithScriptandAmount
-    .map(o => o.amount)
-    .reduce((a, b) => a.chain(s => s.credit(b)), Satoshi.fromNumber(0))
-    .fold(e => {
-      throw e;
-    }, r => r);
-  coinManager
-    .importOurOutPoints(id, outpointWithScriptandAmount)
-    .then(() => log.info(`finished importing aomunts from the blockchain`))
-    .then(() => nextSubject.next(credit(totalIn)))
-    .catch(() => nextSubject.error(`error while importing to coinManager`))
-}
-}
+    const outpointWithScriptandAmount = matchedOuts.map(
+      prepareOutpointForImport(payload)
+    );
+    const totalIn = outpointWithScriptandAmount
+      .map(o => o.amount)
+      .reduce((a, b) => a.chain(s => s.credit(b)), Satoshi.fromNumber(0))
+      .fold(e => {
+        throw e;
+      }, r => r);
+    coinManager
+      .importOurOutPoints(id, outpointWithScriptandAmount)
+      .then(() => log.info(`finished importing aomunts from the blockchain`))
+      .then(() => nextSubject.next(credit(totalIn)))
+      .catch(() => nextSubject.error(`error while importing to coinManager`));
+  } else {
+    throw new Error(`Not supported yet!`);
+  }
+};
 /**
  * This class must communicate with the blockchain only in reactive manner using ObservableBlockchain, not proactively.
  * Query to the blockchain must be delegated to CoinManager.
@@ -119,7 +120,9 @@ export class NormalAccount extends Subject<NormalAccountEvent>
     super();
     this.logger = logger.child({ account: this.id });
     this.observableBlockchain.subscribe(
-      handleUpdate(this.logger)(id)(this.watchingAddresses.getOrElse([]))(this.coinManager)(this),
+      handleUpdate(this.logger)(id)(this.watchingAddresses.getOrElse([]))(
+        this.coinManager
+      )(this),
       handleError(this.logger)
     );
     this.publish();
@@ -128,5 +131,4 @@ export class NormalAccount extends Subject<NormalAccountEvent>
   public get balance(): Satoshi {
     return this.coinManager.total;
   }
-
 }

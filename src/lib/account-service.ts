@@ -15,6 +15,9 @@ import {
   debit,
   watchingAdddressUpdated
 } from './actions/account-event';
+import { TaskEither } from 'fp-ts/lib/TaskEither';
+import { Either, left } from 'fp-ts/lib/Either';
+import { Task } from 'fp-ts/lib/Task';
 
 export interface AbstractAccountService<A extends Account> {
   readonly keyRepo: KeyRepository;
@@ -116,6 +119,16 @@ export default class NormalAccountService
     return [newAccount, address, changeAddress];
   }
 
+  /**
+   * create new account from HDNode.
+   * It tries to recover the balance from the blockchain.
+   * but before tring, it will simply returns the account first.
+   * @param {HDNode} masterHD
+   * @param {number} index
+   * @param {ObservableBlockchain} observableBlockchain
+   * @param {BlockchainProxy} bchProxy
+   * @returns {Promise<NormalAccount>}
+   */
   public async createFromHD(
     masterHD: HDNode,
     index: number,
@@ -147,3 +160,16 @@ export default class NormalAccountService
     await this.keyRepo.setHDNode(id, key);
   }
 }
+
+export const trySyncAccount = (
+  account: Account
+): TaskEither<Error, Account> => {
+  const task = new Task(syncAccount(account));
+  return new TaskEither<Error, Account>(task);
+};
+
+const syncAccount = (account: Account) => async (): Promise<
+  Either<Error, Account>
+> => {
+  return left(new Error('not implemented!'));
+};
