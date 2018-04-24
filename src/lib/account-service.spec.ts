@@ -233,7 +233,7 @@ test('recovering account', async t => {
     bchProxy
   );
 
-  const accountRecovered = await trySyncAccount(accountToRecover).run();
+  const accountRecovered = await service.trySyncAccount(accountToRecover).run();
   accountRecovered.fold(
     e => {
       throw e;

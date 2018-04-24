@@ -2,7 +2,12 @@ import { AccountID } from './primitives/identity';
 import { Satoshi } from './primitives/satoshi';
 /* tslint:disable:no-submodule-imports */
 import { none, Option } from 'fp-ts/lib/Option';
-import { Observable, Subject } from '@joemphilips/rxjs';
+import {
+  BehaviorSubject,
+  Observable,
+  ReplaySubject,
+  Subject
+} from '@joemphilips/rxjs';
 import {
   BlockchainEvent,
   ObservableBlockchain,

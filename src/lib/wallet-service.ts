@@ -21,8 +21,7 @@ import { Satoshi } from './primitives/satoshi';
 /* tslint:disable no-submodule-imports */
 import { none } from 'fp-ts/lib/Option';
 import NormalAccountService, {
-  AbstractAccountService,
-  trySyncAccount
+  AbstractAccountService
 } from './account-service';
 import CoinManager from './coin-manager';
 import { AccountID } from './primitives/identity';
@@ -227,7 +226,8 @@ export default class WalletService
         accountsInformationSource,
         proxy
       );
-      trySyncAccount(a)
+      this.as
+        .trySyncAccount(a)
         .run()
         .then(r =>
           r.map((acc: NormalAccount) =>

@@ -151,6 +151,15 @@ export default class NormalAccountService
     return a;
   }
 
+  public trySyncAccount(account: Account): TaskEither<Error, Account> {
+    const task = new Task(this.syncAccount(account));
+    return new TaskEither<Error, Account>(task);
+  }
+
+  private syncAccount(account: Account): Either<Error, Account> {
+    return left(new Error('not implemented!'));
+  }
+
   private async _save(id: AccountID, key: HDNode): Promise<void> {
     this.logger.debug(
       `going to save account ${id} with key ${JSON.stringify(
@@ -160,16 +169,3 @@ export default class NormalAccountService
     await this.keyRepo.setHDNode(id, key);
   }
 }
-
-export const trySyncAccount = (
-  account: Account
-): TaskEither<Error, Account> => {
-  const task = new Task(syncAccount(account));
-  return new TaskEither<Error, Account>(task);
-};
-
-const syncAccount = (account: Account) => async (): Promise<
-  Either<Error, Account>
-> => {
-  return left(new Error('not implemented!'));
-};
