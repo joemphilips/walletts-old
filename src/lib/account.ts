@@ -17,6 +17,7 @@ import { address, Out, Transaction } from 'bitcoinjs-lib';
 import CoinManager from './coin-manager';
 import { credit, NormalAccountEvent } from './actions/account-event';
 import Logger = require('bunyan');
+import { Either } from 'fp-ts/lib/Either';
 
 export enum AccountType {
   Normal
@@ -52,10 +53,6 @@ export interface Account extends Subject<any> {
    */
   readonly coinManager: CoinManager;
   /**
-   * Account must subscribe to this to be aware of the world state (the blockchain).
-   */
-  readonly observableBlockchain: ObservableBlockchain;
-  /**
    * A total BTC amount this account holds.
    */
   readonly balance: Satoshi;
@@ -72,39 +69,70 @@ const handleError = (l: Logger) => (e: any) => {
   l.error(`received error from Observabble ${e}`);
 };
 
-const handleUpdate = (log: Logger) => (id: AccountID) => (
-  watchingAddresses: ReadonlyArray<string>
-) => (coinManager: CoinManager) => (
-  nextSubject: Subject<NormalAccountEvent>
+const handleIncomingEvent = (log: Logger) => (
+  a: Account,
+  infoSource: ObservableBlockchain
 ) => (payload: BlockchainEvent): void => {
-  // Equivalent to CWallet::SyncTransaction in the bitcoin core.
   if (payload instanceof Transaction) {
-    // check if incoming transaction is concerned to this account.
-    const matchedOuts: Out[] = payload.outs.filter(o =>
-      watchingAddresses.some(a => a === address.fromOutputScript(o.script))
+    handleIncomingTx(
+      payload,
+      a.watchingAddresses.getOrElse([]),
+      a.coinManager,
+      a,
+      log
     );
-    if (!matchedOuts) {
-      return;
-    }
-
-    const outpointWithScriptandAmount = matchedOuts.map(
-      prepareOutpointForImport(payload)
-    );
-    const totalIn = outpointWithScriptandAmount
-      .map(o => o.amount)
-      .reduce((a, b) => a.chain(s => s.credit(b)), Satoshi.fromNumber(0))
-      .fold(e => {
-        throw e;
-      }, r => r);
-    coinManager
-      .importOurOutPoints(id, outpointWithScriptandAmount)
-      .then(() => log.info(`finished importing aomunts from the blockchain`))
-      .then(() => nextSubject.next(credit(totalIn)))
-      .catch(() => nextSubject.error(`error while importing to coinManager`));
   } else {
     throw new Error(`Not supported yet!`);
   }
 };
+
+const handleIncomingTx = (
+  payload: Transaction,
+  watchingAddresses: ReadonlyArray<string>,
+  coinManager: CoinManager,
+  account: NormalAccount,
+  log: Logger
+) => {
+  // check if incoming transaction is concerned to this account.
+  const matchedOuts: Out[] = payload.outs.filter(o =>
+    watchingAddresses.some(a => a === address.fromOutputScript(o.script))
+  );
+  if (!matchedOuts) {
+    return;
+  }
+
+  const outpointWithScriptandAmount = matchedOuts.map(
+    prepareOutpointForImport(payload)
+  );
+  const totalIn = outpointWithScriptandAmount
+    .map(o => o.amount)
+    .reduce((a, b) => a.chain(s => s.credit(b)), Satoshi.fromNumber(0))
+    .fold(e => {
+      throw e;
+    }, r => r);
+  coinManager
+    .importOurOutPoints(account.id, outpointWithScriptandAmount)
+    .then(() => log.info(`finished importing aomunts from the blockchain`))
+    .then(() => account.next(credit(totalIn)))
+    .catch(() => account.error(`error while importing to coinManager`));
+};
+
+export const subscribeToBlockchain = (
+  a: Account,
+  infoSource: ObservableBlockchain,
+  logger: Logger
+): Account => {
+  const subsc = infoSource.subscribe(
+    handleIncomingEvent(logger)(a, infoSource),
+    handleError(logger),
+    () =>
+      logger.error(
+        `received onCompleted event from the Blockchain which should not happen`
+      )
+  );
+  return a;
+};
+
 /**
  * This class must communicate with the blockchain only in reactive manner using ObservableBlockchain, not proactively.
  * Query to the blockchain must be delegated to CoinManager.
@@ -117,19 +145,12 @@ export class NormalAccount extends Subject<NormalAccountEvent>
     public readonly id: AccountID,
     public readonly hdIndex: number,
     public readonly coinManager: CoinManager,
-    public readonly observableBlockchain: ObservableBlockchain,
     logger: Logger,
     public readonly type = AccountType.Normal,
     public readonly watchingAddresses: Option<ReadonlyArray<string>> = none
   ) {
     super();
     this.logger = logger.child({ account: this.id });
-    this.observableBlockchain.subscribe(
-      handleUpdate(this.logger)(id)(this.watchingAddresses.getOrElse([]))(
-        this.coinManager
-      )(this),
-      handleError(this.logger)
-    );
     this.publish();
   }
 

@@ -1,4 +1,9 @@
-import { Account, AccountType, NormalAccount } from './account';
+import {
+  Account,
+  AccountType,
+  NormalAccount,
+  subscribeToBlockchain
+} from './account';
 import KeyRepository, { InMemoryKeyRepository } from './key-repository';
 import { crypto, HDNode, Transaction } from 'bitcoinjs-lib';
 import hash160 = crypto.hash160;
@@ -21,7 +26,11 @@ import { Task } from 'fp-ts/lib/Task';
 
 export interface AbstractAccountService<A extends Account> {
   readonly keyRepo: KeyRepository;
-  getAddressForAccount: (a: A, index: number) => Promise<[A, string, string]>;
+  getAddressForAccount: (
+    a: A,
+    observableBlockchain: ObservableBlockchain,
+    index: number
+  ) => Promise<[A, string, string]>;
   createFromHD: (
     masterHD: HDNode,
     index: number,
@@ -31,7 +40,8 @@ export interface AbstractAccountService<A extends Account> {
   pay: (
     from: A,
     amount: Satoshi,
-    destinations: ReadonlyArray<OuterEntity>
+    destinations: ReadonlyArray<OuterEntity>,
+    observableBlockchain: ObservableBlockchain
   ) => Promise<A>;
 }
 
@@ -45,7 +55,8 @@ export default class NormalAccountService
   public async pay(
     from: NormalAccount,
     amount: Satoshi,
-    destinations: ReadonlyArray<OuterEntity>
+    destinations: ReadonlyArray<OuterEntity>,
+    observableBlockchain: ObservableBlockchain
   ): Promise<NormalAccount> {
     if (destinations.some(d => !isOtherUser(d))) {
       throw new Error(`Right now, only paying to other Users is supported`);
@@ -58,7 +69,8 @@ export default class NormalAccountService
     }));
 
     const [updatedAccount, _, changeAddress] = await this.getAddressForAccount(
-      from
+      from,
+      observableBlockchain
     );
     const txResult = await from.coinManager.createTx(
       from.id,
@@ -69,20 +81,29 @@ export default class NormalAccountService
     updatedAccount.coinManager
       .broadCast(txResult)
       .then(() => updatedAccount.next(debit(amount)))
-      .catch(e => `Failed to broadcast TX! the error was ${e.toString()}`);
+      .catch(
+        (e: Error) => `Failed to broadcast TX! the error was ${e.toString()}`
+      );
     return new NormalAccount(
       updatedAccount.id,
       updatedAccount.hdIndex,
       updatedAccount.coinManager,
-      updatedAccount.observableBlockchain,
       this.logger,
       updatedAccount.type,
       updatedAccount.watchingAddresses
     );
   }
 
+  /**
+   * TODO: make less anemic by using Kleisli composition
+   * @param {NormalAccount} a
+   * @param {ObservableBlockchain} observableBlockchain
+   * @param {number} index
+   * @returns {Promise<[NormalAccount , string , string]>}
+   */
   public async getAddressForAccount(
     a: NormalAccount,
+    observableBlockchain: ObservableBlockchain,
     index?: number
   ): Promise<[NormalAccount, string, string]> {
     const nextAddreessindex = index
@@ -105,14 +126,17 @@ export default class NormalAccountService
         `could not retrieve address! This account is not saved to repo!`
       );
     }
-    const newAccount = new NormalAccount(
-      a.id,
-      a.hdIndex,
-      a.coinManager,
-      a.observableBlockchain,
-      this.logger,
-      AccountType.Normal,
-      some([...a.watchingAddresses.getOrElse([]), address, changeAddress])
+    const newAccount = subscribeToBlockchain(
+      new NormalAccount(
+        a.id,
+        a.hdIndex,
+        a.coinManager,
+        this.logger,
+        AccountType.Normal,
+        some([...a.watchingAddresses.getOrElse([]), address, changeAddress])
+      ),
+      observableBlockchain,
+      this.logger
     );
     newAccount.next(watchingAdddressUpdated(address));
     newAccount.next(watchingAdddressUpdated(changeAddress));
@@ -140,10 +164,8 @@ export default class NormalAccountService
     const coinManager = new CoinManager(this.logger, this.keyRepo, bchProxy);
     this.logger.debug(`Account ${id} has been created from HD`);
     await this._save(id, masterHD);
-    const a = new NormalAccount(
-      id,
-      index,
-      coinManager,
+    const a = subscribeToBlockchain(
+      new NormalAccount(id, index, coinManager, this.logger),
       observableBlockchain,
       this.logger
     );

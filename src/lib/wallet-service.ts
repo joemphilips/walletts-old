@@ -16,7 +16,11 @@ import KeyRepository from './key-repository';
 import hash160 = bitcoin.crypto.hash160;
 import { PurposeField, SupportedCoinType } from './primitives/constants';
 import * as util from 'util';
-import { BlockchainProxy, ObservableBlockchain } from './blockchain-proxy';
+import {
+  BlockchainProxy,
+  getObservableBlockchain,
+  ObservableBlockchain
+} from './blockchain-proxy';
 import { Satoshi } from './primitives/satoshi';
 /* tslint:disable no-submodule-imports */
 import { none } from 'fp-ts/lib/Option';
@@ -199,7 +203,10 @@ export default class WalletService
     if (!account) {
       throw new Error(`no accounts found for ${id}`);
     }
-    const [a, addr, change] = await this.as.getAddressForAccount(account);
+    const [a, addr, change] = await this.as.getAddressForAccount(
+      account,
+      getObservableBlockchain(this.cfg.subscriptionURL)
+    );
     const newWallet = new BasicWallet(
       w.id,
       this.logger,
@@ -213,7 +220,7 @@ export default class WalletService
     masternode: bitcoin.HDNode,
     proxy: BlockchainProxy,
     wallet: BasicWallet,
-    accountsInformationSource: ObservableBlockchain
+    observableBlockchain: ObservableBlockchain
   ): Promise<BasicWallet> {
     let i: number = 0;
     const accounts: NormalAccountMap = new Map();
@@ -223,7 +230,7 @@ export default class WalletService
       const a = await this.as.createFromHD(
         accountMasterHD,
         i,
-        accountsInformationSource,
+        observableBlockchain,
         proxy
       );
       this.as

@@ -8,7 +8,7 @@ import {
   testBitcoindUsername,
   testZmqPubUrl
 } from '../test/helpers';
-import NormalAccountService, { trySyncAccount } from './account-service';
+import NormalAccountService from './account-service';
 import { InMemoryKeyRepository } from './key-repository';
 import {
   address,
@@ -91,6 +91,7 @@ test('get address for account', async t => {
   const account = await service.createFromHD(masterHD, 0, infoSource, bchProxy);
   const [account2, addr, change] = await service.getAddressForAccount(
     account,
+    infoSource,
     0
   );
   const addr2 = masterHD
@@ -136,6 +137,7 @@ test(`handles incoming transaction event from the blockchain correctly`, async t
   // get an address and pay to it.
   const [account2, addr, change] = await service.getAddressForAccount(
     account,
+    infoSource,
     0
   );
   const tx = createMockTx(
@@ -154,6 +156,7 @@ test(`handles incoming transaction event from the blockchain correctly`, async t
   // do the same thing again
   const [account3, addr2, change2] = await service.getAddressForAccount(
     account2,
+    infoSource,
     1
   );
   logger.info(
@@ -209,11 +212,13 @@ test('recovering account', async t => {
   // these addresses should be synced
   const [account2, addr, change] = await service.getAddressForAccount(
     account,
+    infoSource,
     GAP_LIMIT
   );
   // these should not
   const [account3, addr2, change2] = await service.getAddressForAccount(
     account2,
+    infoSource,
     GAP_LIMIT * 2 + 1
   );
 

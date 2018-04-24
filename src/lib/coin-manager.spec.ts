@@ -175,7 +175,10 @@ test('create transaction and broadcast, then check the balance', async (t: Execu
     obs,
     t.context.bch
   );
-  const [account2, _, changeAddress] = await as.getAddressForAccount(account);
+  const [account2, _, changeAddress] = await as.getAddressForAccount(
+    account,
+    getObservableBlockchain(testZmqPubUrl)
+  );
 
   // 2. set coins
   const num = 1;
@@ -214,7 +217,10 @@ test('import outpoint as its own coin.', async (t: ExecutionContext<
   const as = new NormalAccountService(logger, t.context.keyRepo);
   const obs = getObservableBlockchain(testZmqPubUrl);
   const a1 = await as.createFromHD(t.context.masterHD, 0, obs, t.context.bch);
-  const [a2, addr, change] = await as.getAddressForAccount(a1);
+  const [a2, addr, change] = await as.getAddressForAccount(
+    a1,
+    getObservableBlockchain(testZmqPubUrl)
+  );
 
   const outpoints = [
     {
