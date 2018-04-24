@@ -43,6 +43,12 @@ export interface Config {
    * specify which blockchain to use.
    */
   readonly network: 'mainnet' | 'testnet3';
+
+  /**
+   * zeromq endpoint for bitcoin core, websocket for bcoin.
+   */
+
+  readonly subscriptionURL: string;
 }
 
 // paths
@@ -70,7 +76,8 @@ const defaultMap: Config = {
   port: defaultPort,
   ip: 'localhost',
   url: 'locahost:' + defaultPort,
-  network: 'testnet3'
+  network: 'testnet3',
+  subscriptionURL: 'tcp://127.0.0.1:28332'
 };
 
 function takeWithPriority<K extends keyof Config>(
@@ -110,6 +117,7 @@ export default function loadConfig(opts: Partial<Config>): Config {
   const port = takeWithPriority(opts, fileConf, 'port');
   const ip = takeWithPriority(opts, fileConf, 'ip');
   const url = ip + ':' + port;
+  const subscriptionURL = takeWithPriority(opts, fileConf, 'subscriptionURL');
 
   if (!nodeUrl.parse(url)) {
     throw new ConfigError(`Invalid URL ${url} !`);
@@ -127,6 +135,7 @@ export default function loadConfig(opts: Partial<Config>): Config {
     network,
     port,
     ip,
-    url
+    url,
+    subscriptionURL
   };
 }
