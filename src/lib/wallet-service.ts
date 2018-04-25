@@ -234,7 +234,7 @@ export default class WalletService
         proxy
       );
       this.as
-        .trySyncAccount(a)
+        .getSyncAccountTask(a)
         .run()
         .then(r =>
           r.map((acc: NormalAccount) =>

@@ -173,13 +173,25 @@ export default class NormalAccountService
     return a;
   }
 
-  public trySyncAccount(account: Account): TaskEither<Error, Account> {
-    const task = new Task(this.syncAccount(account));
-    return new TaskEither<Error, Account>(task);
+  public getSyncAccountTask(
+    account: Account,
+    bchProxy: BlockchainProxy,
+    observableBlockchain: ObservableBlockchain
+  ): TaskEither<Error, Account> {
+    return new TaskEither(
+      new Task(() =>
+        this.promiseSyncAccount(account, bchProxy, observableBlockchain)
+      )
+    );
   }
 
-  private syncAccount(account: Account): Either<Error, Account> {
-    return left(new Error('not implemented!'));
+  private async promiseSyncAccount(
+    a: Account,
+    bchProxy: BlockchainProxy,
+    observableBlockchain: ObservableBlockchain
+  ): Promise<Either<Error, Account>> {
+
+    return left(new Error(`sync Account not implemented yet !`));
   }
 
   private async _save(id: AccountID, key: HDNode): Promise<void> {

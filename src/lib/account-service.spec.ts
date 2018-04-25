@@ -29,6 +29,7 @@ import * as Logger from 'bunyan';
 import { some } from 'fp-ts/lib/Option';
 import { Satoshi } from './primitives/satoshi';
 import { GAP_LIMIT } from './primitives/constants';
+import { Either } from 'fp-ts/lib/Either';
 
 // 1. helper functions
 const createMockTx = (...out: Array<{ address: string; amount: number }>) => {
@@ -238,7 +239,9 @@ test('recovering account', async t => {
     bchProxy
   );
 
-  const accountRecovered = await service.trySyncAccount(accountToRecover).run();
+  const accountRecovered = await service
+    .getSyncAccountTask(accountToRecover)
+    .run();
   accountRecovered.fold(
     e => {
       throw e;

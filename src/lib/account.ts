@@ -71,7 +71,6 @@ const handleError = (l: Logger) => (e: any) => {
 
 const handleIncomingEvent = (log: Logger) => (
   a: Account,
-  infoSource: ObservableBlockchain
 ) => (payload: BlockchainEvent): void => {
   if (payload instanceof Transaction) {
     handleIncomingTx(
@@ -123,7 +122,7 @@ export const subscribeToBlockchain = (
   logger: Logger
 ): Account => {
   const subsc = infoSource.subscribe(
-    handleIncomingEvent(logger)(a, infoSource),
+    handleIncomingEvent(logger)(a),
     handleError(logger),
     () =>
       logger.error(
