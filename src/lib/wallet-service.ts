@@ -218,7 +218,7 @@ export default class WalletService
   // TODO: decouple this function as a separate object.
   private async syncHDNode(
     masternode: bitcoin.HDNode,
-    proxy: BlockchainProxy,
+    bchProxy: BlockchainProxy,
     wallet: BasicWallet,
     observableBlockchain: ObservableBlockchain
   ): Promise<BasicWallet> {
@@ -231,10 +231,10 @@ export default class WalletService
         accountMasterHD,
         i,
         observableBlockchain,
-        proxy
+        bchProxy
       );
       this.as
-        .getSyncAccountTask(a)
+        .getSyncAccountTask(a, bchProxy, observableBlockchain)
         .run()
         .then(r =>
           r.map((acc: NormalAccount) =>

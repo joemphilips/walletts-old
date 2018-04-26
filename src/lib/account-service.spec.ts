@@ -240,7 +240,7 @@ test('recovering account', async t => {
   );
 
   const accountRecovered = await service
-    .getSyncAccountTask(accountToRecover)
+    .getSyncAccountTask(accountToRecover, bchProxy, mockObservable)
     .run();
   accountRecovered.fold(
     e => {

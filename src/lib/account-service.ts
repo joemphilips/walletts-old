@@ -190,7 +190,6 @@ export default class NormalAccountService
     bchProxy: BlockchainProxy,
     observableBlockchain: ObservableBlockchain
   ): Promise<Either<Error, Account>> {
-
     return left(new Error(`sync Account not implemented yet !`));
   }
 

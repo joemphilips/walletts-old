@@ -69,9 +69,9 @@ const handleError = (l: Logger) => (e: any) => {
   l.error(`received error from Observabble ${e}`);
 };
 
-const handleIncomingEvent = (log: Logger) => (
-  a: Account,
-) => (payload: BlockchainEvent): void => {
+const handleIncomingEvent = (log: Logger) => (a: Account) => (
+  payload: BlockchainEvent
+): void => {
   if (payload instanceof Transaction) {
     handleIncomingTx(
       payload,
@@ -116,6 +116,7 @@ const handleIncomingTx = (
     .catch(() => account.error(`error while importing to coinManager`));
 };
 
+// TODO: this is not working since subscription will be discarded when the function returns
 export const subscribeToBlockchain = (
   a: Account,
   infoSource: ObservableBlockchain,
