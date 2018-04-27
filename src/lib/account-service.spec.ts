@@ -1,4 +1,4 @@
-import test from 'ava';
+import anyTest, { ExecutionContext, TestInterface } from 'ava';
 import {
   prePareTest,
   sleep,
@@ -8,7 +8,9 @@ import {
   testBitcoindUsername,
   testZmqPubUrl
 } from '../test/helpers';
-import NormalAccountService from './account-service';
+import NormalAccountService, {
+  AbstractAccountService
+} from './account-service';
 import { InMemoryKeyRepository } from './key-repository';
 import {
   address,
@@ -44,17 +46,17 @@ const createMockTx = (...out: Array<{ address: string; amount: number }>) => {
 };
 
 // 2. setup
-let service: NormalAccountService;
+const test = anyTest as TestInterface<NormalAccountServiceTestContext>;
+
 let masterHD: HDNode;
 let infoSource: ObservableBlockchain;
 let bchProxy: TrustedBitcoindRPC;
 let logger: Logger;
 let datadir: string;
-test.before('set up AccountService test', () => {
+test.before('setup AccountService test', () => {
   const [parentLogger, dir] = prePareTest();
   datadir = dir;
   logger = parentLogger.child({ subModule: 'accountSpec' });
-  service = new NormalAccountService(logger, new InMemoryKeyRepository());
   masterHD = HDNode.fromSeedHex(
     'ffffffffffffffffffffffffffffffff',
     networks.testnet
@@ -72,15 +74,27 @@ test.before('set up AccountService test', () => {
   );
 });
 
+interface NormalAccountServiceTestContext {
+  service: NormalAccountService;
+}
+
+test.beforeEach(
+  'setup AccountService test',
+  (t: ExecutionContext<NormalAccountServiceTestContext>) => {
+    t.context.service = new NormalAccountService(
+      logger,
+      new InMemoryKeyRepository()
+    );
+    t.context.service.setBlockchain(bchProxy, infoSource);
+  }
+);
+
 // 3. actual tests
-test('create from hd', async t => {
-  const account = await service.createFromHD(masterHD, 0, infoSource, bchProxy);
-  const account2 = await service.createFromHD(
-    masterHD,
-    1,
-    infoSource,
-    bchProxy
-  );
+test('create from hd', async (t: ExecutionContext<
+  NormalAccountServiceTestContext
+>) => {
+  const account = await t.context.service.createFromHD(masterHD, 0);
+  const account2 = await t.context.service.createFromHD(masterHD, 1);
   t.not(
     account.id,
     account2.id,
@@ -89,10 +103,9 @@ test('create from hd', async t => {
 });
 
 test('get address for account', async t => {
-  const account = await service.createFromHD(masterHD, 0, infoSource, bchProxy);
-  const [account2, addr, change] = await service.getAddressForAccount(
+  const account = await t.context.service.createFromHD(masterHD, 0);
+  const [account2, addr, change] = await t.context.service.getAddressForAccount(
     account,
-    infoSource,
     0
   );
   const addr2 = masterHD
@@ -117,12 +130,11 @@ test(`handles incoming transaction event from the blockchain correctly`, async t
   t.plan(4);
   // prepare an account
   const mockObservable = new Subject<TransactionArrived>();
-  const account = await service.createFromHD(
-    masterHD,
-    0,
-    mockObservable,
-    bchProxy
-  );
+
+  // create service with mock Observable injected.
+  const s = new NormalAccountService(logger, new InMemoryKeyRepository());
+  s.setBlockchain(bchProxy, mockObservable);
+  const account = await s.createFromHD(masterHD, 0);
 
   // listen to the account event
   account.subscribe(
@@ -136,11 +148,7 @@ test(`handles incoming transaction event from the blockchain correctly`, async t
   );
 
   // get an address and pay to it.
-  const [account2, addr, change] = await service.getAddressForAccount(
-    account,
-    infoSource,
-    0
-  );
+  const [account2, addr, change] = await s.getAddressForAccount(account, 0);
   const tx = createMockTx(
     { address: addr, amount: 0.5 },
     { address: change, amount: 1.5 }
@@ -155,14 +163,11 @@ test(`handles incoming transaction event from the blockchain correctly`, async t
   );
 
   // do the same thing again
-  const [account3, addr2, change2] = await service.getAddressForAccount(
-    account2,
-    infoSource,
-    1
-  );
+  const [account3, addr2, change2] = await s.getAddressForAccount(account2, 1);
   logger.info(
     `account3 is watching ${JSON.stringify(account3.watchingAddresses)}`
   );
+
   const tx2 = createMockTx(
     { address: addr2, amount: 0.01 },
     { address: change2, amount: 5 }
@@ -176,12 +181,9 @@ test(`handles incoming transaction event from the blockchain correctly`, async t
   );
 
   const mockObservable2 = new Subject<TransactionArrived>();
-  const account3recov = await service.createFromHD(
-    masterHD,
-    0,
-    mockObservable2,
-    bchProxy
-  );
+  const s2 = new NormalAccountService(logger, new InMemoryKeyRepository());
+  s2.setBlockchain(bchProxy, mockObservable2);
+  const account3recov = await s2.createFromHD(masterHD, 0);
   t.is(
     account3recov.balance,
     Satoshi.fromNumber(0).value as Satoshi,
@@ -203,23 +205,18 @@ test(`handles incoming transaction event from the blockchain correctly`, async t
 
 test('recovering account', async t => {
   const mockObservable = new Subject<TransactionArrived>();
-  const account = await service.createFromHD(
-    masterHD,
-    5,
-    mockObservable,
-    bchProxy
-  );
+  const s = new NormalAccountService(logger, new InMemoryKeyRepository());
+  s.setBlockchain(bchProxy, mockObservable);
+  const account = await s.createFromHD(masterHD, 5);
 
   // these addresses should be synced
-  const [account2, addr, change] = await service.getAddressForAccount(
+  const [account2, addr, change] = await s.getAddressForAccount(
     account,
-    infoSource,
     GAP_LIMIT
   );
   // these should not
-  const [account3, addr2, change2] = await service.getAddressForAccount(
+  const [account3, addr2, change2] = await s.getAddressForAccount(
     account2,
-    infoSource,
     GAP_LIMIT * 2 + 1
   );
 
@@ -232,16 +229,9 @@ test('recovering account', async t => {
   await sleep(10);
   t.is(account3.balance.amount, 10);
 
-  const accountToRecover = await service.createFromHD(
-    masterHD,
-    5,
-    mockObservable,
-    bchProxy
-  );
+  const accountToRecover = await s.createFromHD(masterHD, 5);
 
-  const accountRecovered = await service
-    .getSyncAccountTask(accountToRecover, bchProxy, mockObservable)
-    .run();
+  const accountRecovered = await s.getSyncAccountTask(accountToRecover).run();
   accountRecovered.fold(
     e => {
       throw e;

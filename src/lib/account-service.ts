@@ -26,38 +26,58 @@ import { Task } from 'fp-ts/lib/Task';
 
 export interface AbstractAccountService<A extends Account> {
   readonly keyRepo: KeyRepository;
-  getAddressForAccount: (
-    a: A,
-    observableBlockchain: ObservableBlockchain,
-    index: number
-  ) => Promise<[A, string, string]>;
-  createFromHD: (
-    masterHD: HDNode,
-    index: number,
-    observableBlockchain: ObservableBlockchain,
-    bchProxy: BlockchainProxy
-  ) => Promise<A>;
+
+  /**
+   * These three are to enable instantiating service before setting up the blockchain.
+   * But it is ugly since it makes the class mutable, but otherwise every method requires redundant parameters.
+   * Ideally we should use something like State monad to handle this.
+   */
+  observableBlockchain: ObservableBlockchain | null;
+  bchProxy: BlockchainProxy | null;
+  setBlockchain: (
+    bchProxy: BlockchainProxy,
+    observableBlockchain: ObservableBlockchain
+  ) => void;
+
+  getAddressForAccount: (a: A, index: number) => Promise<[A, string, string]>;
+  createFromHD: (masterHD: HDNode, index: number) => Promise<A>;
   pay: (
     from: A,
     amount: Satoshi,
-    destinations: ReadonlyArray<OuterEntity>,
-    observableBlockchain: ObservableBlockchain
+    destinations: ReadonlyArray<OuterEntity>
   ) => Promise<A>;
 }
 
 export default class NormalAccountService
   implements AbstractAccountService<NormalAccount> {
+  public bchProxy: BlockchainProxy | null;
+  public observableBlockchain: ObservableBlockchain | null;
+  private isBlockchainVisible: boolean;
   private readonly logger: Logger;
   constructor(parentLogger: Logger, public readonly keyRepo: KeyRepository) {
     this.logger = parentLogger.child({ subModule: 'NormalAccountService' });
+    this.bchProxy = null;
+    this.observableBlockchain = null;
+    this.isBlockchainVisible = false;
+  }
+  public setBlockchain(
+    bchProxy: BlockchainProxy,
+    observableBlockchain: ObservableBlockchain
+  ): void {
+    this.bchProxy = bchProxy;
+    this.observableBlockchain = observableBlockchain;
+    this.isBlockchainVisible = true;
   }
 
   public async pay(
     from: NormalAccount,
     amount: Satoshi,
-    destinations: ReadonlyArray<OuterEntity>,
-    observableBlockchain: ObservableBlockchain
+    destinations: ReadonlyArray<OuterEntity>
   ): Promise<NormalAccount> {
+    if (this.isBlockchainVisible) {
+      throw new Error(`Please set up blockchain!`);
+    }
+
     if (destinations.some(d => !isOtherUser(d))) {
       throw new Error(`Right now, only paying to other Users is supported`);
     }
@@ -69,8 +89,7 @@ export default class NormalAccountService
     }));
 
     const [updatedAccount, _, changeAddress] = await this.getAddressForAccount(
-      from,
-      observableBlockchain
+      from
     );
     const txResult = await from.coinManager.createTx(
       from.id,
@@ -103,9 +122,11 @@ export default class NormalAccountService
    */
   public async getAddressForAccount(
     a: NormalAccount,
-    observableBlockchain: ObservableBlockchain,
     index?: number
   ): Promise<[NormalAccount, string, string]> {
+    if (this.isBlockchainVisible) {
+      throw new Error(`Please set up blockchain!`);
+    }
     const nextAddreessindex = index
       ? index
       : a.watchingAddresses.getOrElse([]).length;
@@ -135,7 +156,7 @@ export default class NormalAccountService
         AccountType.Normal,
         some([...a.watchingAddresses.getOrElse([]), address, changeAddress])
       ),
-      observableBlockchain,
+      this.observableBlockchain as ObservableBlockchain,
       this.logger
     );
     newAccount.next(watchingAdddressUpdated(address));
@@ -155,32 +176,38 @@ export default class NormalAccountService
    */
   public async createFromHD(
     masterHD: HDNode,
-    index: number,
-    observableBlockchain: ObservableBlockchain,
-    bchProxy: BlockchainProxy
+    index: number
   ): Promise<NormalAccount> {
+    if (this.isBlockchainVisible) {
+      throw new Error(`Please set up blockchain!`);
+    }
+
     const pubkey = masterHD.deriveHardened(index).getPublicKeyBuffer();
     const id = hash160(pubkey).toString('hex');
-    const coinManager = new CoinManager(this.logger, this.keyRepo, bchProxy);
+    const coinManager = new CoinManager(this.logger, this.keyRepo, this
+      .bchProxy as BlockchainProxy);
     this.logger.debug(`Account ${id} has been created from HD`);
     await this._save(id, masterHD);
     const a = subscribeToBlockchain(
       new NormalAccount(id, index, coinManager, this.logger),
-      observableBlockchain,
+      this.observableBlockchain as ObservableBlockchain,
       this.logger
     );
     a.next(accountCreated(a));
     return a;
   }
 
-  public getSyncAccountTask(
-    account: Account,
-    bchProxy: BlockchainProxy,
-    observableBlockchain: ObservableBlockchain
-  ): TaskEither<Error, Account> {
+  public getSyncAccountTask(account: Account): TaskEither<Error, Account> {
+    if (this.isBlockchainVisible) {
+      throw new Error(`Please set up blockchain!`);
+    }
     return new TaskEither(
       new Task(() =>
-        this.promiseSyncAccount(account, bchProxy, observableBlockchain)
+        this.promiseSyncAccount(
+          account,
+          this.bchProxy as BlockchainProxy,
+          this.observableBlockchain as ObservableBlockchain
+        )
       )
     );
   }
